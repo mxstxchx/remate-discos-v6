@@ -26,8 +26,12 @@ export function useAuth() {
       const { data: session, error: sessionError } = await supabase
         .from('sessions')
         .insert([{
-          user_alias: alias,
+          id: crypto.randomUUID(),
+          user_id: user.id,  // Using user.id instead of alias
           language: 'es',
+          created_at: new Date().toISOString(),
+          last_seen_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           metadata: {}
         }])
         .select()
@@ -65,7 +69,7 @@ export function useAuth() {
       const { error } = await supabase
         .from('sessions')
         .update({ expires_at: new Date().toISOString() })
-        .eq('user_alias', useAuthStore.getState().alias)
+        .eq('user_id', useAuthStore.getState().alias)
 
       if (error) throw error
       reset()
