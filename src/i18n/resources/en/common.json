@@ -1,0 +1,21 @@
+{
+  "app": {
+    "name": "Remate Discos",
+    "tagline": "Vinyl Collection Sale"
+  },
+  "navigation": {
+    "home": "Home",
+    "cart": "Cart",
+    "admin": "Admin"
+  },
+  "actions": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save"
+  },
+  "errors": {
+    "general": "An error occurred",
+    "tryAgain": "Please try again"
+  }
+}
