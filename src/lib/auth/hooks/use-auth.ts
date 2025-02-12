@@ -13,25 +13,34 @@ export function useAuth() {
   const signIn = useCallback(async (alias: string): Promise<SignInResponse> => {
     setLoading(true)
     try {
-      // Create or update user
-      const { data: user, error: userError } = await supabase
+      // Check if user exists
+      const { data: existingUser } = await supabase
         .from('users')
-        .upsert({ alias })
         .select()
+        .eq('alias', alias)
         .single()
 
-      if (userError) throw userError
+      // Special case for admin alias
+      const isAdmin = alias === '_soyelputoamo_'
 
-      // Create new session
+      // Create user if doesn't exist
+      if (!existingUser) {
+        const { data: newUser, error: createError } = await supabase
+          .from('users')
+          .insert([{ alias, is_admin: isAdmin }])
+          .select()
+          .single()
+
+        if (createError) throw createError
+        existingUser = newUser
+      }
+
+      // Create session
       const { data: session, error: sessionError } = await supabase
         .from('sessions')
         .insert([{
-          id: crypto.randomUUID(),
-          user_id: user.id,  // Using user.id instead of alias
+          user_alias: alias,
           language: 'es',
-          created_at: new Date().toISOString(),
-          last_seen_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           metadata: {}
         }])
         .select()
@@ -41,15 +50,15 @@ export function useAuth() {
 
       setAuth({
         isAuthenticated: true,
-        isAdmin: user.is_admin,
-        alias: user.alias,
+        isAdmin: existingUser.is_admin,
+        alias: existingUser.alias,
         error: null
       })
 
       return { 
         success: true, 
         session,
-        isAdmin: user.is_admin
+        isAdmin: existingUser.is_admin
       }
     } catch (error) {
       const authError = {
@@ -69,7 +78,7 @@ export function useAuth() {
       const { error } = await supabase
         .from('sessions')
         .update({ expires_at: new Date().toISOString() })
-        .eq('user_id', useAuthStore.getState().alias)
+        .eq('user_alias', useAuthStore.getState().alias)
 
       if (error) throw error
       reset()
