@@ -14,11 +14,15 @@ export function useAuth() {
     setLoading(true)
     try {
       // Check if user exists
-      const { data: existingUser } = await supabase
+      let { data: existingUser, error: userError } = await supabase
         .from('users')
         .select()
         .eq('alias', alias)
         .single()
+
+      if (userError && userError.code !== 'PGRST116') {
+        throw userError
+      }
 
       // Special case for admin alias
       const isAdmin = alias === '_soyelputoamo_'
@@ -35,14 +39,10 @@ export function useAuth() {
         existingUser = newUser
       }
 
-      // Create session
+      // Create new session
       const { data: session, error: sessionError } = await supabase
         .from('sessions')
-        .insert([{
-          user_alias: alias,
-          language: 'es',
-          metadata: {}
-        }])
+        .insert([{ user_alias: alias }])
         .select()
         .single()
 
@@ -61,6 +61,7 @@ export function useAuth() {
         isAdmin: existingUser.is_admin
       }
     } catch (error) {
+      console.error('Auth error:', error)
       const authError = {
         message: error.message || 'Failed to sign in',
         code: error.code
