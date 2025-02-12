@@ -1,3 +1,5 @@
+"use client"
+
 import { useTranslation } from 'react-i18next'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
