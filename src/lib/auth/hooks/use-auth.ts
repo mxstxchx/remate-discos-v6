@@ -19,22 +19,11 @@ export function useAuth() {
     debug('signIn', `Starting sign in for alias: ${alias}`)
 
     try {
-      // First expire any existing sessions
-      debug('sessions', 'Expiring existing sessions')
-      const { error: expireError } = await supabase
-        .from('sessions')
-        .update({ expires_at: new Date().toISOString() })
-        .eq('user_alias', alias)
-
-      if (expireError) {
-        debug('sessions', 'Error expiring sessions:', expireError)
-      }
-
       // Check/create user
       debug('user', 'Checking for existing user')
       let { data: existingUser, error: userError } = await supabase
         .from('users')
-        .select('*')
+        .select('alias, is_admin')
         .eq('alias', alias)
         .single()
 
@@ -52,8 +41,13 @@ export function useAuth() {
 
         const { data: newUser, error: createError } = await supabase
           .from('users')
-          .insert({ alias, is_admin: isAdmin })
-          .select('*')
+          .insert([
+            { 
+              alias: alias,
+              is_admin: isAdmin
+            }
+          ])
+          .select('alias, is_admin')
           .single()
 
         if (createError) {
@@ -66,11 +60,16 @@ export function useAuth() {
         debug('user', 'Found existing user:', existingUser)
       }
 
-      // Create session
+      // Create new session (preserving existing ones)
       debug('sessions', 'Creating new session')
       const { data: session, error: sessionError } = await supabase
         .from('sessions')
-        .insert({ user_alias: alias })
+        .insert([
+          { 
+            user_alias: alias,
+            language: 'es'
+          }
+        ])
         .select()
         .single()
 
@@ -122,15 +121,19 @@ export function useAuth() {
 
     setLoading(true)
     try {
-      debug('sessions', 'Expiring session')
-      const { error } = await supabase
-        .from('sessions')
-        .update({ expires_at: new Date().toISOString() })
-        .eq('user_alias', alias)
+      debug('sessions', 'Expiring current session')
+      const currentSession = useAuthStore.getState().session
+      
+      if (currentSession?.id) {
+        const { error } = await supabase
+          .from('sessions')
+          .update({ expires_at: new Date().toISOString() })
+          .eq('id', currentSession.id)
 
-      if (error) {
-        debug('sessions', 'Error expiring session:', error)
-        throw error
+        if (error) {
+          debug('sessions', 'Error expiring session:', error)
+          throw error
+        }
       }
 
       debug('auth', 'Resetting auth state')
