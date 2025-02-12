@@ -1,6 +1,8 @@
+"use client"
+
 import { useState, useCallback } from 'react'
-import { useAuthStore } from './use-auth-store'
 import { useSupabase } from '@/hooks/use-supabase'
+import { useAuthStore } from './use-auth-store'
 import type { SignInResponse } from '../types'
 
 export function useAuth() {

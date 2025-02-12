@@ -1,3 +1,5 @@
+"use client"
+
 import { createContext, useContext, useEffect } from 'react'
 import { useSupabase } from '@/hooks/use-supabase'
 import { useAuth } from './hooks/use-auth'
