@@ -13,10 +13,16 @@ export function useAuth() {
   const signIn = useCallback(async (alias: string): Promise<SignInResponse> => {
     setLoading(true)
     try {
-      // Check if user exists
+      // First expire any existing sessions
+      await supabase
+        .from('sessions')
+        .update({ expires_at: new Date().toISOString() })
+        .eq('user_alias', alias)
+
+      // Check/create user
       let { data: existingUser, error: userError } = await supabase
         .from('users')
-        .select()
+        .select('*')
         .eq('alias', alias)
         .single()
 
@@ -24,25 +30,21 @@ export function useAuth() {
         throw userError
       }
 
-      // Special case for admin alias
-      const isAdmin = alias === '_soyelputoamo_'
-
-      // Create user if doesn't exist
       if (!existingUser) {
         const { data: newUser, error: createError } = await supabase
           .from('users')
-          .insert([{ alias, is_admin: isAdmin }])
-          .select()
+          .insert({ alias, is_admin: alias === '_soyelputoamo_' })
+          .select('*')
           .single()
 
         if (createError) throw createError
         existingUser = newUser
       }
 
-      // Create new session
+      // Create session
       const { data: session, error: sessionError } = await supabase
         .from('sessions')
-        .insert([{ user_alias: alias }])
+        .insert({ user_alias: alias })
         .select()
         .single()
 
@@ -74,12 +76,15 @@ export function useAuth() {
   }, [supabase, setAuth])
 
   const signOut = useCallback(async () => {
+    const alias = useAuthStore.getState().alias
+    if (!alias) return { success: true }
+
     setLoading(true)
     try {
       const { error } = await supabase
         .from('sessions')
         .update({ expires_at: new Date().toISOString() })
-        .eq('user_alias', useAuthStore.getState().alias)
+        .eq('user_alias', alias)
 
       if (error) throw error
       reset()
