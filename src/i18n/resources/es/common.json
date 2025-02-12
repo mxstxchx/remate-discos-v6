@@ -1,0 +1,21 @@
+{
+  "app": {
+    "name": "Remate Discos",
+    "tagline": "Venta de Colección de Vinilos"
+  },
+  "navigation": {
+    "home": "Inicio",
+    "cart": "Carrito",
+    "admin": "Admin"
+  },
+  "actions": {
+    "close": "Cerrar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar"
+  },
+  "errors": {
+    "general": "Ha ocurrido un error",
+    "tryAgain": "Por favor, inténtalo de nuevo"
+  }
+}
