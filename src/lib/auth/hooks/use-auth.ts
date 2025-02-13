@@ -21,18 +21,17 @@ export function useAuth() {
     try {
       // Check/create user
       debug('user', 'Checking for existing user')
-      let { data: existingUser, error: userError } = await supabase
+      const { data: users, error: userError } = await supabase
         .from('users')
         .select('alias, is_admin')
         .eq('alias', alias)
-        .single()
 
       if (userError) {
         debug('user', 'Error checking user:', userError)
-        if (userError.code !== 'PGRST116') {
-          throw userError
-        }
+        throw userError
       }
+
+      let existingUser = users?.[0]
 
       if (!existingUser) {
         debug('user', 'Creating new user')
@@ -41,12 +40,7 @@ export function useAuth() {
 
         const { data: newUser, error: createError } = await supabase
           .from('users')
-          .insert([
-            { 
-              alias: alias,
-              is_admin: isAdmin
-            }
-          ])
+          .insert({ alias, is_admin: isAdmin })
           .select('alias, is_admin')
           .single()
 
@@ -60,16 +54,11 @@ export function useAuth() {
         debug('user', 'Found existing user:', existingUser)
       }
 
-      // Create new session (preserving existing ones)
+      // Create new session
       debug('sessions', 'Creating new session')
       const { data: session, error: sessionError } = await supabase
         .from('sessions')
-        .insert([
-          { 
-            user_alias: alias,
-            language: 'es'
-          }
-        ])
+        .insert({ user_alias: alias })
         .select()
         .single()
 
