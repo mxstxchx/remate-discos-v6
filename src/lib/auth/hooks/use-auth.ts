@@ -23,7 +23,7 @@ export function useAuth() {
       debug('user', 'Checking for existing user')
       const { data: users, error: userError } = await supabase
         .from('users')
-        .select('alias, is_admin')
+        .select('*')
         .eq('alias', alias)
 
       if (userError) {
@@ -38,18 +38,20 @@ export function useAuth() {
         const isAdmin = alias === '_soyelputoamo_'
         debug('user', `Admin status: ${isAdmin}`)
 
-        const { data: newUser, error: createError } = await supabase
+        const { data, error: createError } = await supabase
           .from('users')
-          .insert({ alias, is_admin: isAdmin })
-          .select('alias, is_admin')
-          .single()
+          .insert({
+            alias,
+            is_admin: isAdmin
+          })
+          .select()
 
         if (createError) {
           debug('user', 'Error creating user:', createError)
           throw createError
         }
-        debug('user', 'User created:', newUser)
-        existingUser = newUser
+        debug('user', 'User created:', data[0])
+        existingUser = data[0]
       } else {
         debug('user', 'Found existing user:', existingUser)
       }
@@ -72,6 +74,7 @@ export function useAuth() {
         isAuthenticated: true,
         isAdmin: existingUser.is_admin,
         alias: existingUser.alias,
+        session,
         error: null
       })
 
@@ -100,10 +103,10 @@ export function useAuth() {
   }, [supabase, setAuth])
 
   const signOut = useCallback(async () => {
-    const alias = useAuthStore.getState().alias
-    debug('signOut', `Starting sign out for alias: ${alias}`)
+    const { session } = useAuthStore.getState()
+    debug('signOut', `Starting sign out for session: ${session?.id}`)
     
-    if (!alias) {
+    if (!session?.id) {
       debug('signOut', 'No active session found')
       return { success: true }
     }
@@ -111,18 +114,14 @@ export function useAuth() {
     setLoading(true)
     try {
       debug('sessions', 'Expiring current session')
-      const currentSession = useAuthStore.getState().session
-      
-      if (currentSession?.id) {
-        const { error } = await supabase
-          .from('sessions')
-          .update({ expires_at: new Date().toISOString() })
-          .eq('id', currentSession.id)
+      const { error } = await supabase
+        .from('sessions')
+        .update({ expires_at: new Date().toISOString() })
+        .eq('id', session.id)
 
-        if (error) {
-          debug('sessions', 'Error expiring session:', error)
-          throw error
-        }
+      if (error) {
+        debug('sessions', 'Error expiring session:', error)
+        throw error
       }
 
       debug('auth', 'Resetting auth state')

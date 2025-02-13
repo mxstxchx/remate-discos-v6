@@ -1,3 +1,5 @@
+"use client"
+
 import { create } from 'zustand'
 import type { AuthState } from '../types'
 
@@ -10,6 +12,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isAdmin: false,
   alias: null,
+  session: null,
   error: null
 }
 
