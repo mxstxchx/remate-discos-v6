@@ -40,11 +40,8 @@ export function useAuth() {
 
         const { data, error: createError } = await supabase
           .from('users')
-          .insert({
-            alias,
-            is_admin: isAdmin
-          })
-          .select()
+          .insert({ alias, is_admin: isAdmin })
+          .select('*')
 
         if (createError) {
           debug('user', 'Error creating user:', createError)
@@ -68,7 +65,9 @@ export function useAuth() {
         debug('sessions', 'Error creating session:', sessionError)
         throw sessionError
       }
+
       debug('sessions', 'Session created:', session)
+      debug('auth', 'Setting auth state')
 
       setAuth({
         isAuthenticated: true,
@@ -102,44 +101,8 @@ export function useAuth() {
     }
   }, [supabase, setAuth])
 
-  const signOut = useCallback(async () => {
-    const { session } = useAuthStore.getState()
-    debug('signOut', `Starting sign out for session: ${session?.id}`)
-    
-    if (!session?.id) {
-      debug('signOut', 'No active session found')
-      return { success: true }
-    }
-
-    setLoading(true)
-    try {
-      debug('sessions', 'Expiring current session')
-      const { error } = await supabase
-        .from('sessions')
-        .update({ expires_at: new Date().toISOString() })
-        .eq('id', session.id)
-
-      if (error) {
-        debug('sessions', 'Error expiring session:', error)
-        throw error
-      }
-
-      debug('auth', 'Resetting auth state')
-      reset()
-      debug('signOut', 'Sign out complete')
-      return { success: true }
-    } catch (error) {
-      debug('error', 'Sign out failed:', error)
-      setAuth({ error: error.message })
-      return { success: false, error }
-    } finally {
-      setLoading(false)
-    }
-  }, [supabase, setAuth, reset])
-
   return {
     signIn,
-    signOut,
     loading
   }
 }
