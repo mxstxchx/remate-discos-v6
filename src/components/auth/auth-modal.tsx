@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertCircle } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -18,13 +18,6 @@ export function AuthModal() {
   const [loading, setLoading] = useState(false)
   const error = useAuthStore((state) => state.error)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-
-  useEffect(() => {
-    // Keep dialog open until a valid session exists
-    if (!isAuthenticated) {
-      return
-    }
-  }, [isAuthenticated])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
