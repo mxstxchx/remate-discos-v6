@@ -14,7 +14,7 @@ export function useAuth() {
   const supabase = useSupabase()
   const { setAuth, reset } = useAuthStore()
 
-  const signIn = useCallback(async (alias: string): Promise<SignInResponse> => {
+  const signIn = useCallback(async (alias: string, language: 'es' | 'en' = 'es'): Promise<SignInResponse> => {
     setLoading(true)
     debug('signIn', `Starting sign in for alias: ${alias}`)
 
@@ -38,17 +38,17 @@ export function useAuth() {
         const isAdmin = alias === '_soyelputoamo_'
         debug('user', `Admin status: ${isAdmin}`)
 
-        const { data, error: createError } = await supabase
+        const { data: newUsers, error: createError } = await supabase
           .from('users')
-          .insert({ alias, is_admin: isAdmin })
-          .select('*')
+          .upsert([{ alias, is_admin: isAdmin }])
+          .select()
 
         if (createError) {
           debug('user', 'Error creating user:', createError)
           throw createError
         }
-        debug('user', 'User created:', data[0])
-        existingUser = data[0]
+        debug('user', 'User created:', newUsers[0])
+        existingUser = newUsers[0]
       } else {
         debug('user', 'Found existing user:', existingUser)
       }
@@ -57,7 +57,7 @@ export function useAuth() {
       debug('sessions', 'Creating new session')
       const { data: session, error: sessionError } = await supabase
         .from('sessions')
-        .insert({ user_alias: alias })
+        .insert({ user_alias: alias, language })
         .select()
         .single()
 
@@ -101,8 +101,26 @@ export function useAuth() {
     }
   }, [supabase, setAuth])
 
+  const signOut = useCallback(async () => {
+    const { session } = useAuthStore.getState()
+    
+    if (!session?.id) return
+    
+    try {
+      await supabase
+        .from('sessions')
+        .update({ expires_at: new Date().toISOString() })
+        .eq('id', session.id)
+      
+      reset()
+    } catch (error) {
+      console.error('Sign out failed:', error)
+    }
+  }, [supabase, reset])
+
   return {
     signIn,
+    signOut,
     loading
   }
 }
