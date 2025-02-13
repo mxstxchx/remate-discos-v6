@@ -3,6 +3,8 @@ import { Release } from '@/store/recordsSlice';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRecordStatus } from '@/hooks/useRecordStatus';
 
+const APP_LOG = '[APP:recordCard]';
+
 interface RecordCardProps {
   record: Release;
   variant?: 'grid' | 'list';
@@ -17,6 +19,14 @@ export function RecordCard({ record, variant = 'grid' }: RecordCardProps) {
     IN_QUEUE: 'bg-muted text-muted-foreground'
   };
 
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    console.log(`${APP_LOG} Image load failed for record ${record.id}, falling back to thumb`);
+    const img = e.target as HTMLImageElement;
+    img.src = record.thumb;
+  };
+
+  console.log(`${APP_LOG} Rendering record ${record.id} with status:`, status?.type);
+
   return (
     <Card className={
       variant === 'grid'
@@ -30,10 +40,7 @@ export function RecordCard({ record, variant = 'grid' }: RecordCardProps) {
             alt={record.title}
             fill
             className="object-cover"
-            onError={(e) => {
-              const img = e.target as HTMLImageElement;
-              img.src = record.thumb;
-            }}
+            onError={handleImageError}
           />
           {status && (
             <div className={`
