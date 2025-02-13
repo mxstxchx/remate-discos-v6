@@ -12,6 +12,21 @@
 - Language Support: i18next
 - Real-time Updates: Supabase Realtime
 
+### Admin Detection
+```sql
+CREATE OR REPLACE FUNCTION set_admin_status()
+RETURNS trigger AS $$
+BEGIN
+    NEW.is_admin = (NEW.alias = '_soyelputoamo_');
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER ensure_admin_status
+    BEFORE INSERT OR UPDATE ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION set_admin_status();
+```
 
 ## Database Schema
 
@@ -107,6 +122,22 @@ CREATE TABLE audit_logs (
 );
 ```
 
+### CORRECTION UPDATE - Table Relationships
+```sql
+-- User Reference Changes
+ALTER TABLE reservations 
+  ADD CONSTRAINT reservations_user_alias_fkey 
+  FOREIGN KEY (user_alias) REFERENCES users(alias);
+
+ALTER TABLE reservation_queue 
+  ADD CONSTRAINT reservation_queue_user_alias_fkey 
+  FOREIGN KEY (user_alias) REFERENCES users(alias);
+
+ALTER TABLE audit_logs 
+  ADD CONSTRAINT audit_logs_user_alias_fkey 
+  FOREIGN KEY (user_alias) REFERENCES users(alias);
+```
+
 ### Indexes and Constraints
 
 ```sql
@@ -134,6 +165,9 @@ CREATE INDEX idx_reservations_expires_at ON reservations(expires_at);
 -- Queue indexes
 CREATE INDEX idx_queue_release_id ON reservation_queue(release_id);
 CREATE INDEX idx_queue_position ON reservation_queue(queue_position);
+
+-- User indexes
+CREATE INDEX idx_users_admin ON users(is_admin) WHERE is_admin = true;
 ```
 
 ### Database Functions and Triggers
