@@ -8,7 +8,7 @@ interface RecordGridProps {
   variant?: 'grid' | 'list';
 }
 
-export function RecordGrid({ records, loading = false, variant = 'grid' }: RecordGridProps) {
+export function RecordGrid({ records = [], loading = false, variant = 'grid' }: RecordGridProps) {
   if (loading) {
     return (
       <div className={
@@ -25,7 +25,7 @@ export function RecordGrid({ records, loading = false, variant = 'grid' }: Recor
     );
   }
 
-  if (!records.length) {
+  if (!records?.length) {
     return (
       <div className="flex items-center justify-center h-64">
         <p className="text-muted-foreground">No records found</p>

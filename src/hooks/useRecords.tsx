@@ -4,82 +4,58 @@ import { ITEMS_PER_PAGE } from '@/store/recordsSlice';
 import { sqlToRest, postgrestRequest } from '@/lib/api';
 
 const APP_LOG = '[APP:records]';
-const DEV_LOG = '[DEV:records]';
 
 export function useRecords(page: number = 1) {
-  const { 
-    releases,
-    setReleases,
-    setLoading,
-    setError,
-    setTotalPages 
-  } = useStore();
+  const releases = useStore(state => state.releases);
+  const setReleases = useStore(state => state.setReleases);
+  const setLoading = useStore(state => state.setLoading);
+  const setError = useStore(state => state.setError);
+  const setTotalPages = useStore(state => state.setTotalPages);
+  const loading = useStore(state => state.loading);
+  const error = useStore(state => state.error);
+  const totalPages = useStore(state => state.totalPages);
 
   useEffect(() => {
     async function fetchReleases() {
-      console.log(`${APP_LOG} Fetching records page ${page}`);
       setLoading(true);
       
       try {
+        // Fetch releases
         const { method, path } = await sqlToRest({
-          sql: `
-            SELECT 
-              id, title, artists, labels, styles,
-              year, country, condition, price,
-              thumb, primary_image, secondary_image
-            FROM releases
-            ORDER BY created_at DESC
-            LIMIT ${ITEMS_PER_PAGE}
-            OFFSET ${(page - 1) * ITEMS_PER_PAGE}
-          `
+          sql: `SELECT * FROM releases ORDER BY created_at DESC LIMIT ${ITEMS_PER_PAGE} OFFSET ${(page - 1) * ITEMS_PER_PAGE}`
         });
 
-        console.log(`${DEV_LOG} PostgREST query:`, { method, path });
+        const records = await postgrestRequest({ method, path });
+        console.log(`${APP_LOG} Fetched records:`, records?.length);
 
-        const { data: records } = await postgrestRequest({
-          method,
-          path
-        });
+        if (records?.length) {
+          const parsedRecords = records.map(record => ({
+            ...record,
+            artists: typeof record.artists === 'string' ? JSON.parse(record.artists) : record.artists,
+            labels: typeof record.labels === 'string' ? JSON.parse(record.labels) : record.labels,
+            styles: typeof record.styles === 'string' ? JSON.parse(record.styles) : record.styles
+          }));
+          
+          setReleases(parsedRecords);
+        }
 
-        console.log(`${APP_LOG} Retrieved ${records.length} records`);
-
+        // Fetch count
         const { method: countMethod, path: countPath } = await sqlToRest({
           sql: 'SELECT COUNT(*) FROM releases'
         });
 
-        const { data: countData } = await postgrestRequest({
+        const countResult = await postgrestRequest({
           method: countMethod,
           path: countPath
         });
 
-        const total = parseInt(countData[0].count);
-        console.log(`${APP_LOG} Total records: ${total}`);
-        
-        const parsedRecords = records.map(record => {
-          try {
-            return {
-              ...record,
-              artists: JSON.parse(record.artists),
-              labels: JSON.parse(record.labels),
-              styles: JSON.parse(record.styles)
-            };
-          } catch (err) {
-            console.error(`${APP_LOG} Error parsing record ${record.id}:`, err);
-            // Return record with empty arrays as fallback
-            return {
-              ...record,
-              artists: [],
-              labels: [],
-              styles: []
-            };
-          }
-        });
-        
-        setReleases(parsedRecords);
-        setTotalPages(Math.ceil(total / ITEMS_PER_PAGE));
+        if (countResult?.[0]?.count) {
+          setTotalPages(Math.ceil(parseInt(countResult[0].count) / ITEMS_PER_PAGE));
+        }
+
         setError(null);
       } catch (err) {
-        console.error(`${APP_LOG} Error fetching records:`, err);
+        console.error(`${APP_LOG} Error:`, err);
         setError(err instanceof Error ? err.message : 'Failed to fetch records');
       } finally {
         setLoading(false);
@@ -89,10 +65,5 @@ export function useRecords(page: number = 1) {
     fetchReleases();
   }, [page, setReleases, setLoading, setError, setTotalPages]);
 
-  return {
-    releases,
-    loading: useStore(state => state.loading),
-    error: useStore(state => state.error),
-    totalPages: useStore(state => state.totalPages)
-  };
+  return { releases, loading, error, totalPages };
 }
