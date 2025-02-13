@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertCircle } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -9,9 +9,10 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { useAuthContext } from '@/lib/auth/provider'
 import { useAuthStore } from '@/lib/auth/hooks'
+import { LanguageSelector } from './language-selector'
 
 export function AuthModal() {
-  const { t } = useTranslation('auth')
+  const { t, i18n } = useTranslation('auth')
   const { signIn } = useAuthContext()
   const [alias, setAlias] = useState('')
   const [loading, setLoading] = useState(false)
@@ -23,7 +24,7 @@ export function AuthModal() {
     if (alias.length < 6) return
 
     setLoading(true)
-    await signIn(alias)
+    await signIn(alias, i18n.language as 'es' | 'en')
     setLoading(false)
   }
 
@@ -50,6 +51,8 @@ export function AuthModal() {
               disabled={loading}
             />
           </div>
+
+          <LanguageSelector />
 
           {error && (
             <div className="flex items-center gap-2 text-sm text-destructive">
