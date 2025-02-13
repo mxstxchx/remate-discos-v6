@@ -38,17 +38,23 @@ export function useAuth() {
         const isAdmin = alias === '_soyelputoamo_'
         debug('user', `Admin status: ${isAdmin}`)
 
-        const { data: newUsers, error: createError } = await supabase
+        const { error: createError } = await supabase
           .from('users')
-          .upsert([{ alias, is_admin: isAdmin }])
-          .select()
+          .insert({ alias, is_admin: isAdmin })
 
         if (createError) {
           debug('user', 'Error creating user:', createError)
           throw createError
         }
-        debug('user', 'User created:', newUsers[0])
-        existingUser = newUsers[0]
+
+        const { data: newUser } = await supabase
+          .from('users')
+          .select('*')
+          .eq('alias', alias)
+          .single()
+
+        debug('user', 'User created:', newUser)
+        existingUser = newUser
       } else {
         debug('user', 'Found existing user:', existingUser)
       }
