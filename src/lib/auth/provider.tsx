@@ -1,10 +1,9 @@
 "use client"
 
-import { createContext, useContext, useEffect } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { useSupabase } from '@/hooks/use-supabase'
 import { useAuth } from './hooks/use-auth'
 import { useAuthStore } from './hooks/use-auth-store'
-import type { AuthSession } from './types'
 
 type AuthContextType = ReturnType<typeof useAuth>
 
@@ -15,51 +14,42 @@ export function AuthProvider({
 }: {
   children: React.ReactNode
 }) {
+  const [initializing, setInitializing] = useState(true)
   const auth = useAuth()
   const supabase = useSupabase()
-  const alias = useAuthStore((state) => state.alias)
   const setAuth = useAuthStore((state) => state.setAuth)
 
   useEffect(() => {
-    if (!alias) return
-
-    // Subscribe to session changes
-    const channel = supabase
-      .channel(`sessions:${alias}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'sessions',
-        filter: `user_alias=eq.${alias}`
-      }, (payload) => {
-        const session = payload.new as AuthSession
-        // Handle session expiry
-        if (new Date(session.expires_at) <= new Date()) {
-          auth.signOut()
-        }
-      })
-      .subscribe()
-
-    // Check session validity on mount
-    const checkSession = async () => {
-      const { data } = await supabase
+    async function checkSession() {
+      const { data: activeSession } = await supabase
         .from('sessions')
-        .select()
-        .eq('user_alias', alias)
+        .select('*')
         .gte('expires_at', new Date().toISOString())
-        .maybeSingle()
+        .limit(1)
+        .single()
 
-      if (!data) {
-        auth.signOut()
+      if (activeSession) {
+        const { data: user } = await supabase
+          .from('users')
+          .select('*')
+          .eq('alias', activeSession.user_alias)
+          .single()
+
+        setAuth({
+          isAuthenticated: true,
+          isAdmin: user.is_admin,
+          alias: user.alias,
+          session: activeSession,
+          error: null
+        })
       }
+      setInitializing(false)
     }
 
     checkSession()
+  }, [])
 
-    return () => {
-      channel.unsubscribe()
-    }
-  }, [alias, supabase, auth, setAuth])
+  if (initializing) return null
 
   return (
     <AuthContext.Provider value={auth}>
