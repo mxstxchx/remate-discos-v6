@@ -3,6 +3,9 @@ import { useStore } from '@/store';
 import { ITEMS_PER_PAGE } from '@/store/recordsSlice';
 import { sqlToRest, postgrestRequest } from '@/lib/api';
 
+const APP_LOG = '[APP:records]';
+const DEV_LOG = '[DEV:records]';
+
 export function useRecords(page: number = 1) {
   const { 
     releases,
@@ -14,9 +17,10 @@ export function useRecords(page: number = 1) {
 
   useEffect(() => {
     async function fetchReleases() {
+      console.log(`${APP_LOG} Fetching records page ${page}`);
       setLoading(true);
+      
       try {
-        // Convert SQL to PostgREST query
         const { method, path } = await sqlToRest({
           sql: `
             SELECT 
@@ -30,13 +34,15 @@ export function useRecords(page: number = 1) {
           `
         });
 
-        // Fetch records
+        console.log(`${DEV_LOG} PostgREST query:`, { method, path });
+
         const { data: records } = await postgrestRequest({
           method,
           path
         });
 
-        // Get total count for pagination
+        console.log(`${APP_LOG} Retrieved ${records.length} records`);
+
         const { method: countMethod, path: countPath } = await sqlToRest({
           sql: 'SELECT COUNT(*) FROM releases'
         });
@@ -47,17 +53,33 @@ export function useRecords(page: number = 1) {
         });
 
         const total = parseInt(countData[0].count);
+        console.log(`${APP_LOG} Total records: ${total}`);
         
-        setReleases(records.map(record => ({
-          ...record,
-          artists: JSON.parse(record.artists),
-          labels: JSON.parse(record.labels),
-          styles: JSON.parse(record.styles)
-        })));
+        const parsedRecords = records.map(record => {
+          try {
+            return {
+              ...record,
+              artists: JSON.parse(record.artists),
+              labels: JSON.parse(record.labels),
+              styles: JSON.parse(record.styles)
+            };
+          } catch (err) {
+            console.error(`${APP_LOG} Error parsing record ${record.id}:`, err);
+            // Return record with empty arrays as fallback
+            return {
+              ...record,
+              artists: [],
+              labels: [],
+              styles: []
+            };
+          }
+        });
         
+        setReleases(parsedRecords);
         setTotalPages(Math.ceil(total / ITEMS_PER_PAGE));
         setError(null);
       } catch (err) {
+        console.error(`${APP_LOG} Error fetching records:`, err);
         setError(err instanceof Error ? err.message : 'Failed to fetch records');
       } finally {
         setLoading(false);
