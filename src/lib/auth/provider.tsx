@@ -21,34 +21,45 @@ export function AuthProvider({
 
   useEffect(() => {
     async function checkSession() {
-      const { data: activeSession } = await supabase
-        .from('sessions')
-        .select('*')
-        .gte('expires_at', new Date().toISOString())
-        .limit(1)
-        .single()
-
-      if (activeSession) {
-        const { data: user } = await supabase
-          .from('users')
+      try {
+        console.log('Checking session...')
+        const { data: activeSession } = await supabase
+          .from('sessions')
           .select('*')
-          .eq('alias', activeSession.user_alias)
+          .gte('expires_at', new Date().toISOString())
+          .limit(1)
           .single()
 
-        setAuth({
-          isAuthenticated: true,
-          isAdmin: user.is_admin,
-          alias: user.alias,
-          session: activeSession,
-          error: null
-        })
+        if (activeSession) {
+          console.log('Found active session:', activeSession)
+          const { data: user } = await supabase
+            .from('users')
+            .select('*')
+            .eq('alias', activeSession.user_alias)
+            .single()
+
+          setAuth({
+            isAuthenticated: true,
+            isAdmin: user.is_admin,
+            alias: user.alias,
+            session: activeSession,
+            error: null
+          })
+        } else {
+          console.log('No active session found')
+        }
+      } catch (error) {
+        console.log('Session check error:', error)
+      } finally {
+        console.log('Setting initializing to false')
+        setInitializing(false)
       }
-      setInitializing(false)
     }
 
     checkSession()
-  }, [])
+  }, [supabase, setAuth])
 
+  console.log('AuthProvider render:', { initializing })
   if (initializing) return null
 
   return (
