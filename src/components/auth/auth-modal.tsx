@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertCircle } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { useAuthContext } from '@/lib/auth/provider'
 import { useAuthStore } from '@/lib/auth/hooks'
-import { LanguageSelector } from './language-selector'
 
 export function AuthModal() {
   const { t } = useTranslation('auth')
@@ -58,8 +57,6 @@ export function AuthModal() {
               <span>{error}</span>
             </div>
           )}
-
-          <LanguageSelector />
 
           <Button
             type="submit"
