@@ -1,7 +1,9 @@
+import React from 'react';
 import Image from 'next/image';
 import { Release } from '@/store/recordsSlice';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRecordStatus } from '@/hooks/useRecordStatus';
+import { RecordStatus } from './RecordStatus';
 
 const APP_LOG = '[APP:recordCard]';
 
@@ -10,22 +12,17 @@ interface RecordCardProps {
   variant?: 'grid' | 'list';
 }
 
-export const RecordCard = React.memo(function RecordCard({ record, variant = 'grid' }: RecordCardProps) {
-  const status = useRecordStatus(record.id);
-
-  const statusColors = {
-    AVAILABLE: 'bg-success text-white',
-    RESERVED: 'bg-info text-white',
-    IN_QUEUE: 'bg-muted text-muted-foreground'
-  };
-
+export const RecordCard = React.memo(function RecordCard({
+  record,
+  variant = 'grid'
+}: RecordCardProps) {
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     console.log(`${APP_LOG} Image load failed for record ${record.id}, falling back to thumb`);
     const img = e.target as HTMLImageElement;
     img.src = record.thumb;
   };
 
-  console.log(`${APP_LOG} Rendering record ${record.id} with status:`, status?.type);
+  console.log(`${APP_LOG} Rendering record ${record.id}`);
 
   return (
     <Card className={
@@ -42,14 +39,10 @@ export const RecordCard = React.memo(function RecordCard({ record, variant = 'gr
             className="object-cover"
             onError={handleImageError}
           />
-          {status && (
-            <div className={`
-              absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium
-              ${statusColors[status.type] || 'bg-muted text-muted-foreground'}
-            `}>
-              {status.type}
-            </div>
-          )}
+          <RecordStatus
+            recordId={record.id}
+            className="absolute top-2 right-2"
+          />
         </div>
       </div>
 
@@ -81,4 +74,4 @@ export const RecordCard = React.memo(function RecordCard({ record, variant = 'gr
       </div>
     </Card>
   );
-}
+});
