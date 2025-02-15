@@ -2,27 +2,29 @@ import React from 'react';
 import Image from 'next/image';
 import { Release } from '@/store/recordsSlice';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useRecordStatus } from '@/hooks/useRecordStatus';
-import { RecordStatus } from './RecordStatus';
+import { Badge } from '@/components/ui/badge';
+import { ActionButton } from './ActionButton';
 
 const APP_LOG = '[APP:recordCard]';
 
 interface RecordCardProps {
   record: Release;
   variant?: 'grid' | 'list';
+  onAddToCart?: () => void;
+  onJoinQueue?: () => void;
 }
 
 export const RecordCard = React.memo(function RecordCard({
   record,
-  variant = 'grid'
+  variant = 'grid',
+  onAddToCart,
+  onJoinQueue
 }: RecordCardProps) {
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     console.log(`${APP_LOG} Image load failed for record ${record.id}, falling back to thumb`);
     const img = e.target as HTMLImageElement;
     img.src = record.thumb;
   };
-
-  console.log(`${APP_LOG} Rendering record ${record.id}`);
 
   return (
     <Card className={
@@ -39,10 +41,12 @@ export const RecordCard = React.memo(function RecordCard({
             className="object-cover"
             onError={handleImageError}
           />
-          <RecordStatus
-            recordId={record.id}
-            className="absolute top-2 right-2"
-          />
+          <Badge
+            variant="secondary"
+            className="absolute top-2 right-2 bg-black/50 text-white backdrop-blur-sm"
+          >
+            {record.condition}
+          </Badge>
         </div>
       </div>
 
@@ -62,12 +66,14 @@ export const RecordCard = React.memo(function RecordCard({
         </CardContent>
 
         <CardFooter className="mt-auto">
-          <div className="flex justify-between items-center w-full">
-            <span className="font-mono text-lg font-semibold text-primary">
-              {record.price.toFixed(2)}€
-            </span>
-            <span className="text-sm font-medium text-muted-foreground">
-              {record.condition}
+          <div className="flex items-center w-full gap-3">
+            <ActionButton
+              recordId={record.id}
+              onAddToCart={onAddToCart}
+              onJoinQueue={onJoinQueue}
+            />
+            <span className="font-mono text-lg font-semibold text-primary whitespace-nowrap">
+              {Math.floor(record.price)}€
             </span>
           </div>
         </CardFooter>
