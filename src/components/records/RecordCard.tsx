@@ -10,7 +10,7 @@ interface RecordCardProps {
   variant?: 'grid' | 'list';
 }
 
-export function RecordCard({ record, variant = 'grid' }: RecordCardProps) {
+export const RecordCard = React.memo(function RecordCard({ record, variant = 'grid' }: RecordCardProps) {
   const status = useRecordStatus(record.id);
 
   const statusColors = {

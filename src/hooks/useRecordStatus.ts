@@ -1,72 +1,65 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { sqlToRest, postgrestRequest } from '@/lib/api';
+import { debounce } from 'lodash';
 
-const APP_LOG = '[APP:recordStatus]';
+const statusCache = new Map();
 
-export type RecordStatus = {
-  type: 'AVAILABLE' | 'RESERVED' | 'IN_QUEUE';
-  lastChecked: string;
-};
-
-export function useRecordStatus(releaseId: number) {
-  const [status, setStatus] = useState<RecordStatus | null>(null);
+export function useRecordStatus(recordId: number) {
+  const [status, setStatus] = useState(() => statusCache.get(recordId) || null);
   const supabase = createClientComponentClient();
+  const isMounted = useRef(true);
 
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const { method, path } = await sqlToRest({
-          sql: `
-            SELECT 
-              CASE
-                WHEN r.status = 'RESERVED' THEN 'RESERVED'
-                WHEN q.release_id IS NOT NULL THEN 'IN_QUEUE'
-                ELSE 'AVAILABLE'
-              END as type
-            FROM releases rel
-            LEFT JOIN reservations r ON rel.id = r.release_id
-            LEFT JOIN reservation_queue q ON rel.id = q.release_id
-            WHERE rel.id = ${releaseId}
-          `
-        });
+        const { data, error } = await supabase
+          .from('reservations')
+          .select('status, user_alias')
+          .eq('release_id', recordId)
+          .single();
 
-        const { data } = await postgrestRequest({ method, path });
-        
-        if (data?.[0]) {
-          console.log(`${APP_LOG} Status updated for ${releaseId}:`, data[0].type);
-          setStatus({
-            type: data[0].type,
-            lastChecked: new Date().toISOString()
-          });
+        if (error) throw error;
+
+        const newStatus = data
+          ? { type: data.status, reservedBy: data.user_alias }
+          : { type: 'AVAILABLE' };
+
+        if (isMounted.current) {
+          setStatus(newStatus);
+          statusCache.set(recordId, newStatus);
         }
       } catch (err) {
-        console.error(`${APP_LOG} Error fetching status for ${releaseId}:`, err);
+        console.error(`[APP:recordStatus] Error fetching status for ${recordId}:`, err);
       }
     };
 
-    fetchStatus();
+    // Debounced status update
+    const debouncedFetch = debounce(fetchStatus, 300);
 
-    const statusSub = supabase
-      .channel(`record-${releaseId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'reservations',
-        filter: `release_id=eq.${releaseId}`
-      }, () => {
-        console.log(`${APP_LOG} Status change detected for ${releaseId}`);
-        fetchStatus();
-      })
+    // Initial fetch
+    debouncedFetch();
+
+    // Subscribe to changes
+    const subscription = supabase
+      .channel(`record-${recordId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reservations',
+          filter: `release_id=eq.${recordId}`
+        },
+        debouncedFetch
+      )
       .subscribe();
 
-    const validationInterval = setInterval(fetchStatus, 300000);
-
     return () => {
-      statusSub.unsubscribe();
-      clearInterval(validationInterval);
+      isMounted.current = false;
+      subscription.unsubscribe();
+      debouncedFetch.cancel();
     };
-  }, [releaseId]);
+  }, [recordId, supabase]);
 
   return status;
 }
