@@ -45,13 +45,14 @@ export const useStore = create<AppState & AppActions>()(
       setTotalPages: (totalPages) => set({ totalPages }),
       setCurrentPage: (currentPage) => set({ currentPage })
     }),
-    {
-      name: 'remate-discos-storage',
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        language: state.language,
-        viewPreference: state.viewPreference
-      })
-    }
+   {
+     name: 'remate-discos-storage',
+     storage: createJSONStorage(() => localStorage),
+     partialize: (state) => ({
+       language: state.language,
+       viewPreference: state.viewPreference,
+       session: state.session
+     })
+   }
   )
 )

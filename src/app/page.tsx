@@ -15,9 +15,13 @@ export default function BrowsePage() {
     totalPages 
   } = useRecords();
   
-  const viewMode = useStore(state => state.viewMode);
-  const setViewMode = useStore(state => state.setViewMode);
-
+  const viewPreference = useStore(state => state.viewPreference);
+  const setViewPreference = useStore(state => state.setViewPreference);
+ 
+  const toggleView = () => {
+    setViewPreference(viewPreference === 'grid' ? 'list' : 'grid');
+  };
+ 
   if (error) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -25,30 +29,12 @@ export default function BrowsePage() {
       </div>
     );
   }
-
+ 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-semibold">Browse Records</h1>
-        
-        <div className="flex gap-2">
-          <Button
-            variant={viewMode === 'grid' ? 'default' : 'ghost'}
-            size="icon"
-            onClick={() => setViewMode('grid')}
-            className="hidden md:flex"
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === 'list' ? 'default' : 'ghost'}
-            size="icon"
-            onClick={() => setViewMode('list')}
-          >
-            <List className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+    <>
+      <TopLayout />
+      <div className="container mx-auto px-4 py-8 mt-16">
+        <h1 className="text-2xl font-semibold mb-8">Browse Records</h1>
 
       <Suspense
         fallback={
@@ -65,6 +51,20 @@ export default function BrowsePage() {
           variant={viewMode}
         />
       </Suspense>
+ 
+      <Button
+        variant="default"
+        size="icon"
+        onClick={toggleView}
+        className="fixed bottom-6 right-6 rounded-full shadow-lg"
+      >
+        {viewPreference === 'grid' ? (
+          <List className="h-4 w-4" />
+        ) : (
+          <LayoutGrid className="h-4 w-4" />
+        )}
+      </Button>
     </div>
+    </>
   );
-}
+ }

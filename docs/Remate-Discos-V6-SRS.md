@@ -296,16 +296,24 @@ import create from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 
 interface StoreState {
-    cart: Record<string, CartItem>;
-    filters: FilterState;
-    view: 'grid' | 'list';
-    language: 'en' | 'es';
+   session: Session | null;
+   cart: Record<string, CartItem>;
+   filters: FilterState;
+   viewPreference: 'grid' | 'list';
+   language: 'en' | 'es';
     setFilter: (type: keyof FilterState, values: string[]) => void;
     addToCart: (item: CartItem) => void;
     removeFromCart: (id: string) => void;
     updateCartItemStatus: (id: string, status: ItemStatus) => void;
     setView: (view: 'grid' | 'list') => void;
-    setLanguage: (lang: 'en' | 'es') => void;
+   setLanguage: (lang: 'en' | 'es') => void;
+}
+
+// Persistent state configuration
+interface PersistentState {
+   session: Session | null;
+   language: 'en' | 'es';
+   viewPreference: 'grid' | 'list';
 }
 
 const useStore = create<StoreState>()(
@@ -789,5 +797,4 @@ export default {
     }
 }
 ```
-
 
