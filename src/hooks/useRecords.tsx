@@ -58,15 +58,23 @@ export function useRecords(page: number = 1) {
       const conditions = [];
       
       if (currentFilters.artists.length > 0) {
-        conditions.push(`artists ?| array['${currentFilters.artists.map(a => `$.name == "${a}"`).join("','")}']`);
+        // Use proper JSONB array containment
+        conditions.push(`artists @> '[${currentFilters.artists.map(a =>
+          JSON.stringify({ name: a })
+        )}]'`);
       }
       
       if (currentFilters.labels.length > 0) {
-        conditions.push(`labels ?| array['${currentFilters.labels.map(l => `$.name == "${l}"`).join("','")}']`);
+        conditions.push(`labels @> '[${currentFilters.labels.map(l =>
+          JSON.stringify({ name: l })
+        )}]'`);
       }
       
       if (currentFilters.styles.length > 0) {
-        conditions.push(`styles ?| array['${currentFilters.styles.join("','")}']`);
+        // Use array overlap operator for text[]
+        conditions.push(`styles && ARRAY[${currentFilters.styles.map(s =>
+          `'${s}'`
+        )}]`);
       }
       
       if (currentFilters.conditions.length > 0) {

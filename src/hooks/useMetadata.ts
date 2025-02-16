@@ -7,7 +7,8 @@ export interface Metadata {
 }
 
 async function fetchMetadata() {
-  const response = await fetch('/api/postgrest/releases?select=artists,labels,styles');
+  // Use proper PostgREST JSON extraction
+  const response = await fetch('/api/postgrest/releases?select=artists->name,labels->name,styles');
   if (!response.ok) throw new Error('Failed to fetch metadata');
 
   const records = await response.json();
@@ -17,17 +18,24 @@ async function fetchMetadata() {
   const styles = new Set<string>();
 
   records.forEach((record: any) => {
-    record.artists?.forEach((artist: any) => {
-      if (artist?.name) artists.add(artist.name);
-    });
+    try {
+      const artistsArray = Array.isArray(record.artists) ? record.artists : JSON.parse(record.artists);
+      artistsArray?.forEach((artist: any) => {
+        if (artist?.name) artists.add(artist.name);
+      });
 
-    record.labels?.forEach((label: any) => {
-      if (label?.name) labels.add(label.name);
-    });
+      const labelsArray = Array.isArray(record.labels) ? record.labels : JSON.parse(record.labels);
+      labelsArray?.forEach((label: any) => {
+        if (label?.name) labels.add(label.name);
+      });
 
-    record.styles?.forEach((style: string) => {
-      if (style) styles.add(style);
-    });
+      const stylesArray = Array.isArray(record.styles) ? record.styles : JSON.parse(record.styles);
+      stylesArray?.forEach((style: string) => {
+        if (style) styles.add(style);
+      });
+    } catch (error) {
+      console.error('Error parsing record:', error);
+    }
   });
 
   return {

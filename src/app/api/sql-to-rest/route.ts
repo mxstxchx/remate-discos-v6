@@ -23,16 +23,34 @@ export async function POST(request: Request) {
         filters += `&condition.in=${condMatch[1]}`;
       }
 
-      // Label filter
-      const labelMatch = conditions.match(/labels \?\| array\['([^']+)'\]/);
-      if (labelMatch) {
-        filters += `&labels.cs={"name":"${labelMatch[1]}"}`;
+      // Artists filter - handle JSONB array containment
+      const artistsMatch = conditions.match(/artists @> '\[(.*?)\]'/);
+      if (artistsMatch) {
+        const artistObjs = JSON.parse(`[${artistsMatch[1]}]`);
+        const artistFilters = artistObjs.map((obj: any) =>
+          `&artists.cs={"name":"${obj.name}"}`
+        ).join('');
+        filters += artistFilters;
       }
 
-      // Style filter
-      const styleMatch = conditions.match(/styles \?\| array\['([^']+)'\]/);
+      // Labels filter - handle JSONB array containment
+      const labelsMatch = conditions.match(/labels @> '\[(.*?)\]'/);
+      if (labelsMatch) {
+        const labelObjs = JSON.parse(`[${labelsMatch[1]}]`);
+        const labelFilters = labelObjs.map((obj: any) =>
+          `&labels.cs={"name":"${obj.name}"}`
+        ).join('');
+        filters += labelFilters;
+      }
+
+      // Style filter - handle array overlap
+      const styleMatch = conditions.match(/styles && ARRAY\[(.*?)\]/);
       if (styleMatch) {
-        filters += `&styles.cs=["${styleMatch[1]}"]`;
+        const styles = styleMatch[1].split(',').map(s => s.trim().replace(/'/g, ''));
+        const styleFilters = styles.map(style =>
+          `&styles.cs=["${style}"]`
+        ).join('');
+        filters += styleFilters;
       }
     }
 
