@@ -1,60 +1,56 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+  <change>
+    <description>Fix multi-value filter handling</description>
+    <content>
+===
 import { NextResponse } from 'next/server';
 
-export const dynamic = 'force-dynamic';
-
-export async function GET(
-  request: Request,
-  { params }: { params: { path: string[] } }
-) {
-  const cookieStore = await cookies();
-  const supabase = createServerComponentClient({ cookies: () => cookieStore });
-  const { searchParams } = new URL(request.url);
-  const tableName = params.path?.[0] ?? 'releases';
-  
+export async function POST(request: Request) {
   try {
-    let query = supabase.from(tableName);
-    const filters: any = {};
+    const { sql } = await request.json();
+    console.log('[API] Processing SQL:', sql);
+    
+    let filters = '';
+    const whereMatch = sql.match(/WHERE\s+(.+?)\s+(?:ORDER BY|LIMIT|$)/i);
+    
+    if (whereMatch) {
+      const conditions = whereMatch[1];
+  console.log('[API] Processing request with params:', Object.fromEntries(searchParams));
+  
 
+      // Price range
+      if (priceMatch) {
+
+      // Multi-value label filter
+      const labelMatch = conditions.match(/labels \?\| array\['([^']+)'\]/);
+      if (labelMatch) {
+    const filters = searchParams.getAll('or');
+    if (filters.length) {
+      query = query.or(filters.join(','));
+    }
+
+    // Handle simple filters
     searchParams.forEach((value, key) => {
-      const [field, op] = key.split('.');
-      if (op) {
-        filters[field] = { [op]: value };
-      }
+      if (!['select', 'or', 'order'].includes(key)) {
+        const [field, op] = key.split('.');
+        if (op === 'eq') query = query.eq(field, value);
+        if (op === 'gte') query = query.gte(field, value);
+        if (op === 'lte') query = query.lte(field, value);
+        if (op === 'cs') query = query.contains(field, JSON.parse(value));
+    console.log('[API] Generated filters:', filters);
     });
 
-    console.log('[API] Applying filters:', filters);
-    
-    if (searchParams.has('select')) {
-      query = query.select(searchParams.get('select')!);
-    }
+    if (searchParams.has('order')) {
+      const [column, direction] = searchParams.get('order')!.split('.');
+      query = query.order(column, { ascending: direction === 'asc' });
 
-    for (const [field, conditions] of Object.entries(filters)) {
-      for (const [op, value] of Object.entries(conditions)) {
-        switch (op) {
-          case 'gte':
-            query = query.gte(field, value);
-            break;
-          case 'lte':
-            query = query.lte(field, value);
-            break;
-          case 'in':
-            query = query.in(field, value.split(','));
-            break;
-          case 'cs':
-            query = query.contains(field, JSON.parse(value));
-            break;
-        }
-      }
-    }
+    return NextResponse.json({
+    console.log('[API] Executing query:', query);
+      method: 'GET',
+      path: `/releases?select=id,title,artists,labels,styles,year,country,condition,price,thumb,primary_image,secondary_image${filters}&order=created_at.desc`
+    });
 
-    const { data, error } = await query;
-    if (error) throw error;
-
-    return NextResponse.json(data);
   } catch (error) {
-    console.error('[API] Query error:', error);
-    return NextResponse.json({ error: 'Query failed' }, { status: 500 });
+    console.error('[API] SQL-to-REST error:', error);
+    return NextResponse.json({ error: 'Failed to process SQL query' }, { status: 500 });
   }
 }
