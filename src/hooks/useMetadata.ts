@@ -22,37 +22,64 @@ export function useMetadata() {
     const fetchMetadata = async () => {
       console.log(`${APP_LOG} Fetching metadata`);
       try {
-        const { method, path } = await sqlToRest({
+        // First get unique artists
+        const artistsQuery = await sqlToRest({
           sql: `
-            SELECT
-              ARRAY_AGG(DISTINCT artist_name) as artists,
-              ARRAY_AGG(DISTINCT label_name) as labels,
-              ARRAY_AGG(DISTINCT style) as styles
-            FROM (
-              SELECT
-                jsonb_array_elements(artists)->>'name' as artist_name,
-                jsonb_array_elements(labels)->>'name' as label_name,
-                unnest(styles) as style
-              FROM releases
-            ) as expanded
-            WHERE
-              artist_name IS NOT NULL
-              AND label_name IS NOT NULL
-              AND style IS NOT NULL
+            SELECT DISTINCT jsonb_path_query_array(artists, '$[*].name') as names
+            FROM releases
           `
         });
 
-        console.log(`${APP_LOG} Making API request with:`, { method, path });
-        const result = await postgrestRequest({ method, path });
+        // Then get unique labels
+        const labelsQuery = await sqlToRest({
+          sql: `
+            SELECT DISTINCT jsonb_path_query_array(labels, '$[*].name') as names
+            FROM releases
+          `
+        });
+
+        // Finally get unique styles
+        const stylesQuery = await sqlToRest({
+          sql: `
+            SELECT DISTINCT styles as names
+            FROM releases
+          `
+        });
+
+        console.log(`${APP_LOG} Making API requests for metadata`);
         
-        if (result?.[0]) {
-          console.log(`${APP_LOG} Received metadata:`, result[0]);
-          setMetadata({
-            artists: result[0].artists || [],
-            labels: result[0].labels || [],
-            styles: result[0].styles || []
-          });
-        }
+        const [artistsResult, labelsResult, stylesResult] = await Promise.all([
+          postgrestRequest({ method: 'GET', path: artistsQuery.path }),
+          postgrestRequest({ method: 'GET', path: labelsQuery.path }),
+          postgrestRequest({ method: 'GET', path: stylesQuery.path })
+        ]);
+
+        console.log(`${APP_LOG} Processing metadata results`);
+
+        // Process and flatten arrays
+        const artists = Array.from(new Set(
+          artistsResult?.flatMap(r => r.names || [])
+        )).filter(Boolean).sort();
+
+        const labels = Array.from(new Set(
+          labelsResult?.flatMap(r => r.names || [])
+        )).filter(Boolean).sort();
+
+        const styles = Array.from(new Set(
+          stylesResult?.flatMap(r => r.names || [])
+        )).filter(Boolean).sort();
+
+        console.log(`${APP_LOG} Setting metadata:`, {
+          artistsCount: artists.length,
+          labelsCount: labels.length,
+          stylesCount: styles.length
+        });
+
+        setMetadata({
+          artists,
+          labels,
+          styles
+        });
       } catch (err) {
         console.error(`${APP_LOG} Error fetching metadata:`, err);
         setError(err instanceof Error ? err.message : 'Failed to fetch metadata');
