@@ -9,7 +9,7 @@ export function StyleFilter() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const styles = useFilters((state) => state.styles);
   const setStyles = useFilters((state) => state.setStyles);
-  const releases = useStore((state) => state.releases);
+
 
   const { metadata, loading: metadataLoading } = useMetadata();
   const uniqueStyles = metadata.styles.sort();

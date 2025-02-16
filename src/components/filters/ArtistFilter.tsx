@@ -9,7 +9,7 @@ import { useMetadata } from '@/hooks/useMetadata'; // Import directly from sourc
 
 export function ArtistFilter() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const artists = useFilters((state) => state.artists);
+
   const setArtists = useFilters((state) => state.setArtists);
   const { metadata, loading: metadataLoading } = useMetadata();
   const uniqueArtists = metadata.artists.sort();
