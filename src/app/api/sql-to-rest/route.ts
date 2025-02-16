@@ -12,46 +12,52 @@ export async function POST(request: Request) {
       );
     }
 
-    // Extract filter conditions
-    const whereMatch = sql.match(/WHERE\s+(.+?)\s+(?:ORDER BY|LIMIT|$)/i);
-    const conditions = whereMatch ? whereMatch[1] : '';
-    
-    // Convert SQL conditions to PostgREST filters
     let filters = '';
-    if (conditions) {
-      const priceRangeMatch = conditions.match(/price >= (\d+) AND price <= (\d+)/);
-      if (priceRangeMatch) {
-        filters += `&price=gte.${priceRangeMatch[1]}&price=lte.${priceRangeMatch[2]}`;
+    const whereMatch = sql.match(/WHERE\s+(.+?)\s+(?:ORDER BY|LIMIT|$)/i);
+    
+    if (whereMatch) {
+      const conditions = whereMatch[1];
+      console.log('[API] Parsing conditions:', conditions);
+
+      // Price range
+      const priceMatch = conditions.match(/price >= (\d+) AND price <= (\d+)/);
+      if (priceMatch) {
+        filters += `&price.gte=${priceMatch[1]}&price.lte=${priceMatch[2]}`;
       }
 
-      const conditionMatch = conditions.match(/condition IN \('(.+?)'\)/);
-      if (conditionMatch) {
-        const conditions = conditionMatch[1].split("','");
-        filters += `&condition=in.(${conditions.join(',')})`;
+      // Condition
+      const condMatch = conditions.match(/condition IN \('([^']+)'\)/);
+      if (condMatch) {
+        filters += `&condition.in=${condMatch[1]}`;
       }
 
-      const artistMatch = conditions.match(/artists \?\| array\['(.+?)'\]/);
-      if (artistMatch) {
-        const artists = artistMatch[1].split("','").map(a => {
-          const nameMatch = a.match(/\$.name == "(.+?)"/);
-          return nameMatch ? nameMatch[1] : '';
-        }).filter(Boolean);
-        if (artists.length) {
-          filters += `&artists=cs.{name:"${artists.join('","')}"}`;
+      // Labels
+      const labelMatch = conditions.match(/labels \?\| array\['([^']+)'\]/);
+      if (labelMatch) {
+        const labels = labelMatch[1].match(/\$.name == "([^"]+)"/g)
+          ?.map(x => x.match(/"([^"]+)"/)?.[1])
+          .filter(Boolean);
+        if (labels?.length) {
+          filters += `&labels.cs={"name":"${labels.join('","')}"}`;
         }
+      }
+
+      // Styles
+      const styleMatch = conditions.match(/styles \?\| array\['([^']+)'\]/);
+      if (styleMatch) {
+        filters += `&styles.cs=["${styleMatch[1]}"]`;
       }
     }
 
-    // Handle COUNT queries
+    console.log('[API] Generated filters:', filters);
+
     if (sql.includes('SELECT COUNT(*)')) {
-      console.log('[API] Generating count query path');
       return NextResponse.json({
         method: 'GET',
         path: `/releases?select=count${filters}`
       });
     }
 
-    console.log('[API] Generating data query path with filters:', filters);
     return NextResponse.json({
       method: 'GET',
       path: `/releases?select=id,title,artists,labels,styles,year,country,condition,price,thumb,primary_image,secondary_image${filters}&order=created_at.desc`
