@@ -1,32 +1,34 @@
-"use client"
+import { createContext, useContext, ReactNode } from 'react'
+import { useAuthStore } from './hooks'
 
-import { createContext, useContext } from 'react'
-import { useAuth } from './hooks/use-auth'
+interface AuthContextType {
+ signIn: (alias: string, language: 'es' | 'en') => Promise<void>
+}
 
-type AuthContextType = ReturnType<typeof useAuth>
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-const AuthContext = createContext<AuthContextType | null>(null)
+export function AuthProvider({ children }: { children: ReactNode }) {
+ const signIn = async (alias: string, language: 'es' | 'en') => {
+   try {
+     // Sign in logic here
+     useAuthStore.getState().setAuthenticated(true)
+     useAuthStore.getState().setModalOpen(false)
+   } catch (error) {
+     useAuthStore.getState().setError(error instanceof Error ? error.message : 'Unknown error')
+   }
+ }
 
-export function AuthProvider({
-  children
-}: {
-  children: React.ReactNode
-}) {
-  const auth = useAuth()
-
-  return (
-    <AuthContext.Provider value={auth}>
-      {children}
-    </AuthContext.Provider>
-  )
+ return (
+   <AuthContext.Provider value={{ signIn }}>
+     {children}
+   </AuthContext.Provider>
+ )
 }
 
 export function useAuthContext() {
- const { signIn } = useContext(AuthContext)
- const setModalOpen = useAuthStore((state) => state.setModalOpen)
- const setAuthenticated = useAuthStore((state) => state.setAuthenticated)
- return { signIn, setModalOpen, setAuthenticated }
-}
-  }
-  return context
+ const context = useContext(AuthContext)
+ if (!context) {
+   throw new Error('useAuthContext must be used within an AuthProvider')
+ }
+ return context
 }

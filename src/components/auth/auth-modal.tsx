@@ -12,76 +12,76 @@ import { useAuthStore } from '@/lib/auth/hooks'
 import { LanguageSelector } from './language-selector'
 
 export function AuthModal() {
-  const { t, i18n } = useTranslation('auth')
-  const { signIn } = useAuthContext()
-  const [alias, setAlias] = useState('')
-  const [loading, setLoading] = useState(false)
-  const { error, isAuthenticated, modalOpen, setModalOpen } = useAuthStore(state => ({
-    error: state.error,
-    isAuthenticated: state.isAuthenticated,
-    modalOpen: state.modalOpen,
-    setModalOpen: state.setModalOpen
-  }))
+ const { t, i18n } = useTranslation('auth')
+ const { signIn } = useAuthContext()
+ const [alias, setAlias] = useState('')
+ const [loading, setLoading] = useState(false)
  
-  if (isAuthenticated && !modalOpen) return null
+ const authState = useAuthStore(state => ({
+   error: state.error,
+   isAuthenticated: state.isAuthenticated,
+   modalOpen: state.modalOpen,
+   setModalOpen: state.setModalOpen
+ }))
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (alias.length < 6) return
+ const handleSubmit = async (e: React.FormEvent) => {
+   e.preventDefault()
+   if (alias.length < 6) return
 
-    setLoading(true)
-    await signIn(alias, i18n.language as 'es' | 'en')
-    setLoading(false)
-  }
+   setLoading(true)
+   await signIn(alias, i18n.language as 'es' | 'en')
+   setLoading(false)
+ }
 
-  const modalOpen = useAuthStore((state) => state.modalOpen)
- 
-  if (isAuthenticated && !modalOpen) return null
- 
-  return (
-   <Dialog open={modalOpen} onOpenChange={(open) => {
-     if (!open && isAuthenticated) {
-       setModalOpen(false)
-     }
-   }}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t('modal.title')}</DialogTitle>
-          <DialogDescription>{t('modal.subtitle')}</DialogDescription>
-        </DialogHeader>
+ if (authState.isAuthenticated && !authState.modalOpen) return null
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="alias">{t('modal.aliasLabel')}</Label>
-            <Input
-              id="alias"
-              value={alias}
-              onChange={(e) => setAlias(e.target.value)}
-              placeholder={t('modal.aliasPlaceholder')}
-              minLength={6}
-              required
-              disabled={loading}
-            />
-          </div>
+ return (
+   <Dialog
+     open={authState.modalOpen}
+     onOpenChange={(open) => {
+       if (!open && authState.isAuthenticated) {
+         authState.setModalOpen(false)
+       }
+     }}
+   >
+     <DialogContent className="sm:max-w-md">
+       <DialogHeader>
+         <DialogTitle>{t('modal.title')}</DialogTitle>
+         <DialogDescription>{t('modal.subtitle')}</DialogDescription>
+       </DialogHeader>
 
-          <LanguageSelector />
+       <form onSubmit={handleSubmit} className="space-y-4">
+         <div className="space-y-2">
+           <Label htmlFor="alias">{t('modal.aliasLabel')}</Label>
+           <Input
+             id="alias"
+             value={alias}
+             onChange={(e) => setAlias(e.target.value)}
+             placeholder={t('modal.aliasPlaceholder')}
+             minLength={6}
+             required
+             disabled={loading}
+           />
+         </div>
 
-          {error && (
-            <div className="flex items-center gap-2 text-sm text-destructive">
-              <AlertCircle className="h-4 w-4" />
-              <span>{error}</span>
-            </div>
-          )}
+         <LanguageSelector />
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading || alias.length < 6}
-          >
-            {loading ? t('modal.loading') : t('modal.submit')}
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
+         {authState.error && (
+           <div className="flex items-center gap-2 text-sm text-destructive">
+             <AlertCircle className="h-4 w-4" />
+             <span>{authState.error}</span>
+           </div>
+         )}
+
+         <Button
+           type="submit"
+           className="w-full"
+           disabled={loading || alias.length < 6}
+         >
+           {loading ? t('modal.loading') : t('modal.submit')}
+         </Button>
+       </form>
+     </DialogContent>
+   </Dialog>
+ )
 }
