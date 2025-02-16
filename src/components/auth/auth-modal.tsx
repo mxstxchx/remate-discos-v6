@@ -17,7 +17,10 @@ export function AuthModal() {
   const [alias, setAlias] = useState('')
   const [loading, setLoading] = useState(false)
   const error = useAuthStore((state) => state.error)
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+ const { isAuthenticated, modalOpen } = useAuthStore((state) => ({
+   isAuthenticated: state.isAuthenticated,
+   modalOpen: state.modalOpen
+ }))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

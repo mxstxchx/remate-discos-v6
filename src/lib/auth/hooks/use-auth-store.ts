@@ -1,10 +1,9 @@
-"use client"
-
 import { create } from 'zustand'
-import type { AuthState } from '../types'
 
 interface AuthActions {
  setModalOpen: (open: boolean) => void;
+ setError: (error: string | null) => void;
+ setAuthenticated: (isAuthenticated: boolean) => void;
 }
 
 interface AuthState {
@@ -13,18 +12,11 @@ interface AuthState {
  modalOpen: boolean;
 }
 
-const initialState: AuthState = {
-  isAuthenticated: false,
-  isAdmin: false,
-  alias: null,
-  session: null,
-  error: null
-const useAuthStore = create<AuthState & AuthActions>((set) => ({
+export const useAuthStore = create<AuthState & AuthActions>((set) => ({
  isAuthenticated: false,
  error: null,
  modalOpen: false,
  setModalOpen: (open: boolean) => set({ modalOpen: open }),
-  ...initialState,
-  setAuth: (update) => set((state) => ({ ...state, ...update })),
-  reset: () => set(initialState)
+ setError: (error: string | null) => set({ error }),
+ setAuthenticated: (isAuthenticated: boolean) => set({ isAuthenticated })
 }))

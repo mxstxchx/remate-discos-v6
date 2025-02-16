@@ -22,10 +22,11 @@ export function AuthProvider({
 }
 
 export function useAuthContext() {
-  const { signIn } = useContext(AuthContext)
-  const setModalOpen = useAuthStore((state) => state.setModalOpen)
-  return { signIn, setModalOpen }
- }
+ const { signIn } = useContext(AuthContext)
+ const setModalOpen = useAuthStore((state) => state.setModalOpen)
+ const setAuthenticated = useAuthStore((state) => state.setAuthenticated)
+ return { signIn, setModalOpen, setAuthenticated }
+}
   }
   return context
 }
