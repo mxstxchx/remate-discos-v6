@@ -11,6 +11,8 @@ const APP_LOG = '[APP:records]';
 const cache = new Map();
 
 export function useRecords(page: number = 1) {
+  console.log(`${APP_LOG} Initializing useRecords with page:`, page);
+  
   const releases = useStore(state => state.releases);
   const setReleases = useStore(state => state.setReleases);
   const setLoading = useStore(state => state.setLoading);
@@ -32,110 +34,29 @@ export function useRecords(page: number = 1) {
   // Use ref to track mounted state
   const isMounted = useRef(true);
   
-  // Create debounced fetch function
-  const debouncedFetch = useCallback(
-    debounce(async (pageNum: number, filters: FilterState) => {
-      if (!isMounted.current) return;
-      
-      const cacheKey = `page-${pageNum}-${JSON.stringify(filters)}`;
-      
-      // Check cache first
-      if (cache.has(cacheKey)) {
-        console.log(`${APP_LOG} Using cached data for page ${pageNum}`);
-        setReleases(cache.get(cacheKey));
-        setLoading(false);
-        return;
-      }
-      
-      try {
-        // Fetch releases with pagination
-        const { method, path } = await sqlToRest({
-          sql: `
-            SELECT
-              id, title, artists, labels, styles, year,
-              country, condition, price, thumb,
-              primary_image, secondary_image
-            FROM releases
-            WHERE
-              (${filters.artists.length === 0} OR
-               artists->>'name' = ANY('{${filters.artists.join(',')}}'::text[]))
-              AND
-              (${filters.labels.length === 0} OR
-               labels->>'name' = ANY('{${filters.labels.join(',')}}'::text[]))
-              AND
-              (${filters.styles.length === 0} OR
-               styles && '{${filters.styles.join(',')}}'::text[])
-              AND
-              (${filters.conditions.length === 0} OR
-               condition = ANY('{${filters.conditions.join(',')}}'::text[]))
-              AND
-              price BETWEEN ${filters.priceRange.min} AND ${filters.priceRange.max}
-            ORDER BY created_at DESC
-            LIMIT ${ITEMS_PER_PAGE}
-            OFFSET ${(pageNum - 1) * ITEMS_PER_PAGE}
-          `
-        });
-
-        const records = await postgrestRequest({ method, path });
-        console.log(`${APP_LOG} Fetched records for page ${pageNum}:`, records?.length);
-
-        if (records?.length && isMounted.current) {
-          const parsedRecords = records.map(record => ({
-            ...record,
-            artists: typeof record.artists === 'string' ? JSON.parse(record.artists) : record.artists,
-            labels: typeof record.labels === 'string' ? JSON.parse(record.labels) : record.labels,
-            styles: typeof record.styles === 'string' ? JSON.parse(record.styles) : record.styles
-          }));
-          
-          // Update cache
-          cache.set(cacheKey, parsedRecords);
-          
-          // Update state
-          setReleases(parsedRecords);
-          
-          // Prefetch next page
-          if (pageNum < totalPages) {
-            prefetchNextPage(pageNum + 1);
-          }
-        }
-
-        if (!totalPages) {
-          // Fetch total count only once
-          const { method: countMethod, path: countPath } = await sqlToRest({
-            sql: 'SELECT COUNT(*) FROM releases'
-          });
-
-          const countResult = await postgrestRequest({
-            method: countMethod,
-            path: countPath
-          });
-
-          if (countResult?.[0]?.count && isMounted.current) {
-            setTotalPages(Math.ceil(parseInt(countResult[0].count) / ITEMS_PER_PAGE));
-          }
-        }
-
-        setError(null);
-      } catch (err) {
-        console.error(`${APP_LOG} Error:`, err);
-        if (isMounted.current) {
-          setError(err instanceof Error ? err.message : 'Failed to fetch records');
-        }
-      } finally {
-        if (isMounted.current) {
-          setLoading(false);
-        }
-      }
-    }, 300),
-    [setReleases, setLoading, setError, setTotalPages, totalPages]
-  );
-
-  // Prefetch next page
-  const prefetchNextPage = useCallback(async (nextPage: number) => {
-    const cacheKey = `page-${nextPage}`;
-    if (cache.has(cacheKey)) return;
-
+  // Create fetch function without debounce first
+  const fetchRecords = async (pageNum: number, currentFilters: typeof filters) => {
+    console.log(`${APP_LOG} Fetching records for page ${pageNum} with filters:`, currentFilters);
+    
+    if (!isMounted.current) {
+      console.log(`${APP_LOG} Component unmounted, aborting fetch`);
+      return;
+    }
+    
+    const cacheKey = `page-${pageNum}`;
+    console.log(`${APP_LOG} Cache key:`, cacheKey);
+    
+    // Check cache first
+    if (cache.has(cacheKey)) {
+      console.log(`${APP_LOG} Using cached data for page ${pageNum}`);
+      setReleases(cache.get(cacheKey));
+      setLoading(false);
+      return;
+    }
+    
     try {
+      console.log(`${APP_LOG} Building SQL query with filters`);
+      // Fetch releases with pagination
       const { method, path } = await sqlToRest({
         sql: `
           SELECT
@@ -143,15 +64,31 @@ export function useRecords(page: number = 1) {
             country, condition, price, thumb,
             primary_image, secondary_image
           FROM releases
+          WHERE
+            (${currentFilters.artists.length === 0} OR
+             artists->>'name' = ANY('{${currentFilters.artists.join(',')}}'::text[]))
+            AND
+            (${currentFilters.labels.length === 0} OR
+             labels->>'name' = ANY('{${currentFilters.labels.join(',')}}'::text[]))
+            AND
+            (${currentFilters.styles.length === 0} OR
+             styles && '{${currentFilters.styles.join(',')}}'::text[])
+            AND
+            (${currentFilters.conditions.length === 0} OR
+             condition = ANY('{${currentFilters.conditions.join(',')}}'::text[]))
+            AND
+            price BETWEEN ${currentFilters.priceRange.min} AND ${currentFilters.priceRange.max}
           ORDER BY created_at DESC
           LIMIT ${ITEMS_PER_PAGE}
-          OFFSET ${(nextPage - 1) * ITEMS_PER_PAGE}
+          OFFSET ${(pageNum - 1) * ITEMS_PER_PAGE}
         `
       });
 
+      console.log(`${APP_LOG} Making API request with:`, { method, path });
       const records = await postgrestRequest({ method, path });
-      
-      if (records?.length) {
+      console.log(`${APP_LOG} Received records:`, records?.length);
+
+      if (records?.length && isMounted.current) {
         const parsedRecords = records.map(record => ({
           ...record,
           artists: typeof record.artists === 'string' ? JSON.parse(record.artists) : record.artists,
@@ -159,28 +96,67 @@ export function useRecords(page: number = 1) {
           styles: typeof record.styles === 'string' ? JSON.parse(record.styles) : record.styles
         }));
         
+        // Update cache
         cache.set(cacheKey, parsedRecords);
+        
+        // Update state
+        setReleases(parsedRecords);
+        
+        // Prefetch next page
+        if (pageNum < totalPages) {
+          prefetchNextPage(pageNum + 1);
+        }
       }
-    } catch (error) {
-      console.error(`${APP_LOG} Prefetch error:`, error);
+
+      if (!totalPages) {
+        // Fetch total count only once
+        const { method: countMethod, path: countPath } = await sqlToRest({
+          sql: 'SELECT COUNT(*) FROM releases'
+        });
+
+        console.log(`${APP_LOG} Fetching total count with:`, { countMethod, countPath });
+        const countResult = await postgrestRequest({
+          method: countMethod,
+          path: countPath
+        });
+
+        if (countResult?.[0]?.count && isMounted.current) {
+          const total = Math.ceil(parseInt(countResult[0].count) / ITEMS_PER_PAGE);
+          console.log(`${APP_LOG} Setting total pages:`, total);
+          setTotalPages(total);
+        }
+      }
+
+      setError(null);
+    } catch (err) {
+      console.error(`${APP_LOG} Error:`, err);
+      if (isMounted.current) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch records');
+      }
+    } finally {
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
-  }, []);
+  };
+  
+  // Create debounced version
+  const debouncedFetch = useCallback(
+    debounce(fetchRecords, 300),
+    [setReleases, setLoading, setError, setTotalPages, totalPages]
+  );
 
   useEffect(() => {
+    console.log(`${APP_LOG} useEffect triggered with page:`, page);
     setLoading(true);
-    debouncedFetch(page, filters);
+    fetchRecords(page, filters);
     
     return () => {
+      console.log(`${APP_LOG} Cleaning up useRecords`);
       isMounted.current = false;
-    };
-  }, [page, debouncedFetch, filters.artists, filters.labels, filters.styles, filters.conditions, filters.priceRange]);
-
-  // Clear cache when component unmounts
-  useEffect(() => {
-    return () => {
       cache.clear();
     };
-  }, []);
+  }, [page, filters.artists, filters.labels, filters.styles, filters.conditions, filters.priceRange.min, filters.priceRange.max]);
 
   return { releases, loading, error, totalPages };
 }
