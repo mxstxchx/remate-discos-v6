@@ -34,7 +34,6 @@ export function useRecords(page: number = 1) {
   // Use ref to track mounted state
   const isMounted = useRef(true);
   
-  // Create fetch function without debounce first
   const fetchRecords = async (pageNum: number, currentFilters: typeof filters) => {
     console.log(`${APP_LOG} Fetching records for page ${pageNum} with filters:`, currentFilters);
     
@@ -55,71 +54,49 @@ export function useRecords(page: number = 1) {
     }
     
     try {
-      console.log(`${APP_LOG} Building SQL query with filters`);
-      // Fetch releases with pagination
-        // Generate a filter string for the query
-        const conditions = [];
-        
-        if (currentFilters.artists.length > 0) {
-          conditions.push(`artists ?| array['${currentFilters.artists.map(a => `$.name == "${a}"`).join("','")}']`);
-        }
-        
-        if (currentFilters.labels.length > 0) {
-          conditions.push(`labels ?| array['${currentFilters.labels.map(l => `$.name == "${l}"`).join("','")}']`);
-        }
-        
-        if (currentFilters.styles.length > 0) {
-          conditions.push(`styles ?| array['${currentFilters.styles.join("','")}']`);
-        }
-        
-        if (currentFilters.conditions.length > 0) {
-          conditions.push(`condition IN ('${currentFilters.conditions.join("','")}')`)
-        }
-        
-        conditions.push(`price >= ${currentFilters.priceRange.min}`);
-        conditions.push(`price <= ${currentFilters.priceRange.max}`);
+      // Generate a filter string for the query
+      const conditions = [];
+      
+      if (currentFilters.artists.length > 0) {
+        conditions.push(`artists ?| array['${currentFilters.artists.map(a => `$.name == "${a}"`).join("','")}']`);
+      }
+      
+      if (currentFilters.labels.length > 0) {
+        conditions.push(`labels ?| array['${currentFilters.labels.map(l => `$.name == "${l}"`).join("','")}']`);
+      }
+      
+      if (currentFilters.styles.length > 0) {
+        conditions.push(`styles ?| array['${currentFilters.styles.join("','")}']`);
+      }
+      
+      if (currentFilters.conditions.length > 0) {
+        conditions.push(`condition IN ('${currentFilters.conditions.join("','")}')`)
+      }
+      
+      conditions.push(`price >= ${currentFilters.priceRange.min}`);
+      conditions.push(`price <= ${currentFilters.priceRange.max}`);
 
-        const whereClause = conditions.length > 0
-          ? `WHERE ${conditions.join(' AND ')}`
-          : '';
+      const whereClause = conditions.length > 0
+        ? `WHERE ${conditions.join(' AND ')}`
+        : '';
 
-        console.log(`${APP_LOG} Constructed WHERE clause:`, whereClause);
-        
-        const sqlQuery = `
-          SELECT
-            id, title, artists, labels, styles, year,
-            country, condition, price, thumb,
-            primary_image, secondary_image
-          FROM releases
-          ${whereClause}
-          ORDER BY created_at DESC
-          LIMIT ${ITEMS_PER_PAGE}
-          OFFSET ${(pageNum - 1) * ITEMS_PER_PAGE}
-        `;
-        
-        console.log(`${APP_LOG} Executing SQL query:`, sqlQuery);
-        
-        const { method, path } = await sqlToRest({
-          sql: sqlQuery
-        });
-
-        const { method, path } = await sqlToRest({
-          sql: `
-            SELECT
-              id, title, artists, labels, styles, year,
-              country, condition, price, thumb,
-              primary_image, secondary_image
-            FROM releases
-            ${whereClause}
-            ORDER BY created_at DESC
-            LIMIT ${ITEMS_PER_PAGE}
-            OFFSET ${(pageNum - 1) * ITEMS_PER_PAGE}
-          `
-        });
-          LIMIT ${ITEMS_PER_PAGE}
-          OFFSET ${(pageNum - 1) * ITEMS_PER_PAGE}
-        `
-      });
+      console.log(`${APP_LOG} Constructed WHERE clause:`, whereClause);
+      
+      const sqlQuery = `
+        SELECT
+          id, title, artists, labels, styles, year,
+          country, condition, price, thumb,
+          primary_image, secondary_image
+        FROM releases
+        ${whereClause}
+        ORDER BY created_at DESC
+        LIMIT ${ITEMS_PER_PAGE}
+        OFFSET ${(pageNum - 1) * ITEMS_PER_PAGE}
+      `;
+      
+      console.log(`${APP_LOG} Executing SQL query:`, sqlQuery);
+      
+      const { method, path } = await sqlToRest({ sql: sqlQuery });
 
       console.log(`${APP_LOG} Making API request with:`, { method, path });
       const records = await postgrestRequest({ method, path });
@@ -138,20 +115,17 @@ export function useRecords(page: number = 1) {
         
         // Update state
         setReleases(parsedRecords);
-        
-        // Prefetch next page
-        if (pageNum < totalPages) {
-          prefetchNextPage(pageNum + 1);
-        }
       }
 
       if (!totalPages) {
         // Fetch total count only once
+        const countQuery = `SELECT COUNT(*) FROM releases ${whereClause}`;
+        console.log(`${APP_LOG} Executing count query:`, countQuery);
+        
         const { method: countMethod, path: countPath } = await sqlToRest({
-          sql: 'SELECT COUNT(*) FROM releases'
+          sql: countQuery
         });
 
-        console.log(`${APP_LOG} Fetching total count with:`, { countMethod, countPath });
         const countResult = await postgrestRequest({
           method: countMethod,
           path: countPath
@@ -176,12 +150,6 @@ export function useRecords(page: number = 1) {
       }
     }
   };
-  
-  // Create debounced version
-  const debouncedFetch = useCallback(
-    debounce(fetchRecords, 300),
-    [setReleases, setLoading, setError, setTotalPages, totalPages]
-  );
 
   // Memoize filters to prevent unnecessary re-renders
   const memoizedFilters = useCallback(() => ({
