@@ -17,12 +17,10 @@ export function AuthModal() {
  const [alias, setAlias] = useState('')
  const [loading, setLoading] = useState(false)
  
- const authState = useAuthStore(state => ({
-   error: state.error,
-   isAuthenticated: state.isAuthenticated,
-   modalOpen: state.modalOpen,
-   setModalOpen: state.setModalOpen
- }))
+ const error = useAuthStore(state => state.error)
+ const isAuthenticated = useAuthStore(state => state.isAuthenticated)
+ const modalOpen = useAuthStore(state => state.modalOpen)
+ const setModalOpen = useAuthStore(state => state.setModalOpen)
 
  const handleSubmit = async (e: React.FormEvent) => {
    e.preventDefault()
@@ -33,14 +31,14 @@ export function AuthModal() {
    setLoading(false)
  }
 
- if (authState.isAuthenticated && !authState.modalOpen) return null
+ if (isAuthenticated && !modalOpen) return null
 
  return (
    <Dialog
-     open={authState.modalOpen}
+     open={modalOpen}
      onOpenChange={(open) => {
-       if (!open && authState.isAuthenticated) {
-         authState.setModalOpen(false)
+       if (!open && isAuthenticated) {
+         setModalOpen(false)
        }
      }}
    >
@@ -66,7 +64,7 @@ export function AuthModal() {
 
          <LanguageSelector />
 
-         {authState.error && (
+         {error && (
            <div className="flex items-center gap-2 text-sm text-destructive">
              <AlertCircle className="h-4 w-4" />
              <span>{authState.error}</span>

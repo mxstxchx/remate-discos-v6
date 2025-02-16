@@ -1,4 +1,5 @@
 import { Globe, ShoppingCart, UserCircle2 } from 'lucide-react'
+import { useAuthContext } from '@/lib/auth/provider'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { useTranslation } from 'react-i18next'
