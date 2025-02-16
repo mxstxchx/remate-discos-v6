@@ -24,10 +24,10 @@ export function useRecords(page: number = 1) {
   
   // Create debounced fetch function
   const debouncedFetch = useCallback(
-    debounce(async (pageNum: number) => {
+    debounce(async (pageNum: number, filters: FilterState) => {
       if (!isMounted.current) return;
       
-      const cacheKey = `page-${pageNum}`;
+      const cacheKey = `page-${pageNum}-${JSON.stringify(filters)}`;
       
       // Check cache first
       if (cache.has(cacheKey)) {
@@ -46,6 +46,20 @@ export function useRecords(page: number = 1) {
               country, condition, price, thumb,
               primary_image, secondary_image
             FROM releases
+            WHERE
+              (${filters.artists.length === 0} OR
+               artists->>'name' = ANY('{${filters.artists.join(',')}}'::text[]))
+              AND
+              (${filters.labels.length === 0} OR
+               labels->>'name' = ANY('{${filters.labels.join(',')}}'::text[]))
+              AND
+              (${filters.styles.length === 0} OR
+               styles && '{${filters.styles.join(',')}}'::text[])
+              AND
+              (${filters.conditions.length === 0} OR
+               condition = ANY('{${filters.conditions.join(',')}}'::text[]))
+              AND
+              price BETWEEN ${filters.priceRange.min} AND ${filters.priceRange.max}
             ORDER BY created_at DESC
             LIMIT ${ITEMS_PER_PAGE}
             OFFSET ${(pageNum - 1) * ITEMS_PER_PAGE}
