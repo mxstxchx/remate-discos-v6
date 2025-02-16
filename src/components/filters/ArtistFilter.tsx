@@ -7,7 +7,8 @@ import { useStore } from '@/store';
 
 export function ArtistFilter() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { artists, setArtists } = useFilters();
+  const artists = useFilters((state) => state.artists);
+  const setArtists = useFilters((state) => state.setArtists);
   const releases = useStore((state) => state.releases);
 
   const { metadata, loading: metadataLoading } = useMetadata();

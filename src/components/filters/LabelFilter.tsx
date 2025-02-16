@@ -7,7 +7,8 @@ import { useStore } from '@/store';
 
 export function LabelFilter() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { labels, setLabels } = useFilters();
+  const labels = useFilters((state) => state.labels);
+  const setLabels = useFilters((state) => state.setLabels);
   const releases = useStore((state) => state.releases);
 
   const { metadata, loading: metadataLoading } = useMetadata();

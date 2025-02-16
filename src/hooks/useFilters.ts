@@ -35,7 +35,8 @@ const initialState: FilterState = {
   }
 };
 
-export const useFilters = create<FilterStore>()(
+// Create and export the store directly
+const useFilters = create<FilterStore>()(
   persist(
     (set) => ({
       ...initialState,
@@ -63,3 +64,6 @@ export const useFilters = create<FilterStore>()(
     }
   )
 );
+
+export { useFilters };
+export type { FilterStore };
