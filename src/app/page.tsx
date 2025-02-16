@@ -7,6 +7,15 @@ import { RecordGrid } from '@/components/records/RecordGrid';
 import { useRecords } from '@/hooks/useRecords';
 import { useStore } from '@/store';
 import { TopLayout } from '@/components/layout/TopLayout';
+import {
+  ArtistFilter,
+  LabelFilter,
+  StyleFilter,
+  PriceRangeFilter,
+  ConditionFilter,
+  FilterCard,
+  ActiveFilters
+} from '@/components/filters';
 
 export default function BrowsePage() {
   const { 
@@ -32,9 +41,9 @@ export default function BrowsePage() {
   }
  
   return (
-    <>
+    <div>
       <TopLayout />
-      <div className="container mx-auto px-4 py-8 mt-16">
+      <main className="container mx-auto px-4 py-8 mt-16">
         <h1 className="text-2xl font-semibold mb-8">Browse Records</h1>
         <div className="lg:grid lg:grid-cols-4 gap-6">
           {/* Left Column - Price and Condition Filters */}
@@ -66,35 +75,37 @@ export default function BrowsePage() {
               <ActiveFilters />
             </div>
 
-     <Suspense
-       fallback={
-         <RecordGrid
-           records={[]}
-           loading={true}
-           viewPreference={viewPreference}
-         />
-       }
-     >
-        <RecordGrid
-          records={releases}
-          loading={loading}
-          viewPreference={viewPreference}
-        />
-      </Suspense>
- 
-      <Button
-        variant="default"
-        size="icon"
-        onClick={toggleView}
-        className="fixed bottom-6 right-6 rounded-full shadow-lg"
-      >
-        {viewPreference === 'grid' ? (
-          <List className="h-4 w-4" />
-        ) : (
-          <LayoutGrid className="h-4 w-4" />
-        )}
-      </Button>
+            <Suspense
+              fallback={
+                <RecordGrid
+                  records={[]}
+                  loading={true}
+                  viewPreference={viewPreference}
+                />
+              }
+            >
+              <RecordGrid
+                records={releases}
+                loading={loading}
+                viewPreference={viewPreference}
+              />
+            </Suspense>
+          </div>
+        </div>
+
+        <Button
+          variant="default"
+          size="icon"
+          onClick={toggleView}
+          className="fixed bottom-6 right-6 rounded-full shadow-lg"
+        >
+          {viewPreference === 'grid' ? (
+            <List className="h-4 w-4" />
+          ) : (
+            <LayoutGrid className="h-4 w-4" />
+          )}
+        </Button>
+      </main>
     </div>
-    </>
   );
- }
+}
