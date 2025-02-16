@@ -10,14 +10,8 @@ export function LabelFilter() {
   const { labels, setLabels } = useFilters();
   const releases = useStore((state) => state.releases);
 
-  // Extract unique labels from releases
-  const uniqueLabels = Array.from(
-    new Set(
-      releases?.flatMap((release) =>
-        release?.labels?.map((label) => label?.name)
-      ).filter(Boolean) ?? []
-    )
-  ).sort();
+  const { metadata, loading: metadataLoading } = useMetadata();
+  const uniqueLabels = metadata.labels.sort();
 
   return (
     <>

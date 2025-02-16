@@ -10,14 +10,8 @@ export function ArtistFilter() {
   const { artists, setArtists } = useFilters();
   const releases = useStore((state) => state.releases);
 
-  // Extract unique artists from releases
-  const uniqueArtists = Array.from(
-    new Set(
-      releases?.flatMap((release) =>
-        release?.artists?.map((artist) => artist?.name)
-      ).filter(Boolean) ?? []
-    )
-  ).sort();
+  const { metadata, loading: metadataLoading } = useMetadata();
+  const uniqueArtists = metadata.artists.sort();
 
   return (
     <>

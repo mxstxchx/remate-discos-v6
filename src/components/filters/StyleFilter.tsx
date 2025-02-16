@@ -10,10 +10,8 @@ export function StyleFilter() {
   const { styles, setStyles } = useFilters();
   const releases = useStore((state) => state.releases);
 
-  // Extract unique styles from releases
-  const uniqueStyles = Array.from(
-    new Set(releases?.flatMap((release) => release?.styles ?? []).filter(Boolean) ?? [])
-  ).sort();
+  const { metadata, loading: metadataLoading } = useMetadata();
+  const uniqueStyles = metadata.styles.sort();
 
   return (
     <>

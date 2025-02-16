@@ -64,20 +64,26 @@ export function useRecords(page: number = 1) {
             country, condition, price, thumb,
             primary_image, secondary_image
           FROM releases
-          WHERE
-            (${currentFilters.artists.length === 0} OR
-             artists->>'name' = ANY('{${currentFilters.artists.join(',')}}'::text[]))
-            AND
-            (${currentFilters.labels.length === 0} OR
-             labels->>'name' = ANY('{${currentFilters.labels.join(',')}}'::text[]))
-            AND
-            (${currentFilters.styles.length === 0} OR
-             styles && '{${currentFilters.styles.join(',')}}'::text[])
-            AND
-            (${currentFilters.conditions.length === 0} OR
-             condition = ANY('{${currentFilters.conditions.join(',')}}'::text[]))
-            AND
-            price BETWEEN ${currentFilters.priceRange.min} AND ${currentFilters.priceRange.max}
+          WHERE 1=1
+            ${currentFilters.artists.length > 0
+              ? `AND EXISTS (
+                   SELECT 1 FROM jsonb_array_elements(artists) a
+                   WHERE a->>'name' = ANY(${'{\'' + currentFilters.artists.join('\',\'') + '\'}'}::text[])
+                 )`
+              : ''}
+            ${currentFilters.labels.length > 0
+              ? `AND EXISTS (
+                   SELECT 1 FROM jsonb_array_elements(labels) l
+                   WHERE l->>'name' = ANY(${'{\'' + currentFilters.labels.join('\',\'') + '\'}'}::text[])
+                 )`
+              : ''}
+            ${currentFilters.styles.length > 0
+              ? `AND styles && ${'{\'' + currentFilters.styles.join('\',\'') + '\'}'}::text[]`
+              : ''}
+            ${currentFilters.conditions.length > 0
+              ? `AND condition = ANY(${'{\'' + currentFilters.conditions.join('\',\'') + '\'}'}::text[])`
+              : ''}
+            AND price BETWEEN ${currentFilters.priceRange.min} AND ${currentFilters.priceRange.max}
           ORDER BY created_at DESC
           LIMIT ${ITEMS_PER_PAGE}
           OFFSET ${(pageNum - 1) * ITEMS_PER_PAGE}
