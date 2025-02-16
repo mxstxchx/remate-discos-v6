@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { RecordGrid } from '@/components/records/RecordGrid';
 import { useRecords } from '@/hooks/useRecords';
 import { useStore } from '@/store';
+import { TopLayout } from '@/components/layout/TopLayout';
 
 export default function BrowsePage() {
   const { 
