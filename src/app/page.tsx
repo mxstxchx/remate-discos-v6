@@ -37,15 +37,15 @@ export default function BrowsePage() {
       <div className="container mx-auto px-4 py-8 mt-16">
         <h1 className="text-2xl font-semibold mb-8">Browse Records</h1>
 
-      <Suspense
-        fallback={
-          <RecordGrid
-            records={[]}
-            loading={true}
-            variant={viewMode}
-          />
-        }
-      >
+     <Suspense
+       fallback={
+         <RecordGrid
+           records={[]}
+           loading={true}
+           viewPreference={viewPreference}
+         />
+       }
+     >
         <RecordGrid
           records={releases}
           loading={loading}
