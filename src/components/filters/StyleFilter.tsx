@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FilterModal } from './FilterModal';
 import { useFilters } from '@/hooks/useFilters';
-import { useStore } from '@/store';
+import { useMetadata } from '@/hooks/useMetadata';
 
 export function StyleFilter() {
   const [isModalOpen, setIsModalOpen] = useState(false);
