@@ -13,9 +13,9 @@ export function ArtistFilter() {
   // Extract unique artists from releases
   const uniqueArtists = Array.from(
     new Set(
-      releases.flatMap((release) =>
-        release.artists.map((artist) => artist.name)
-      )
+      releases?.flatMap((release) =>
+        release?.artists?.map((artist) => artist?.name)
+      ).filter(Boolean) ?? []
     )
   ).sort();
 

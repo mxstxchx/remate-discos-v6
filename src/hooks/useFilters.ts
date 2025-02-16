@@ -22,6 +22,8 @@ interface FilterActions {
   clearAllFilters: () => void;
 }
 
+type FilterStore = FilterState & FilterActions;
+
 const initialState: FilterState = {
   artists: [],
   labels: [],
@@ -33,40 +35,7 @@ const initialState: FilterState = {
   }
 };
 
-type FilterStore = FilterState & FilterActions;
-
-const useFilters = create<FilterStore>()(
-  persist(
-    (set) => ({
-      ...initialState,
-      setArtists: (artists) => set({ artists }),
-      setLabels: (labels) => set({ labels }),
-      setStyles: (styles) => set({ styles }),
-      setConditions: (conditions) => set({ conditions }),
-      setPriceRange: (priceRange) => set({ priceRange }),
-      clearFilter: (filterType) =>
-        set((state) => ({
-          ...state,
-          [filterType]: Array.isArray(state[filterType]) ? [] : initialState[filterType]
-        })),
-      clearAllFilters: () => set(initialState)
-    }),
-    {
-      name: 'filter-storage',
-      partialize: (state) => ({
-        artists: state.artists,
-        labels: state.labels,
-        styles: state.styles,
-        conditions: state.conditions,
-        priceRange: state.priceRange
-      })
-    }
-  )
-);
-
-export { useFilters, type FilterState, type FilterStore };
-
-export const useFilters = create<FilterState & FilterActions>()(
+export const useFilters = create<FilterStore>()(
   persist(
     (set) => ({
       ...initialState,

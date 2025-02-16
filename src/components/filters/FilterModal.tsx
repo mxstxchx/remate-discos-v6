@@ -19,8 +19,8 @@ export function FilterModal({
   isOpen,
   onClose,
   title,
-  options,
-  selectedValues,
+  options = [],
+  selectedValues = [],
   onApply,
 }: FilterModalProps) {
   const [search, setSearch] = useState("");
@@ -31,7 +31,7 @@ export function FilterModal({
   }, [selectedValues]);
 
   const filteredOptions = options.filter((option) =>
-    option.toLowerCase().includes(search.toLowerCase())
+    option?.toLowerCase?.().includes(search.toLowerCase()) ?? false
   );
 
   const toggleOption = (option: string) => {

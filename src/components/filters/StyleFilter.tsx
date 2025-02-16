@@ -12,7 +12,7 @@ export function StyleFilter() {
 
   // Extract unique styles from releases
   const uniqueStyles = Array.from(
-    new Set(releases.flatMap((release) => release.styles))
+    new Set(releases?.flatMap((release) => release?.styles ?? []).filter(Boolean) ?? [])
   ).sort();
 
   return (

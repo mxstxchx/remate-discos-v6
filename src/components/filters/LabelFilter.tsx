@@ -13,9 +13,9 @@ export function LabelFilter() {
   // Extract unique labels from releases
   const uniqueLabels = Array.from(
     new Set(
-      releases.flatMap((release) =>
-        release.labels.map((label) => label.name)
-      )
+      releases?.flatMap((release) =>
+        release?.labels?.map((label) => label?.name)
+      ).filter(Boolean) ?? []
     )
   ).sort();
 
