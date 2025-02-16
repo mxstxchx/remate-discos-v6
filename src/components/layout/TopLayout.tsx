@@ -9,6 +9,7 @@ import { CartSheet } from './CartSheet'
 export function TopLayout() {
   const { i18n } = useTranslation()
   const setModalOpen = useAuthStore(state => state.setModalOpen)
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated)
   const setLanguage = useStore((state) => state.setLanguage)
 
   const toggleLanguage = () => {

@@ -27,8 +27,13 @@ export function AuthModal() {
    if (alias.length < 6) return
 
    setLoading(true)
-   await signIn(alias, i18n.language as 'es' | 'en')
-   setLoading(false)
+   try {
+     await signIn(alias, i18n.language as 'es' | 'en')
+   } catch (error) {
+     console.error('Sign in error:', error)
+   } finally {
+     setLoading(false)
+   }
  }
 
   if (isAuthenticated && !modalOpen) return null
