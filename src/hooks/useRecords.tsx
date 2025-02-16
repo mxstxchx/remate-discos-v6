@@ -84,6 +84,24 @@ export function useRecords(page: number = 1) {
           : '';
 
         console.log(`${APP_LOG} Constructed WHERE clause:`, whereClause);
+        
+        const sqlQuery = `
+          SELECT
+            id, title, artists, labels, styles, year,
+            country, condition, price, thumb,
+            primary_image, secondary_image
+          FROM releases
+          ${whereClause}
+          ORDER BY created_at DESC
+          LIMIT ${ITEMS_PER_PAGE}
+          OFFSET ${(pageNum - 1) * ITEMS_PER_PAGE}
+        `;
+        
+        console.log(`${APP_LOG} Executing SQL query:`, sqlQuery);
+        
+        const { method, path } = await sqlToRest({
+          sql: sqlQuery
+        });
 
         const { method, path } = await sqlToRest({
           sql: `
@@ -94,6 +112,8 @@ export function useRecords(page: number = 1) {
             FROM releases
             ${whereClause}
             ORDER BY created_at DESC
+            LIMIT ${ITEMS_PER_PAGE}
+            OFFSET ${(pageNum - 1) * ITEMS_PER_PAGE}
           `
         });
           LIMIT ${ITEMS_PER_PAGE}
