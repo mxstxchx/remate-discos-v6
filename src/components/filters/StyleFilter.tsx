@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FilterModal } from './FilterModal';
-import { useFilters } from '@/hooks/useFilters';
+import { useMetadata } from '@/hooks';
 import { useStore } from '@/store';
 
 export function StyleFilter() {

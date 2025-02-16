@@ -3,7 +3,7 @@ import { sqlToRest, postgrestRequest } from '@/lib/api';
 
 const APP_LOG = '[APP:metadata]';
 
-interface Metadata {
+export interface Metadata {
   artists: string[];
   labels: string[];
   styles: string[];
