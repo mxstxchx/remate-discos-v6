@@ -5,19 +5,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface RecordGridProps {
   records: Release[];
   loading?: boolean;
-  variant?: 'grid' | 'list';
+  viewPreference?: 'grid' | 'list';
 }
 
-export function RecordGrid({ records = [], loading = false, variant = 'grid' }: RecordGridProps) {
+export function RecordGrid({ records = [], loading = false, viewPreference = 'grid' }: RecordGridProps) {
   if (loading) {
     return (
       <div className={
-        variant === 'grid'
+        viewPreference === 'grid'
           ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
           : 'flex flex-col gap-6'
       }>
         {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className={variant === 'grid' ? 'aspect-[3/4]' : 'h-48'}>
+          <div key={i} className={viewPreference === 'grid' ? 'aspect-[3/4]' : 'h-48'}>
             <Skeleton className="h-full w-full" />
           </div>
         ))}
@@ -35,7 +35,7 @@ export function RecordGrid({ records = [], loading = false, variant = 'grid' }: 
 
   return (
     <div className={
-      variant === 'grid'
+      viewPreference === 'grid'
         ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
         : 'flex flex-col gap-6'
     }>
@@ -43,7 +43,7 @@ export function RecordGrid({ records = [], loading = false, variant = 'grid' }: 
         <RecordCard
           key={record.id}
           record={record}
-          variant={variant}
+          viewPreference={viewPreference}
         />
       ))}
     </div>

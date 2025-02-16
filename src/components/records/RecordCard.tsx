@@ -9,14 +9,14 @@ const APP_LOG = '[APP:recordCard]';
 
 interface RecordCardProps {
   record: Release;
-  variant?: 'grid' | 'list';
+  viewPreference?: 'grid' | 'list';
   onAddToCart?: () => void;
   onJoinQueue?: () => void;
 }
 
 export const RecordCard = React.memo(function RecordCard({
   record,
-  variant = 'grid',
+  viewPreference = 'grid',
   onAddToCart,
   onJoinQueue
 }: RecordCardProps) {
@@ -28,11 +28,11 @@ export const RecordCard = React.memo(function RecordCard({
 
   return (
     <Card className={
-      variant === 'grid'
+      viewPreference === 'grid'
         ? 'h-full bg-card hover:bg-muted transition-colors'
         : 'flex flex-row bg-card hover:bg-muted transition-colors'
     }>
-      <div className={variant === 'list' ? 'w-48 flex-shrink-0' : ''}>
+      <div className={viewPreference === 'list' ? 'w-48 flex-shrink-0' : ''}>
         <div className="relative aspect-square w-full overflow-hidden">
           <Image
             src={record.primary_image || record.thumb}

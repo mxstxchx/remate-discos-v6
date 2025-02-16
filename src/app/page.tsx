@@ -49,7 +49,7 @@ export default function BrowsePage() {
         <RecordGrid
           records={releases}
           loading={loading}
-          variant={viewMode}
+          viewPreference={viewPreference}
         />
       </Suspense>
  
