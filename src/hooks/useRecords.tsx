@@ -43,7 +43,7 @@ export function useRecords(page: number = 1) {
       return;
     }
     
-    const cacheKey = `page-${pageNum}`;
+    const cacheKey = `page-${pageNum}-${JSON.stringify(currentFilters)}`;
     console.log(`${APP_LOG} Cache key:`, cacheKey);
     
     // Check cache first
@@ -57,34 +57,45 @@ export function useRecords(page: number = 1) {
     try {
       console.log(`${APP_LOG} Building SQL query with filters`);
       // Fetch releases with pagination
-      const { method, path } = await sqlToRest({
-        sql: `
-          SELECT
-            id, title, artists, labels, styles, year,
-            country, condition, price, thumb,
-            primary_image, secondary_image
-          FROM releases
-          WHERE 1=1
-            ${currentFilters.artists.length > 0
-              ? `AND EXISTS (
-                   SELECT 1 FROM jsonb_array_elements(artists) a
-                   WHERE a->>'name' = ANY(${'{\'' + currentFilters.artists.join('\',\'') + '\'}'}::text[])
-                 )`
-              : ''}
-            ${currentFilters.labels.length > 0
-              ? `AND EXISTS (
-                   SELECT 1 FROM jsonb_array_elements(labels) l
-                   WHERE l->>'name' = ANY(${'{\'' + currentFilters.labels.join('\',\'') + '\'}'}::text[])
-                 )`
-              : ''}
-            ${currentFilters.styles.length > 0
-              ? `AND styles && ${'{\'' + currentFilters.styles.join('\',\'') + '\'}'}::text[]`
-              : ''}
-            ${currentFilters.conditions.length > 0
-              ? `AND condition = ANY(${'{\'' + currentFilters.conditions.join('\',\'') + '\'}'}::text[])`
-              : ''}
-            AND price BETWEEN ${currentFilters.priceRange.min} AND ${currentFilters.priceRange.max}
-          ORDER BY created_at DESC
+        // Generate a filter string for the query
+        const conditions = [];
+        
+        if (currentFilters.artists.length > 0) {
+          conditions.push(`artists ?| array['${currentFilters.artists.map(a => `$.name == "${a}"`).join("','")}']`);
+        }
+        
+        if (currentFilters.labels.length > 0) {
+          conditions.push(`labels ?| array['${currentFilters.labels.map(l => `$.name == "${l}"`).join("','")}']`);
+        }
+        
+        if (currentFilters.styles.length > 0) {
+          conditions.push(`styles ?| array['${currentFilters.styles.join("','")}']`);
+        }
+        
+        if (currentFilters.conditions.length > 0) {
+          conditions.push(`condition IN ('${currentFilters.conditions.join("','")}')`)
+        }
+        
+        conditions.push(`price >= ${currentFilters.priceRange.min}`);
+        conditions.push(`price <= ${currentFilters.priceRange.max}`);
+
+        const whereClause = conditions.length > 0
+          ? `WHERE ${conditions.join(' AND ')}`
+          : '';
+
+        console.log(`${APP_LOG} Constructed WHERE clause:`, whereClause);
+
+        const { method, path } = await sqlToRest({
+          sql: `
+            SELECT
+              id, title, artists, labels, styles, year,
+              country, condition, price, thumb,
+              primary_image, secondary_image
+            FROM releases
+            ${whereClause}
+            ORDER BY created_at DESC
+          `
+        });
           LIMIT ${ITEMS_PER_PAGE}
           OFFSET ${(pageNum - 1) * ITEMS_PER_PAGE}
         `

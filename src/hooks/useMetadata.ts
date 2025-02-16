@@ -22,51 +22,55 @@ export function useMetadata() {
     const fetchMetadata = async () => {
       console.log(`${APP_LOG} Fetching metadata`);
       try {
+        // Fetch all records first
         const { method, path } = await sqlToRest({
-          sql: `
-            SELECT
-              COALESCE(
-                (SELECT array_agg(DISTINCT name)
-                FROM releases, jsonb_array_elements(artists) AS a,
-                jsonb_to_record(a) AS x(name text)
-                WHERE name IS NOT NULL),
-                ARRAY[]::text[]
-              ) as artists,
-              COALESCE(
-                (SELECT array_agg(DISTINCT name)
-                FROM releases, jsonb_array_elements(labels) AS l,
-                jsonb_to_record(l) AS x(name text)
-                WHERE name IS NOT NULL),
-                ARRAY[]::text[]
-              ) as labels,
-              COALESCE(
-                (SELECT array_agg(DISTINCT unnest(styles))
-                FROM releases
-                WHERE styles IS NOT NULL),
-                ARRAY[]::text[]
-              ) as styles
-          `
+          sql: 'SELECT artists, labels, styles FROM releases'
         });
 
         console.log(`${APP_LOG} Making API request:`, { method, path });
-        const result = await postgrestRequest({ method, path });
-        console.log(`${APP_LOG} Received raw result:`, result);
+        const records = await postgrestRequest({ method, path });
+        console.log(`${APP_LOG} Received records:`, records?.length);
 
-        if (result?.[0]) {
-          const metadataResult = {
-            artists: (result[0].artists || []).sort(),
-            labels: (result[0].labels || []).sort(),
-            styles: (result[0].styles || []).sort()
-          };
+        // Process the records to extract unique values
+        const uniqueArtists = new Set<string>();
+        const uniqueLabels = new Set<string>();
+        const uniqueStyles = new Set<string>();
 
-          console.log(`${APP_LOG} Processed metadata:`, {
-            artistsCount: metadataResult.artists.length,
-            labelsCount: metadataResult.labels.length,
-            stylesCount: metadataResult.styles.length
+        records?.forEach(record => {
+          // Process artists
+          record.artists?.forEach((artist: any) => {
+            if (artist?.name) uniqueArtists.add(artist.name);
           });
 
-          setMetadata(metadataResult);
-        }
+          // Process labels
+          record.labels?.forEach((label: any) => {
+            if (label?.name) uniqueLabels.add(label.name);
+          });
+
+          // Process styles
+          record.styles?.forEach((style: string) => {
+            if (style) uniqueStyles.add(style);
+          });
+        });
+
+        const metadataResult = {
+          artists: Array.from(uniqueArtists).sort(),
+          labels: Array.from(uniqueLabels).sort(),
+          styles: Array.from(uniqueStyles).sort()
+        };
+
+        console.log(`${APP_LOG} Processed metadata:`, {
+          artistsCount: metadataResult.artists.length,
+          labelsCount: metadataResult.labels.length,
+          stylesCount: metadataResult.styles.length,
+          sample: {
+            artists: metadataResult.artists.slice(0, 3),
+            labels: metadataResult.labels.slice(0, 3),
+            styles: metadataResult.styles.slice(0, 3)
+          }
+        });
+
+        setMetadata(metadataResult);
       } catch (err) {
         console.error(`${APP_LOG} Error fetching metadata:`, err);
         setError(err instanceof Error ? err.message : 'Failed to fetch metadata');

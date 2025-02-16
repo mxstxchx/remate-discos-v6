@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 
 interface FilterModalProps {
   isOpen: boolean;
@@ -13,15 +13,17 @@ interface FilterModalProps {
   options: string[];
   selectedValues: string[];
   onApply: (values: string[]) => void;
+  loading?: boolean;
 }
 
 export function FilterModal({
   isOpen,
   onClose,
   title,
-  options = [],
-  selectedValues = [],
+  options,
+  selectedValues,
   onApply,
+  loading = false
 }: FilterModalProps) {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>(selectedValues);
@@ -31,7 +33,7 @@ export function FilterModal({
   }, [selectedValues]);
 
   const filteredOptions = options.filter((option) =>
-    option?.toLowerCase?.().includes(search.toLowerCase()) ?? false
+    option?.toLowerCase().includes(search.toLowerCase())
   );
 
   const toggleOption = (option: string) => {
@@ -51,7 +53,10 @@ export function FilterModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            {title}
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <Input
@@ -59,29 +64,45 @@ export function FilterModal({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full"
+            disabled={loading}
           />
           <ScrollArea className="h-[300px] rounded-md border p-4">
-            <div className="grid grid-cols-2 gap-2">
-              {filteredOptions.map((option) => (
-                <Badge
-                  key={option}
-                  variant={selected.includes(option) ? "default" : "outline"}
-                  className="cursor-pointer justify-between"
-                  onClick={() => toggleOption(option)}
-                >
-                  <span className="truncate">{option}</span>
-                  {selected.includes(option) && (
-                    <Check className="ml-2 h-3 w-3" />
-                  )}
-                </Badge>
-              ))}
-            </div>
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : filteredOptions.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2">
+                {filteredOptions.map((option) => (
+                  <Badge
+                    key={option}
+                    variant={selected.includes(option) ? "default" : "outline"}
+                    className="cursor-pointer justify-between"
+                    onClick={() => toggleOption(option)}
+                  >
+                    <span className="truncate">{option}</span>
+                    {selected.includes(option) && (
+                      <Check className="ml-2 h-3 w-3" />
+                    )}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                No options found
+              </div>
+            )}
           </ScrollArea>
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={handleApply}>Apply</Button>
+            <Button
+              onClick={handleApply}
+              disabled={loading}
+            >
+              Apply
+            </Button>
           </div>
         </div>
       </DialogContent>
