@@ -7,15 +7,15 @@ interface AuthActions {
 }
 
 interface AuthState {
- isAuthenticated: boolean;
- error: string | null;
- modalOpen: boolean;
+  isAuthenticated: boolean;
+  error: string | null;
+  modalOpen: boolean;
 }
 
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({
- isAuthenticated: false,
- error: null,
- modalOpen: false,
+  isAuthenticated: false,
+  error: null,
+  modalOpen: true, // Changed to show by default
  setModalOpen: (open: boolean) => set({ modalOpen: open }),
  setError: (error: string | null) => set({ error }),
  setAuthenticated: (isAuthenticated: boolean) => set({ isAuthenticated })

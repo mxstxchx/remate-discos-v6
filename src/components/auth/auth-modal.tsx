@@ -31,7 +31,8 @@ export function AuthModal() {
    setLoading(false)
  }
 
- if (isAuthenticated && !modalOpen) return null
+  if (isAuthenticated && !modalOpen) return null
+  if (!isAuthenticated && !modalOpen) setModalOpen(true) // Show modal if not authenticated
 
  return (
    <Dialog
