@@ -13,6 +13,17 @@ export function ArtistFilter() {
   const { metadata, loading: metadataLoading } = useMetadata();
   const uniqueArtists = metadata.artists.sort();
 
+  if (metadataLoading) {
+    return (
+      <div className="space-y-2">
+        <div className="h-6 bg-muted rounded animate-pulse mb-2" />
+        <Button variant="outline" className="w-full" disabled>
+          Loading Artists...
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="space-y-2">
