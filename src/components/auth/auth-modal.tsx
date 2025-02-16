@@ -16,11 +16,14 @@ export function AuthModal() {
   const { signIn } = useAuthContext()
   const [alias, setAlias] = useState('')
   const [loading, setLoading] = useState(false)
-  const error = useAuthStore((state) => state.error)
- const { isAuthenticated, modalOpen } = useAuthStore((state) => ({
-   isAuthenticated: state.isAuthenticated,
-   modalOpen: state.modalOpen
- }))
+  const { error, isAuthenticated, modalOpen, setModalOpen } = useAuthStore(state => ({
+    error: state.error,
+    isAuthenticated: state.isAuthenticated,
+    modalOpen: state.modalOpen,
+    setModalOpen: state.setModalOpen
+  }))
+ 
+  if (isAuthenticated && !modalOpen) return null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,11 +39,11 @@ export function AuthModal() {
   if (isAuthenticated && !modalOpen) return null
  
   return (
-    <Dialog open={modalOpen} onOpenChange={(open) => {
-      if (!open && isAuthenticated) {
-        useAuthStore.getState().setModalOpen(false)
-      }
-    }}>
+   <Dialog open={modalOpen} onOpenChange={(open) => {
+     if (!open && isAuthenticated) {
+       setModalOpen(false)
+     }
+   }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t('modal.title')}</DialogTitle>
