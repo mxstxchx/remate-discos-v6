@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useStore } from '@/store';
+import { useFilters } from '@/hooks/useFilters';
 import { ITEMS_PER_PAGE } from '@/store/recordsSlice';
 import { sqlToRest, postgrestRequest } from '@/lib/api';
 import { debounce } from 'lodash';
@@ -18,6 +19,15 @@ export function useRecords(page: number = 1) {
   const loading = useStore(state => state.loading);
   const error = useStore(state => state.error);
   const totalPages = useStore(state => state.totalPages);
+  
+  // Get filter state
+  const filters = {
+    artists: useFilters(state => state.artists),
+    labels: useFilters(state => state.labels),
+    styles: useFilters(state => state.styles),
+    conditions: useFilters(state => state.conditions),
+    priceRange: useFilters(state => state.priceRange)
+  };
   
   // Use ref to track mounted state
   const isMounted = useRef(true);
@@ -158,12 +168,12 @@ export function useRecords(page: number = 1) {
 
   useEffect(() => {
     setLoading(true);
-    debouncedFetch(page);
+    debouncedFetch(page, filters);
     
     return () => {
       isMounted.current = false;
     };
-  }, [page, debouncedFetch]);
+  }, [page, debouncedFetch, filters.artists, filters.labels, filters.styles, filters.conditions, filters.priceRange]);
 
   // Clear cache when component unmounts
   useEffect(() => {
