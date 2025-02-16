@@ -152,17 +152,38 @@ export function useRecords(page: number = 1) {
     [setReleases, setLoading, setError, setTotalPages, totalPages]
   );
 
+  // Memoize filters to prevent unnecessary re-renders
+  const memoizedFilters = useCallback(() => ({
+    artists: filters.artists,
+    labels: filters.labels,
+    styles: filters.styles,
+    conditions: filters.conditions,
+    priceRange: filters.priceRange
+  }), [
+    filters.artists,
+    filters.labels,
+    filters.styles,
+    filters.conditions,
+    filters.priceRange.min,
+    filters.priceRange.max
+  ]);
+
   useEffect(() => {
     console.log(`${APP_LOG} useEffect triggered with page:`, page);
     setLoading(true);
-    fetchRecords(page, filters);
+    
+    const currentFilters = memoizedFilters();
+    console.log(`${APP_LOG} Current filters:`, currentFilters);
+    
+    // Don't clear cache on unmount, persist it
+    isMounted.current = true;
+    fetchRecords(page, currentFilters);
     
     return () => {
       console.log(`${APP_LOG} Cleaning up useRecords`);
       isMounted.current = false;
-      cache.clear();
     };
-  }, [page, filters.artists, filters.labels, filters.styles, filters.conditions, filters.priceRange.min, filters.priceRange.max]);
+  }, [page, memoizedFilters]);
 
   return { releases, loading, error, totalPages };
 }
