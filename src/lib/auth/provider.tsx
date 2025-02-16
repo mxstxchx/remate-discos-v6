@@ -22,9 +22,10 @@ export function AuthProvider({
 }
 
 export function useAuthContext() {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuthContext must be used within AuthProvider')
+  const { signIn } = useContext(AuthContext)
+  const setModalOpen = useAuthStore((state) => state.setModalOpen)
+  return { signIn, setModalOpen }
+ }
   }
   return context
 }

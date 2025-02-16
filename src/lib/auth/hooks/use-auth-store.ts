@@ -3,9 +3,14 @@
 import { create } from 'zustand'
 import type { AuthState } from '../types'
 
-type AuthStore = AuthState & {
-  setAuth: (update: Partial<AuthState>) => void
-  reset: () => void
+interface AuthActions {
+ setModalOpen: (open: boolean) => void;
+}
+
+interface AuthState {
+ isAuthenticated: boolean;
+ error: string | null;
+ modalOpen: boolean;
 }
 
 const initialState: AuthState = {
@@ -14,9 +19,11 @@ const initialState: AuthState = {
   alias: null,
   session: null,
   error: null
-}
-
-export const useAuthStore = create<AuthStore>((set) => ({
+const useAuthStore = create<AuthState & AuthActions>((set) => ({
+ isAuthenticated: false,
+ error: null,
+ modalOpen: false,
+ setModalOpen: (open: boolean) => set({ modalOpen: open }),
   ...initialState,
   setAuth: (update) => set((state) => ({ ...state, ...update })),
   reset: () => set(initialState)

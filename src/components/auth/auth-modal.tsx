@@ -28,10 +28,16 @@ export function AuthModal() {
     setLoading(false)
   }
 
-  if (isAuthenticated) return null
-
+  const modalOpen = useAuthStore((state) => state.modalOpen)
+ 
+  if (isAuthenticated && !modalOpen) return null
+ 
   return (
-    <Dialog open modal>
+    <Dialog open={modalOpen} onOpenChange={(open) => {
+      if (!open && isAuthenticated) {
+        useAuthStore.getState().setModalOpen(false)
+      }
+    }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t('modal.title')}</DialogTitle>

@@ -8,7 +8,7 @@ import { CartSheet } from './CartSheet'
 
 export function TopLayout() {
  const { i18n } = useTranslation()
- const setAuthModalOpen = useAuthStore((state) => state.setModalOpen)
+ const { setModalOpen } = useAuthContext()
  const setLanguage = useStore((state) => state.setLanguage)
 
  const toggleLanguage = () => {
@@ -43,7 +43,7 @@ export function TopLayout() {
        <Button
          variant="ghost"
          size="icon"
-         onClick={() => setAuthModalOpen(true)}
+         onClick={() => setModalOpen(true)}
          title="Change User"
        >
          <UserCircle2 className="h-5 w-5" />
