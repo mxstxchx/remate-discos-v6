@@ -58,23 +58,33 @@ export function useRecords(page: number = 1) {
       const conditions = [];
       
       if (currentFilters.artists.length > 0) {
-        // Use proper JSONB array containment
-        conditions.push(`artists @> '[${currentFilters.artists.map(a =>
-          JSON.stringify({ name: a })
-        )}]'`);
+        // Use JSONB contains operator with OR logic
+        const artistConditions = currentFilters.artists.map(artist =>
+          `artists @> '[{"name": "${artist}"}]'`
+        );
+        conditions.push(`(${artistConditions.join(' OR ')})`);
       }
       
       if (currentFilters.labels.length > 0) {
-        conditions.push(`labels @> '[${currentFilters.labels.map(l =>
-          JSON.stringify({ name: l })
-        )}]'`);
+        // Use JSONB contains operator with OR logic
+        const labelConditions = currentFilters.labels.map(label =>
+          `labels @> '[{"name": "${label}"}]'`
+        );
+        conditions.push(`(${labelConditions.join(' OR ')})`);
       }
       
       if (currentFilters.styles.length > 0) {
-        // Use array overlap operator for text[]
+        // Use ANY operator for OR logic with arrays
         conditions.push(`styles && ARRAY[${currentFilters.styles.map(s =>
           `'${s}'`
-        )}]`);
+        )}]::text[]`);
+      }
+
+      if (currentFilters.conditions.length > 0) {
+        // Use IN operator for OR logic
+        conditions.push(`condition IN (${currentFilters.conditions.map(c =>
+          `'${c}'`
+        ).join(', ')})`);
       }
       
       if (currentFilters.conditions.length > 0) {

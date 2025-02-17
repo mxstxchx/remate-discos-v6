@@ -13,8 +13,17 @@ async function fetchMetadata() {
  
   const records = await response.json();
   
-  // Debug log to inspect the data structure
+  // Debug logs to inspect the data structure
   console.log('First record:', JSON.stringify(records[0], null, 2));
+  console.log('Records length:', records.length);
+  if (records[0]) {
+    console.log('Artists type:', typeof records[0].artists);
+    console.log('Artists value:', records[0].artists);
+    console.log('Labels type:', typeof records[0].labels);
+    console.log('Labels value:', records[0].labels);
+    console.log('Styles type:', typeof records[0].styles);
+    console.log('Styles value:', records[0].styles);
+  }
   
   const artists = new Set<string>();
   const labels = new Set<string>();
