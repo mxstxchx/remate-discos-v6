@@ -12,16 +12,29 @@ export async function POST(request: Request) {
     if (whereMatch) {
       const conditions = whereMatch[1];
 
-      // Handle array operators for artists and styles
-      const arrayMatch = conditions.match(/(artists|styles) && ARRAY\[(.*?)\]::text\[\]/);
-      if (arrayMatch) {
-        const [, field, values] = arrayMatch;
-        const items = values.split(',')
+      // Handle array operators for styles (TEXT[])
+      const stylesMatch = conditions.match(/styles && ARRAY\[(.*?)\]::text\[\]/);
+      if (stylesMatch) {
+        const styles = stylesMatch[1].split(',')
           .map(s => s.trim().replace(/'/g, ''));
-        filters += `&${field}=cs.{${items.join(',')}}`;
+        // Use multiple .cs for OR logic
+        styles.forEach(style => {
+          filters += `&styles.cs=["${style}"]`;
+        });
       }
 
-      // Handle labels with proper JSON containment
+      // Handle array operators for artists (TEXT[])
+      const artistsMatch = conditions.match(/artists && ARRAY\[(.*?)\]::text\[\]/);
+      if (artistsMatch) {
+        const artists = artistsMatch[1].split(',')
+          .map(s => s.trim().replace(/'/g, ''));
+        // Use same format as styles
+        artists.forEach(artist => {
+          filters += `&artists.cs=["${artist}"]`;
+        });
+      }
+
+      // Handle labels JSONB containment
       const labelsMatch = conditions.match(/\((labels @> '\[.*?\]'(\s+OR\s+labels @> '\[.*?\]')*)\)/);
       if (labelsMatch) {
         const labelsConditions = labelsMatch[1].split(' OR ');
@@ -35,20 +48,20 @@ export async function POST(request: Request) {
         }).filter(Boolean);
         
         if (labelNames.length > 0) {
-          const labelFilters = labelNames.map(name =>
-            `&labels=cs.{"name":"${name}"}`
-          ).join('');
-          filters += labelFilters;
+          // Use multiple .cs for OR logic with JSONB
+          labelNames.forEach(name => {
+            filters += `&labels.cs={"name":"${name}"}`;
+          });
         }
       }
 
-      // Handle condition IN clause - single in operator
+      // Handle condition IN clause
       const conditionMatch = conditions.match(/condition IN \((.*?)\)/);
       if (conditionMatch) {
-        const conditionValues = conditionMatch[1].split(',')
-          .map(c => c.trim().replace(/'/g, ''))
-          .join(',');
-        filters += `&condition=in.(${conditionValues})`;
+        const conditions = conditionMatch[1].split(',')
+          .map(c => c.trim().replace(/'/g, ''));
+        // Use .in for simple text fields
+        filters += `&condition.in=(${conditions.join(',')})`;
       }
 
       // Price range
