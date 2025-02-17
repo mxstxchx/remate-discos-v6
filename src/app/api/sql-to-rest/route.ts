@@ -16,22 +16,20 @@ export async function POST(request: Request) {
       const stylesMatch = conditions.match(/styles && ARRAY\[(.*?)\]::text\[\]/);
       if (stylesMatch) {
         const styles = stylesMatch[1].split(',')
-          .map(s => s.trim().replace(/'/g, ''));
-        // Use multiple .cs for OR logic
-        styles.forEach(style => {
-          filters += `&styles.cs=["${style}"]`;
-        });
+          .map(s => s.trim().replace(/'/g, ''))
+          .join(',');
+        // Use cs.{} for array OR logic
+        filters += `&styles=cs.{${styles}}`;
       }
 
       // Handle array operators for artists (TEXT[])
       const artistsMatch = conditions.match(/artists && ARRAY\[(.*?)\]::text\[\]/);
       if (artistsMatch) {
         const artists = artistsMatch[1].split(',')
-          .map(s => s.trim().replace(/'/g, ''));
-        // Use same format as styles
-        artists.forEach(artist => {
-          filters += `&artists.cs=["${artist}"]`;
-        });
+          .map(s => s.trim().replace(/'/g, ''))
+          .join(',');
+        // Use cs.{} for array OR logic
+        filters += `&artists=cs.{${artists}}`;
       }
 
       // Handle labels JSONB containment
@@ -48,20 +46,25 @@ export async function POST(request: Request) {
         }).filter(Boolean);
         
         if (labelNames.length > 0) {
-          // Use multiple .cs for OR logic with JSONB
-          labelNames.forEach(name => {
-            filters += `&labels.cs={"name":"${name}"}`;
-          });
+          // Add all label names in a single or condition
+          filters += `&labels.cs={${labelNames.map(name =>
+            `"${name}"`
+          ).join(',')}}`;
         }
       }
 
       // Handle condition IN clause
       const conditionMatch = conditions.match(/condition IN \((.*?)\)/);
       if (conditionMatch) {
-        const conditions = conditionMatch[1].split(',')
+        const conditionValues = conditionMatch[1].split(',')
           .map(c => c.trim().replace(/'/g, ''));
-        // Use .in for simple text fields
-        filters += `&condition.in=(${conditions.join(',')})`;
+        if (conditionValues.length === 1) {
+          // Use eq for single values
+          filters += `&condition=eq.${conditionValues[0]}`;
+        } else {
+          // Use in.() for multiple values
+          filters += `&condition=in.(${conditionValues.join(',')})`;
+        }
       }
 
       // Price range
