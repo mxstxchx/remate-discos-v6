@@ -12,22 +12,26 @@ export async function POST(request: Request) {
     if (whereMatch) {
       const conditions = whereMatch[1];
 
-      // Handle array operators for styles (TEXT[])
+      // Handle styles array overlap (TEXT[])
       const stylesMatch = conditions.match(/styles && ARRAY\[(.*?)\]::text\[\]/);
       if (stylesMatch) {
         const styles = stylesMatch[1].split(',')
           .map(s => s.trim().replace(/'/g, ''));
-        // Use array overap with cs operator
-        filters += `&styles.cs={${styles.join(',')}}`;
+        // Use multiple cs parameters for OR logic
+        styles.forEach(style => {
+          filters += `&styles.cs=["${style}"]`;
+        });
       }
 
-      // Handle array operators for artists (TEXT[])
+      // Handle artists as JSON array
       const artistsMatch = conditions.match(/artists && ARRAY\[(.*?)\]::text\[\]/);
       if (artistsMatch) {
         const artists = artistsMatch[1].split(',')
           .map(s => s.trim().replace(/'/g, ''));
-        // Use array overlap with cs operator
-        filters += `&artists.cs={${artists.join(',')}}`;
+        // Use multiple cs parameters for OR logic
+        artists.forEach(artist => {
+          filters += `&artists.cs=["${artist}"]`;
+        });
       }
 
       // Handle labels JSONB containment
@@ -43,30 +47,22 @@ export async function POST(request: Request) {
           return null;
         }).filter(Boolean);
         
-        if (labelNames.length > 0) {
-          // Use JSONB containment with array of objects
-          let labelFilter = labelNames.map(name =>
-            encodeURIComponent(`{"name":"${name}"}`)
-          ).join(',');
-          filters += `&labels.cs={${labelFilter}}`;
-        }
+        // Use multiple parameters for OR logic
+        labelNames.forEach(name => {
+          filters += `&labels.cs={"name":"${name}"}`;
+        });
       }
 
       // Handle condition IN clause
       const conditionMatch = conditions.match(/condition IN \((.*?)\)/);
       if (conditionMatch) {
-        const conditionValues = conditionMatch[1].split(',')
+        const conditions = conditionMatch[1].split(',')
           .map(c => c.trim().replace(/'/g, ''));
-        if (conditionValues.length === 1) {
-          // Use eq operator for single value
-          filters += `&condition.eq=${conditionValues[0]}`;
-        } else {
-          // Use in operator for multiple values
-          filters += `&condition.in=(${conditionValues.join(',')})`;
-        }
+        // Use simple in operator for multiple values
+        filters += `&condition.in=(${conditions.join(',')})`;
       }
 
-      // Price range
+      // Price range - keep working syntax
       const priceMatch = conditions.match(/price >= (\d+) AND price <= (\d+)/);
       if (priceMatch) {
         filters += `&price.gte=${priceMatch[1]}&price.lte=${priceMatch[2]}`;
