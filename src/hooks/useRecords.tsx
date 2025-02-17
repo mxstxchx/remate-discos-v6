@@ -81,10 +81,8 @@ export function useRecords(page: number = 1) {
       }
 
       if (currentFilters.conditions.length > 0) {
-        // Use IN operator for OR logic
-        conditions.push(`condition IN (${currentFilters.conditions.map(c =>
-          `'${c}'`
-        ).join(', ')})`);
+        // Single IN clause for conditions
+        conditions.push(`condition IN ('${currentFilters.conditions.join("', '")}')`);
       }
       
       if (currentFilters.conditions.length > 0) {

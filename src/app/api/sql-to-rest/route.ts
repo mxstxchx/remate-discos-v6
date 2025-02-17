@@ -36,35 +36,40 @@ export async function POST(request: Request) {
         });
       }
 
-      // Handle multiple OR conditions for Labels
+      // Handle multiple OR conditions for Labels using containment
       const labelsOrMatch = conditions.match(/\((labels @> '\[.*?\]'(\s+OR\s+labels @> '\[.*?\]')*)\)/);
       if (labelsOrMatch) {
         const labelsConditions = labelsOrMatch[1].split(' OR ');
-        labelsConditions.forEach(condition => {
+        const labelNames = labelsConditions.map(condition => {
           const match = condition.match(/labels @> '\[(.*?)\]'/);
           if (match) {
             const obj = JSON.parse(`[${match[1]}]`)[0];
-            filters += `&labels.cs={"name":"${obj.name}"}`;
+            return obj.name;
           }
-        });
+          return null;
+        }).filter(Boolean);
+        
+        if (labelNames.length > 0) {
+          filters += `&labels=cs.${JSON.stringify(labelNames.map(name => ({ name })))}`;
+        }
       }
 
-      // Handle styles with array overlap
+      // Handle styles with array overlap - single overlap operator
       const styleMatch = conditions.match(/styles && ARRAY\[(.*?)\]::text\[\]/);
       if (styleMatch) {
-        const styles = styleMatch[1].split(',').map(s => s.trim().replace(/'/g, ''));
-        styles.forEach(style => {
-          filters += `&styles.cs=["${style}"]`;
-        });
+        const styles = styleMatch[1].split(',')
+          .map(s => s.trim().replace(/'/g, ''))
+          .join(',');
+        filters += `&styles=ov.{${styles}}`;
       }
 
-      // Handle condition IN clause
+      // Handle condition IN clause - single in operator
       const conditionMatch = conditions.match(/condition IN \((.*?)\)/);
       if (conditionMatch) {
-        const conditions = conditionMatch[1].split(',').map(c => c.trim().replace(/'/g, ''));
-        conditions.forEach(condition => {
-          filters += `&condition=eq.${condition}`;
-        });
+        const conditions = conditionMatch[1].split(',')
+          .map(c => c.trim().replace(/'/g, ''))
+          .join(',');
+        filters += `&condition=in.(${conditions})`;
       }
     }
 
