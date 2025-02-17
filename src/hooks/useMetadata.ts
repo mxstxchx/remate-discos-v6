@@ -40,13 +40,13 @@ async function fetchMetadata() {
         console.log(`[METADATA] Record ${index} artists:`, record.artists);
       }
 
-      // Handle artists JSONB field
+      // Handle artists array
       if (record.artists) {
         const artistsList = Array.isArray(record.artists) ? record.artists : [record.artists];
-        artistsList.forEach((artist: any) => {
-          if (artist?.name) {
-            artists.add(artist.name);
-            if (index < 2) console.log(`[METADATA] Added artist: ${artist.name}`);
+        artistsList.forEach((artist: string) => {
+          if (artist) {
+            artists.add(artist);
+            if (index < 2) console.log(`[METADATA] Added artist: ${artist}`);
           }
         });
       }

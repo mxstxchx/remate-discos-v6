@@ -27,19 +27,19 @@ export async function POST(request: Request) {
       const artistsOrMatch = conditions.match(/\((artists @> '\[.*?\]'(\s+OR\s+artists @> '\[.*?\]')*)\)/);
       if (artistsOrMatch) {
         const artistsConditions = artistsOrMatch[1].split(' OR ');
-        artistsConditions.forEach(condition => {
-          const match = condition.match(/artists @> '\[(.*?)\]'/);
-          if (match) {
-            const obj = JSON.parse(`[${match[1]}]`)[0];
-            filters += `&artists.cs={"name":"${obj.name}"}`;
-          }
-        });
+          // Handle array operators for artists and styles
+      const arrayMatch = conditions.match(/(artists|styles) && ARRAY\[(.*?)\]::text\[\]/);
+      if (arrayMatch) {
+        const [, field, values] = arrayMatch;
+        const items = values.split(',')
+          .map(s => s.trim().replace(/'/g, ''));
+        filters += `&${field}=cs.{${items.join(',')}}`;
       }
 
-      // Handle multiple OR conditions for Labels using containment
-      const labelsOrMatch = conditions.match(/\((labels @> '\[.*?\]'(\s+OR\s+labels @> '\[.*?\]')*)\)/);
-      if (labelsOrMatch) {
-        const labelsConditions = labelsOrMatch[1].split(' OR ');
+      // Handle labels with proper JSON containment
+      const labelsMatch = conditions.match(/\((labels @> '\[.*?\]'(\s+OR\s+labels @> '\[.*?\]')*)\)/);
+      if (labelsMatch) {
+        const labelsConditions = labelsMatch[1].split(' OR ');
         const labelNames = labelsConditions.map(condition => {
           const match = condition.match(/labels @> '\[(.*?)\]'/);
           if (match) {
@@ -50,7 +50,10 @@ export async function POST(request: Request) {
         }).filter(Boolean);
         
         if (labelNames.length > 0) {
-          filters += `&labels=cs.${JSON.stringify(labelNames.map(name => ({ name })))}`;
+          const labelFilters = labelNames.map(name =>
+            `&labels=cs.{"name":"${name}"}`
+          ).join('');
+          filters += labelFilters;
         }
       }
 

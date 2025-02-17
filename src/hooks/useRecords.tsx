@@ -58,11 +58,10 @@ export function useRecords(page: number = 1) {
       const conditions = [];
       
       if (currentFilters.artists.length > 0) {
-        // Use JSONB contains operator with OR logic
-        const artistConditions = currentFilters.artists.map(artist =>
-          `artists @> '[{"name": "${artist}"}]'`
-        );
-        conditions.push(`(${artistConditions.join(' OR ')})`);
+        // Use array contains for artists
+        conditions.push(`artists && ARRAY[${currentFilters.artists.map(artist =>
+          `'${artist}'`
+        )}]::text[]`);
       }
       
       if (currentFilters.labels.length > 0) {
