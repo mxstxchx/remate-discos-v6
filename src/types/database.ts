@@ -1,0 +1,55 @@
+export interface Release {
+  id: number;
+  title: string;
+  artists: Array<{ name: string; }>;
+  labels: Array<{ name: string; catno?: string; }>;
+  styles: string[];
+  year?: number;
+  country?: string;
+  condition: 'Mint' | 'Near Mint' | 'Very Good Plus' | 'Very Good';
+  price: number;
+  thumb?: string;
+  primary_image?: string;
+  secondary_image?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FilterState {
+  artists: string[];
+  labels: string[];
+  styles: string[];
+  conditions: string[];
+  priceRange: {
+    min: number;
+    max: number;
+  };
+  page: number;
+  perPage: number;
+}
+
+export interface PostgRESTResponse<T> {
+  data: T[];
+  count: number | null;
+  error: string | null;
+}
+
+export interface PostgRESTQuery {
+  select?: string;
+  filter?: Record<string, any>;
+  order?: string;
+  page?: number;
+  perPage?: number;
+}
+
+export type PostgRESTOperator =
+  | 'eq'
+  | 'neq'
+  | 'gt'
+  | 'gte'
+  | 'lt'
+  | 'lte'
+  | 'like'
+  | 'ilike'
+  | 'cs'
+  | 'cd';
