@@ -23,18 +23,29 @@ export async function POST(request: Request) {
         });
       }
 
-      // Handle artists as JSON array
+      // Handle styles array (TEXT[])
+      const stylesMatch = conditions.match(/styles && ARRAY\[(.*?)\]::text\[\]/);
+      if (stylesMatch) {
+        const styles = stylesMatch[1].split(',')
+          .map(s => s.trim().replace(/'/g, ''));
+        // Use multiple parameters for OR logic
+        styles.forEach(style => {
+          filters += `&styles.cs=["${style}"]`;
+        });
+      }
+
+      // Handle artists array (TEXT[])
       const artistsMatch = conditions.match(/artists && ARRAY\[(.*?)\]::text\[\]/);
       if (artistsMatch) {
         const artists = artistsMatch[1].split(',')
           .map(s => s.trim().replace(/'/g, ''));
-        // Use multiple cs parameters for OR logic
+        // Use multiple parameters for OR logic
         artists.forEach(artist => {
           filters += `&artists.cs=["${artist}"]`;
         });
       }
 
-      // Handle labels JSONB containment
+      // Handle labels JSONB
       const labelsMatch = conditions.match(/\((labels @> '\[.*?\]'(\s+OR\s+labels @> '\[.*?\]')*)\)/);
       if (labelsMatch) {
         const labelsConditions = labelsMatch[1].split(' OR ');
@@ -47,8 +58,8 @@ export async function POST(request: Request) {
           return null;
         }).filter(Boolean);
         
-        // Use multiple parameters for OR logic
         labelNames.forEach(name => {
+          // Use multiple parameters for OR logic
           filters += `&labels.cs={"name":"${name}"}`;
         });
       }
@@ -58,11 +69,13 @@ export async function POST(request: Request) {
       if (conditionMatch) {
         const conditions = conditionMatch[1].split(',')
           .map(c => c.trim().replace(/'/g, ''));
-        // Use simple in operator for multiple values
-        filters += `&condition.in=(${conditions.join(',')})`;
+        // Use multiple parameters for OR logic
+        conditions.forEach(condition => {
+          filters += `&condition=eq.${condition}`;
+        });
       }
 
-      // Price range - keep working syntax
+      // Price range (keep existing working syntax)
       const priceMatch = conditions.match(/price >= (\d+) AND price <= (\d+)/);
       if (priceMatch) {
         filters += `&price.gte=${priceMatch[1]}&price.lte=${priceMatch[2]}`;
