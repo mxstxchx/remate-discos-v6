@@ -59,7 +59,23 @@ export const useFilters = create<FilterStore>()(
             : FILTER_DEFAULTS[filterType]
         })),
       
-      clearAllFilters: () => set({ ...FILTER_DEFAULTS }),
+      clearAllFilters: () => {
+        console.log('[FILTER_DYNAMIC_OPTIONS] Executing clearAllFilters');
+        console.log('[FILTER_DYNAMIC_OPTIONS] Current state:', get());
+        console.log('[FILTER_DYNAMIC_OPTIONS] Setting to defaults:', FILTER_DEFAULTS);
+        set({
+          artists: [],
+          labels: [],
+          styles: [],
+          conditions: [],
+          priceRange: FILTER_DEFAULTS.priceRange,
+          isLoading: false,
+          isLoadingOptions: false,
+          error: null,
+          optionsError: null
+        });
+        console.log('[FILTER_DYNAMIC_OPTIONS] New state after clear:', get());
+      },
 
       getFilteredOptions: async (category) => {
         set({ isLoadingOptions: true, optionsError: null });
@@ -260,11 +276,7 @@ export const useFilters = create<FilterStore>()(
 
           // Add ordering and pagination
           query = query
-            .order('created_at', { ascending: false })
-            .range(
-              (page - 1) * FILTER_DEFAULTS.perPage,
-              page * FILTER_DEFAULTS.perPage - 1
-            );
+            .order('created_at', { ascending: false });
 
           console.log('[FILTER_COMBINATION] Executing query...');
           const { data, error, count } = await query;

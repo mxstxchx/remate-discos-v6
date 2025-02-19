@@ -68,7 +68,12 @@ export function ActiveFilters() {
       <Badge
         variant="destructive"
         className="cursor-pointer"
-        onClick={filters.clearAllFilters}
+        onClick={() => {
+          console.log('[FILTER_DYNAMIC_OPTIONS] Clearing all filters');
+          // Call the clearAllFilters method and verify it's actually resetting state
+          filters.clearAllFilters();
+          console.log('[FILTER_DYNAMIC_OPTIONS] Filter state after clear:', filters);
+        }}
       >
         Clear All
       </Badge>

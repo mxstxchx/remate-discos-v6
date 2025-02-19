@@ -4,7 +4,7 @@ export const FILTER_DEFAULTS = {
     max: 20
   },
   page: 1,
-  perPage: 24
+  perPage: 114
 };
 
 export const CONDITIONS = [
