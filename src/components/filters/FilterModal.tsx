@@ -14,6 +14,7 @@ interface FilterModalProps {
   selectedValues: string[];
   onApply: (values: string[]) => void;
   loading?: boolean;
+  category?: 'artists' | 'labels' | 'styles' | 'conditions';
 }
 
 export function FilterModal({

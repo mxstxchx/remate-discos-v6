@@ -4,6 +4,13 @@ import { supabase } from '@/lib/supabase/client';
 import { FILTER_DEFAULTS } from '@/lib/constants';
 import type { FilterState, Release } from '@/types/database';
 
+interface FilterOptions {
+  artists: string[];
+  labels: string[];
+  styles: string[];
+  conditions: string[];
+}
+
 interface FilterStore extends FilterState {
   // Filter state setters
   setArtists: (artists: string[]) => void;
@@ -16,8 +23,11 @@ interface FilterStore extends FilterState {
   
   // Data fetching
   fetchRecords: (page: number) => Promise<{ data: Release[]; count: number }>;
+  getFilteredOptions: (category: keyof FilterOptions) => Promise<string[]>;
   isLoading: boolean;
+  isLoadingOptions: boolean;
   error: string | null;
+  optionsError: string | null;
 }
 
 export const useFilters = create<FilterStore>()(
@@ -30,7 +40,9 @@ export const useFilters = create<FilterStore>()(
       conditions: [],
       priceRange: FILTER_DEFAULTS.priceRange,
       isLoading: false,
+      isLoadingOptions: false,
       error: null,
+      optionsError: null,
 
       // Setters
       setArtists: (artists) => set({ artists }),
@@ -48,6 +60,112 @@ export const useFilters = create<FilterStore>()(
         })),
       
       clearAllFilters: () => set({ ...FILTER_DEFAULTS }),
+
+      getFilteredOptions: async (category) => {
+        set({ isLoadingOptions: true, optionsError: null });
+        
+        try {
+          console.log('[FILTER_OPTIONS] Fetching options for category:', category);
+          const state = get();
+          console.log('[FILTER_OPTIONS] Current filter state:', state);
+
+          let query = supabase.from('releases').select('*');
+          
+          // Build filters excluding the requested category
+          const artistFilters = category !== 'artists' && state.artists.length > 0
+            ? state.artists.map(artist => `artists.cs.["${artist}"]`)
+            : [];
+
+          const labelFilters = category !== 'labels' && state.labels.length > 0
+            ? state.labels.map(label => {
+                const filterObj = JSON.stringify([{ name: label }]);
+                return `labels.cs.${filterObj}`;
+              })
+            : [];
+
+          const styleFilters = category !== 'styles' && state.styles.length > 0
+            ? state.styles.map(style => `styles.cs.{${style}}`)
+            : [];
+
+          const conditionFilters = category !== 'conditions' && state.conditions.length > 0
+            ? [`condition.in.(${state.conditions.join(',')})`]
+            : [];
+
+          console.log('[FILTER_OPTIONS] Built filters:', {
+            artistFilters,
+            labelFilters,
+            styleFilters,
+            conditionFilters
+          });
+
+          // Apply filters
+          if (artistFilters.length > 0) {
+            query = query.or(artistFilters.join(','));
+          }
+          if (labelFilters.length > 0) {
+            query = query.or(labelFilters.join(','));
+          }
+          if (styleFilters.length > 0) {
+            query = query.or(styleFilters.join(','));
+          }
+          if (conditionFilters.length > 0) {
+            query = query.or(conditionFilters[0]);
+          }
+
+          console.log('[FILTER_OPTIONS] Executing query...');
+          const { data, error } = await query;
+
+          if (error) {
+            console.error('[FILTER_OPTIONS] Query error:', error);
+            throw error;
+          }
+
+          // Extract unique values for the requested category
+          const uniqueValues = new Set<string>();
+          
+          data?.forEach(record => {
+            switch (category) {
+              case 'artists':
+                record.artists?.forEach((artist: any) => {
+                  if (typeof artist === 'string') {
+                    uniqueValues.add(artist);
+                  } else if (artist?.name) {
+                    uniqueValues.add(artist.name);
+                  }
+                });
+                break;
+              case 'labels':
+                record.labels?.forEach((label: any) => {
+                  if (label?.name) {
+                    uniqueValues.add(label.name);
+                  }
+                });
+                break;
+              case 'styles':
+                record.styles?.forEach((style: string) => {
+                  uniqueValues.add(style);
+                });
+                break;
+              case 'conditions':
+                if (record.condition) {
+                  uniqueValues.add(record.condition);
+                }
+                break;
+            }
+          });
+
+          const options = Array.from(uniqueValues).sort();
+          console.log(`[FILTER_OPTIONS] Found ${options.length} options for ${category}`);
+          
+          return options;
+        } catch (error) {
+          console.error('[FILTER_OPTIONS] Error fetching options:', error);
+          set({ optionsError: error.message });
+          throw error;
+        } finally {
+          set({ isLoadingOptions: false });
+        }
+      },
 
       // Data fetching
       fetchRecords: async (page) => {
