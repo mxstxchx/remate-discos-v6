@@ -54,61 +54,90 @@ export const useFilters = create<FilterStore>()(
         set({ isLoading: true, error: null });
         
         try {
-          console.log('[FILTERS] Starting fetchRecords with page:', page);
+          console.log('[FILTER_COMBINATION] Starting fetchRecords with page:', page);
           let query = supabase
             .from('releases')
             .select('*', { count: 'exact' });
 
           const state = get();
-          console.log('[FILTERS] Current filter state:', state);
+          console.log('[FILTER_COMBINATION] Current filter state:', state);
           
-          let filters = [];
+          // Initialize empty arrays for each filter category
+          const artistFilters = [];
+          const labelFilters = [];
+          const styleFilters = [];
+          const conditionFilters = [];
+          const priceFilters = [];
 
           // Build artist filters
           if (state.artists.length > 0) {
-            console.log('[FILTERS] Adding artists filter:', state.artists);
+            console.log('[FILTER_COMBINATION] Adding artists:', state.artists);
             state.artists.forEach(artist => {
-              filters.push(`artists.cs.["${artist}"]`);
+              artistFilters.push(`artists.cs.["${artist}"]`);
             });
           }
 
           // Build label filters
           if (state.labels.length > 0) {
-            console.log('[FILTERS] Adding labels filter:', state.labels);
+            console.log('[FILTER_COMBINATION] Adding labels:', state.labels);
             state.labels.forEach(label => {
-              // Format for PostgREST JSON containment using cs operator
               const filterObj = JSON.stringify([{ name: label }]);
-              filters.push(`labels.cs.${filterObj}`);
+              labelFilters.push(`labels.cs.${filterObj}`);
             });
           }
 
           // Build styles filters
           if (state.styles.length > 0) {
-            console.log('[FILTERS] Adding styles filter:', state.styles);
+            console.log('[FILTER_COMBINATION] Adding styles:', state.styles);
             state.styles.forEach(style => {
-              filters.push(`styles.cs.{${style}}`);
+              styleFilters.push(`styles.cs.{${style}}`);
             });
           }
 
           // Build condition filters
           if (state.conditions.length > 0) {
-            console.log('[FILTERS] Adding conditions filter:', state.conditions);
-            filters.push(`condition.in.(${state.conditions.join(',')})`);
+            console.log('[FILTER_COMBINATION] Adding conditions:', state.conditions);
+            conditionFilters.push(`condition.in.(${state.conditions.join(',')})`);
           }
 
-          // Add price range filters
+          // Build price range filters
           if (state.priceRange.min > FILTER_DEFAULTS.priceRange.min) {
-            filters.push(`price.gte.${state.priceRange.min}`);
+            priceFilters.push(`price.gte.${state.priceRange.min}`);
           }
           if (state.priceRange.max < FILTER_DEFAULTS.priceRange.max) {
-            filters.push(`price.lte.${state.priceRange.max}`);
+            priceFilters.push(`price.lte.${state.priceRange.max}`);
           }
 
-          console.log('[FILTERS] All filters:', filters);
+          // Apply styles filters (OR within category)
+          if (styleFilters.length > 0) {
+            console.log('[FILTER_COMBINATION] Applying styles filters:', styleFilters);
+            query = query.or(styleFilters.join(','));
+          }
 
-          // Apply all filters
-          if (filters.length > 0) {
-            query = query.or(filters.join(','));
+          // Apply artist filters (OR within category)
+          if (artistFilters.length > 0) {
+            console.log('[FILTER_COMBINATION] Applying artist filters:', artistFilters);
+            query = query.or(artistFilters.join(','));
+          }
+
+          // Apply label filters (OR within category)
+          if (labelFilters.length > 0) {
+            console.log('[FILTER_COMBINATION] Applying label filters:', labelFilters);
+            query = query.or(labelFilters.join(','));
+          }
+
+          // Apply condition filters
+          if (conditionFilters.length > 0) {
+            console.log('[FILTER_COMBINATION] Applying condition filters:', conditionFilters);
+            query = query.or(conditionFilters[0]);
+          }
+
+          // Apply price filters (AND between min and max)
+          if (priceFilters.length > 0) {
+            console.log('[FILTER_COMBINATION] Applying price filters:', priceFilters);
+            priceFilters.forEach(filter => {
+              query = query.or(filter);
+            });
           }
 
           // Add ordering and pagination
@@ -119,15 +148,15 @@ export const useFilters = create<FilterStore>()(
               page * FILTER_DEFAULTS.perPage - 1
             );
 
-          console.log('[FILTERS] Executing query...');
+          console.log('[FILTER_COMBINATION] Executing query...');
           const { data, error, count } = await query;
 
           if (error) {
-            console.error('[FILTERS] Query error:', error);
+            console.error('[FILTER_COMBINATION] Query error:', error);
             throw error;
           }
 
-          console.log('[FILTERS] Query results:', {
+          console.log('[FILTER_COMBINATION] Query results:', {
             resultCount: data?.length,
             totalCount: count,
             firstResult: data?.[0]
@@ -138,7 +167,7 @@ export const useFilters = create<FilterStore>()(
             count: count || 0
           };
         } catch (error) {
-          console.error('[FILTERS] Error in fetchRecords:', error);
+          console.error('[FILTER_COMBINATION] Error in fetchRecords:', error);
           throw error;
         } finally {
           set({ isLoading: false });
