@@ -1,24 +1,57 @@
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
-import { useFilters, FilterState } from "@/hooks/useFilters";
+import { useFilters } from "@/hooks/useFilters";
+import { FILTER_DEFAULTS } from "@/lib/constants";
+import type { FilterState } from "@/types/database";
 
 export function ActiveFilters() {
   const filters = useFilters();
+
   const activeFilters = Object.entries(filters).filter(([key, value]) => {
-    if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === 'object') {
+    if (key === 'priceRange') {
       const { min, max } = value as { min: number; max: number };
-      return min !== 3 || max !== 20;
+      return min !== FILTER_DEFAULTS.priceRange.min ||
+             max !== FILTER_DEFAULTS.priceRange.max;
+    }
+    if (Array.isArray(value)) {
+      return value.length > 0;
     }
     return false;
   });
 
   if (activeFilters.length === 0) return null;
 
+  const handleRemoveFilter = (key: keyof FilterState, value?: string) => {
+    if (value) {
+      const currentValues = filters[key] as string[];
+      const newValues = currentValues.filter(v => v !== value);
+      filters[`set${key.charAt(0).toUpperCase() + key.slice(1)}`](newValues);
+    } else {
+      filters.clearFilter(key);
+    }
+  };
+
   return (
     <div className="flex flex-wrap gap-2 mb-4">
-      {activeFilters.map(([key, value]) => (
-        Array.isArray(value) ? value.map((item) => (
+      {activeFilters.map(([key, value]) => {
+        if (key === 'priceRange') {
+          const { min, max } = value as { min: number; max: number };
+          return (
+            <Badge
+              key={key}
+              variant="secondary"
+              className="flex items-center gap-1"
+            >
+              {`Price: ${min}€ - ${max}€`}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() => handleRemoveFilter(key as keyof FilterState)}
+              />
+            </Badge>
+          );
+        }
+
+        return (Array.isArray(value) && value.map((item) => (
           <Badge
             key={`${key}-${item}`}
             variant="secondary"
@@ -27,32 +60,20 @@ export function ActiveFilters() {
             {item}
             <X
               className="h-3 w-3 cursor-pointer"
-              onClick={() => {
-                const newValues = (filters[key as keyof FilterState] as string[]).filter(
-                  (v) => v !== item
-                );
-                filters[`set${key.charAt(0).toUpperCase() + key.slice(1)}`](newValues);
-              }}
+              onClick={() => handleRemoveFilter(key as keyof FilterState, item)}
             />
           </Badge>
-        )) : (
-          <Badge
-            key={key}
-            variant="secondary"
-            className="flex items-center gap-1"
-          >
-            {`${key}: ${JSON.stringify(value)}`}
-            <X
-              className="h-3 w-3 cursor-pointer"
-              onClick={() => filters.clearFilter(key as keyof FilterState)}
-            />
-          </Badge>
-        )
-      ))}
+        )));
+      })}
       <Badge
         variant="destructive"
         className="cursor-pointer"
-        onClick={() => filters.clearAllFilters()}
+        onClick={() => {
+          console.log('[FILTER_DYNAMIC_OPTIONS] Clearing all filters');
+          // Call the clearAllFilters method and verify it's actually resetting state
+          filters.clearAllFilters();
+          console.log('[FILTER_DYNAMIC_OPTIONS] Filter state after clear:', filters);
+        }}
       >
         Clear All
       </Badge>

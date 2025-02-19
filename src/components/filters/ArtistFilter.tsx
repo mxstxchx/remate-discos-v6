@@ -1,26 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 import { FilterModal } from './FilterModal';
 import { useFilters } from '@/hooks/useFilters';
-import { useMetadata } from '@/hooks/useMetadata';
 
 export function ArtistFilter() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [availableArtists, setAvailableArtists] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const filters = useFilters();
   const artists = useFilters((state) => state.artists);
   const setArtists = useFilters((state) => state.setArtists);
-  const { metadata, loading: metadataLoading, error } = useMetadata();
 
-  // Safely access and sort artists from metadata
-  const uniqueArtists = metadata?.artists?.sort() ?? [];
+  useEffect(() => {
+    console.log('[FILTER_DYNAMIC_OPTIONS] ArtistFilter - Fetching available artists');
+    async function fetchArtists() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const options = await filters.getFilteredOptions('artists');
+        console.log('[FILTER_DYNAMIC_OPTIONS] ArtistFilter - Received options:', options);
+        setAvailableArtists(options);
+      } catch (err) {
+        console.error('[FILTER_DYNAMIC_OPTIONS] ArtistFilter - Error:', err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
 
-  if (metadataLoading) {
+    fetchArtists();
+  }, [
+    filters.labels,
+    filters.styles,
+    filters.conditions
+    // Excluding artists as we don't want to refetch when artists change
+  ]);
+
+  if (isLoading) {
     return (
       <div className="space-y-2">
-        <Skeleton className="h-6 mb-2" />
+        <div className="flex items-center justify-center space-x-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Loading Artists...</span>
+        </div>
         <Button variant="outline" className="w-full" disabled>
-          Loading Artists...
+          Select Artists
         </Button>
       </div>
     );
@@ -29,9 +57,15 @@ export function ArtistFilter() {
   if (error) {
     return (
       <div className="space-y-2">
-        <p className="text-sm text-destructive">Error loading artists.</p>
-        <Button variant="outline" className="w-full" disabled>
-          Try Again
+        <div className="text-sm text-destructive">
+          Error loading artists: {error}
+        </div>
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => window.location.reload()}
+        >
+          Retry
         </Button>
       </div>
     );
@@ -42,7 +76,11 @@ export function ArtistFilter() {
       <div className="space-y-2">
         <div className="flex flex-wrap gap-2">
           {artists.map((artist) => (
-            <Badge key={artist} variant="secondary">
+            <Badge
+              key={artist}
+              variant="secondary"
+              className={!availableArtists.includes(artist) ? 'opacity-50' : ''}
+            >
               {artist}
             </Badge>
           ))}
@@ -51,8 +89,9 @@ export function ArtistFilter() {
           variant="outline"
           className="w-full"
           onClick={() => setIsModalOpen(true)}
+          disabled={isLoading || availableArtists.length === 0}
         >
-          Select Artists ({uniqueArtists.length})
+          Select Artists ({availableArtists.length})
         </Button>
       </div>
 
@@ -60,9 +99,14 @@ export function ArtistFilter() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Select Artists"
-        options={uniqueArtists}
+        options={availableArtists}
         selectedValues={artists}
-        onApply={setArtists}
+        onApply={(newArtists) => {
+          console.log('[FILTER_DYNAMIC_OPTIONS] ArtistFilter - Applying new artists:', newArtists);
+          setArtists(newArtists);
+        }}
+        loading={isLoading}
+        category="artists"
       />
     </>
   );

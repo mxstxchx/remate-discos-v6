@@ -8,70 +8,78 @@ export interface Metadata {
 
 async function fetchMetadata() {
   console.log('[METADATA] Fetching metadata...');
-  // Use proper PostgREST format for JSONB fields
+  // Request all records without pagination
   const response = await fetch('/api/postgrest/releases?select=artists,labels,styles');
   console.log('[METADATA] Response status:', response.status);
   if (!response.ok) throw new Error('Failed to fetch metadata');
  
-  const records = await response.json();
-  
-  // Debug logs to inspect the data structure
-  console.log('First record:', JSON.stringify(records[0], null, 2));
-  console.log('Records length:', records.length);
-  if (records[0]) {
-    console.log('Artists type:', typeof records[0].artists);
-    console.log('Artists value:', records[0].artists);
-    console.log('Labels type:', typeof records[0].labels);
-    console.log('Labels value:', records[0].labels);
-    console.log('Styles type:', typeof records[0].styles);
-    console.log('Styles value:', records[0].styles);
-  }
+  const { data: records } = await response.json();
+  console.log('[METADATA] Records fetched:', records.length);
   
   const artists = new Set<string>();
   const labels = new Set<string>();
   const styles = new Set<string>();
  
-  console.log('[METADATA] Processing records:', records.length);
+  console.log('[METADATA] Processing records...');
   
-  records.forEach((record: any, index: number) => {
+  records.forEach((record: any) => {
     try {
-      // Log first few records for debugging
-      if (index < 2) {
-        console.log(`[METADATA] Record ${index} artists:`, record.artists);
-      }
-
-      // Handle artists array
-      if (record.artists) {
-        const artistsList = Array.isArray(record.artists) ? record.artists : [record.artists];
-        artistsList.forEach((artist: string) => {
-          if (artist) {
+      // Parse artists JSON and extract names
+      const artistData = typeof record.artists === 'string'
+        ? JSON.parse(record.artists)
+        : record.artists;
+        
+      if (Array.isArray(artistData)) {
+        artistData.forEach(artist => {
+          if (typeof artist === 'string') {
             artists.add(artist);
-            if (index < 2) console.log(`[METADATA] Added artist: ${artist}`);
+          } else if (artist?.name) {
+            artists.add(artist.name);
           }
         });
       }
  
-      if (record.labels) {
-        (Array.isArray(record.labels) ? record.labels : [record.labels]).forEach((label: any) => {
-          if (label?.name) labels.add(label.name);
+      // Parse labels JSON and extract names
+      const labelData = typeof record.labels === 'string'
+        ? JSON.parse(record.labels)
+        : record.labels;
+        
+      if (Array.isArray(labelData)) {
+        labelData.forEach(label => {
+          if (label?.name) {
+            labels.add(label.name);
+          }
         });
       }
  
-      if (record.styles) {
-        (Array.isArray(record.styles) ? record.styles : [record.styles]).forEach((style: string) => {
+      // Parse styles JSON
+      const styleData = typeof record.styles === 'string'
+        ? JSON.parse(record.styles)
+        : record.styles;
+        
+      if (Array.isArray(styleData)) {
+        styleData.forEach(style => {
           if (style) styles.add(style);
         });
       }
     } catch (error) {
-      console.error('Error processing record:', error, record);
+      console.error('[METADATA] Error processing record:', error);
     }
   });
 
-  return {
+  const metadata = {
     artists: Array.from(artists).sort(),
     labels: Array.from(labels).sort(),
     styles: Array.from(styles).sort()
   };
+
+  console.log('[METADATA] Processed metadata:', {
+    artistsCount: metadata.artists.length,
+    labelsCount: metadata.labels.length,
+    stylesCount: metadata.styles.length
+  });
+
+  return metadata;
 }
 
 export function useMetadata() {
@@ -87,7 +95,10 @@ export function useMetadata() {
     setLoading(true);
     fetchMetadata()
       .then(setMetadata)
-      .catch(err => setError(err.message))
+      .catch(err => {
+        console.error('[METADATA] Error:', err);
+        setError(err.message);
+      })
       .finally(() => setLoading(false));
   }, []);
 
