@@ -1,9 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '@/lib/supabase/client';
-import { useSession } from './use-session';
-import { type FilterState, type Release } from '@/types/database';
 import { FILTER_DEFAULTS } from '@/lib/constants';
+import type { FilterState, Release } from '@/types/database';
 
 interface FilterStore extends FilterState {
   // Filter state setters
@@ -55,52 +54,91 @@ export const useFilters = create<FilterStore>()(
         set({ isLoading: true, error: null });
         
         try {
+          console.log('[FILTERS] Starting fetchRecords with page:', page);
           let query = supabase
             .from('releases')
             .select('*', { count: 'exact' });
 
           const state = get();
+          console.log('[FILTERS] Current filter state:', state);
           
-          // Apply filters
+          let filters = [];
+
+          // Build artist filters
           if (state.artists.length > 0) {
-            query = query.contains('artists', state.artists.map(artist => ({ name: artist })));
+            console.log('[FILTERS] Adding artists filter:', state.artists);
+            state.artists.forEach(artist => {
+              filters.push(`artists.cs.["${artist}"]`);
+            });
           }
-          
+
+          // Build label filters
           if (state.labels.length > 0) {
-            const labelQueries = state.labels.map(label =>
-              `labels::jsonb @> '[{"name":"${label}"}]'`
-            );
-            query = query.or(labelQueries.join(','));
+            console.log('[FILTERS] Adding labels filter:', state.labels);
+            state.labels.forEach(label => {
+              // Format for PostgREST JSON containment using cs operator
+              const filterObj = JSON.stringify([{ name: label }]);
+              filters.push(`labels.cs.${filterObj}`);
+            });
           }
-          
+
+          // Build styles filters
           if (state.styles.length > 0) {
-            query = query.contains('styles', state.styles);
+            console.log('[FILTERS] Adding styles filter:', state.styles);
+            state.styles.forEach(style => {
+              filters.push(`styles.cs.{${style}}`);
+            });
           }
-          
+
+          // Build condition filters
           if (state.conditions.length > 0) {
-            query = query.in('condition', state.conditions);
+            console.log('[FILTERS] Adding conditions filter:', state.conditions);
+            filters.push(`condition.in.(${state.conditions.join(',')})`);
           }
-          
+
+          // Add price range filters
+          if (state.priceRange.min > FILTER_DEFAULTS.priceRange.min) {
+            filters.push(`price.gte.${state.priceRange.min}`);
+          }
+          if (state.priceRange.max < FILTER_DEFAULTS.priceRange.max) {
+            filters.push(`price.lte.${state.priceRange.max}`);
+          }
+
+          console.log('[FILTERS] All filters:', filters);
+
+          // Apply all filters
+          if (filters.length > 0) {
+            query = query.or(filters.join(','));
+          }
+
+          // Add ordering and pagination
           query = query
-            .gte('price', state.priceRange.min)
-            .lte('price', state.priceRange.max)
             .order('created_at', { ascending: false })
             .range(
               (page - 1) * FILTER_DEFAULTS.perPage,
               page * FILTER_DEFAULTS.perPage - 1
             );
 
+          console.log('[FILTERS] Executing query...');
           const { data, error, count } = await query;
-          
-          if (error) throw error;
-          
+
+          if (error) {
+            console.error('[FILTERS] Query error:', error);
+            throw error;
+          }
+
+          console.log('[FILTERS] Query results:', {
+            resultCount: data?.length,
+            totalCount: count,
+            firstResult: data?.[0]
+          });
+
           return {
             data: data || [],
             count: count || 0
           };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Failed to fetch records';
-          set({ error: message });
+          console.error('[FILTERS] Error in fetchRecords:', error);
           throw error;
         } finally {
           set({ isLoading: false });

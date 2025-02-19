@@ -20,7 +20,7 @@ export async function GET(request: Request) {
       select: searchParams.get('select') || undefined,
       page: searchParams.has('page') ? Number(searchParams.get('page')) : undefined,
       perPage: searchParams.has('perPage') ? Number(searchParams.get('perPage')) : undefined,
-      order: searchParams.get('order') || undefined
+      order: searchParams.get('order') || undefined      
     };
 
     // Parse filter parameters
