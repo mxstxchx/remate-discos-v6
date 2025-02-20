@@ -17,13 +17,12 @@ interface FilterSheetProps {
 export function FilterSheet({ open, onOpenChange }: FilterSheetProps) {
  return (
    <Sheet open={open} onOpenChange={onOpenChange}>
-     <SheetContent side="left" className="w-full sm:w-[540px] overflow-y-auto">
+     <SheetContent side="left" className="w-[90%] max-w-[400px] overflow-y-auto">
        <SheetHeader>
          <SheetTitle>Filters</SheetTitle>
        </SheetHeader>
        
        <div className="mt-4 space-y-6 pb-20">
-         <ActiveFilters />
          
          <FilterCard title="Price Range">
            <PriceRangeFilter />
