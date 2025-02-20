@@ -70,6 +70,13 @@ export function RecordDetail({ id }: RecordDetailProps) {
             priority
           />
         </div>
+        {/* Mobile ActionButton */}
+        <div className="mt-4 md:hidden">
+          <ActionButton
+            recordId={record.id}
+            className="w-full"
+          />
+        </div>
       </div>
 
       {/* Right Column - 60% */}
@@ -176,8 +183,8 @@ export function RecordDetail({ id }: RecordDetailProps) {
           )}
         </div>
 
-        {/* Action Button */}
-        <div className="pt-4">
+        {/* Desktop Action Button */}
+        <div className="pt-4 hidden md:block">
           <ActionButton
             recordId={record.id}
             className="w-full"
