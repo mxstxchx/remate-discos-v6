@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Release } from '@/store/recordsSlice';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { ActionButton } from './ActionButton';
 
 const APP_LOG = '[APP:recordCard]';
+
+const useRecordNavigation = (id: number) => {
+  const router = useRouter();
+  return () => router.push(`/${id}`);
+};
 
 interface RecordCardProps {
  record: Release;
@@ -28,7 +34,10 @@ export const RecordCard = React.memo(function RecordCard({
 
  if (viewPreference === 'grid') {
    return (
-     <Card className="h-full bg-card hover:bg-muted transition-colors">
+     <Card
+       className="h-full bg-card hover:bg-muted transition-colors cursor-pointer"
+       onClick={useRecordNavigation(record.id)}
+     >
        <div className="relative aspect-square w-full overflow-hidden">
          <Image
            src={record.primary_image || record.thumb}
@@ -84,7 +93,10 @@ export const RecordCard = React.memo(function RecordCard({
  }
 
  return (
-   <Card className="flex flex-row bg-card hover:bg-muted transition-colors p-3 gap-3">
+   <Card
+     className="flex flex-row bg-card hover:bg-muted transition-colors p-3 gap-3 cursor-pointer"
+     onClick={useRecordNavigation(record.id)}
+   >
      <div className="w-28 sm:w-32 flex-shrink-0">
        <div className="relative aspect-square w-full overflow-hidden">
          <Image

@@ -12,6 +12,7 @@ interface AppState {
   error: string | null;
   totalPages: number;
   currentPage: number;
+  scrollPosition: number;
 }
 
 interface AppActions {
@@ -23,6 +24,7 @@ interface AppActions {
   setError: (error: string | null) => void;
   setTotalPages: (total: number) => void;
   setCurrentPage: (page: number) => void;
+  setScrollPosition: (position: number) => void;
 }
 
 type Store = AppState & AppActions;
@@ -35,7 +37,8 @@ const initialState: AppState = {
   loading: false,
   error: null,
   totalPages: 1,
-  currentPage: 1
+  currentPage: 1,
+  scrollPosition: 0
 };
 
 export const useStore = create<Store>()(
@@ -49,7 +52,8 @@ export const useStore = create<Store>()(
       setLoading: (loading) => set({ loading }),
       setError: (error) => set({ error }),
       setTotalPages: (totalPages) => set({ totalPages }),
-      setCurrentPage: (currentPage) => set({ currentPage })
+      setCurrentPage: (currentPage) => set({ currentPage }),
+      setScrollPosition: (scrollPosition) => set({ scrollPosition })
     }),
     {
       name: 'remate-discos-storage',
