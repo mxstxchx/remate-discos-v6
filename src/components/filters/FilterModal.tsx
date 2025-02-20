@@ -67,13 +67,13 @@ export function FilterModal({
             className="w-full"
             disabled={loading}
           />
-          <ScrollArea className="h-[300px] rounded-md border p-4">
+          <ScrollArea className="h-[400px] rounded-md border p-4">
             {loading ? (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="h-6 w-6 animate-spin" />
               </div>
             ) : filteredOptions.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2">
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {filteredOptions.map((option) => (
                   <Badge
                     key={option}

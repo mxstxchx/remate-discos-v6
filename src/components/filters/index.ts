@@ -5,3 +5,4 @@ export * from './LabelFilter';
 export * from './StyleFilter';
 export * from './PriceRangeFilter';
 export * from './ConditionFilter';
+export * from './FilterSheet';
