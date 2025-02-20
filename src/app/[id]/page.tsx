@@ -23,7 +23,8 @@ export default function RecordDetailPage() {
   return (
     <>
       <TopLayout />
-      <div className="container mx-auto px-4 py-8">
+      <main className="pt-16"> {/* Add padding-top to account for TopLayout height */}
+        <div className="container mx-auto px-4 py-8">
       <Button
         variant="ghost"
         className="mb-6"
@@ -34,7 +35,8 @@ export default function RecordDetailPage() {
       </Button>
       
       <RecordDetail id={parseInt(id as string)} />
-    </div>
+        </div>
+      </main>
     </>
   );
 }
