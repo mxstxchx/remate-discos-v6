@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { useRecordStatus } from '@/hooks/useRecordStatus';
+import { useRecordStatus } from '@/store';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Clock, Users } from 'lucide-react';
 
@@ -18,24 +18,19 @@ export const ActionButton = memo(function ActionButton({
 }: ActionButtonProps) {
   const status = useRecordStatus(recordId);
 
-  if (!status) return null;
-
   const buttonStyles = {
     AVAILABLE: 'bg-primary hover:bg-primary/90',
-    RESERVED: 'bg-info hover:bg-info/90',
-    IN_QUEUE: 'bg-muted hover:bg-muted/90'
+    RESERVED_BY_OTHERS: 'bg-info hover:bg-info/90',
+    IN_QUEUE: 'bg-muted hover:bg-muted/90',
+    RESERVED: 'bg-success hover:bg-success/90'
   };
 
+  // Default to AVAILABLE if no status is found
+  const currentStatus = status?.cartStatus || 'AVAILABLE';
+
   const getButtonContent = () => {
-    switch (status.type) {
-      case 'AVAILABLE':
-        return (
-          <>
-            <ShoppingCart className="mr-2 h-4 w-4" />
-            Add to Cart
-          </>
-        );
-      case 'RESERVED':
+    switch (currentStatus) {
+      case 'RESERVED_BY_OTHERS':
         return (
           <>
             <Users className="mr-2 h-4 w-4" />
@@ -46,18 +41,32 @@ export const ActionButton = memo(function ActionButton({
         return (
           <>
             <Clock className="mr-2 h-4 w-4" />
-            In Queue
+            Position {status?.queuePosition}
+          </>
+        );
+      case 'RESERVED':
+        return (
+          <>
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            Reserved
+          </>
+        );
+      default: // AVAILABLE
+        return (
+          <>
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            Add to Cart
           </>
         );
     }
   };
 
   const handleClick = () => {
-    switch (status.type) {
+    switch (currentStatus) {
       case 'AVAILABLE':
         onAddToCart?.();
         break;
-      case 'RESERVED':
+      case 'RESERVED_BY_OTHERS':
         onJoinQueue?.();
         break;
     }
@@ -66,8 +75,8 @@ export const ActionButton = memo(function ActionButton({
   return (
     <Button
       onClick={handleClick}
-      disabled={status.type === 'IN_QUEUE'}
-      className={`flex-1 ${buttonStyles[status.type]} ${className}`}
+      disabled={currentStatus === 'IN_QUEUE' || currentStatus === 'RESERVED'}
+      className={`flex-1 ${buttonStyles[currentStatus]} ${className}`}
     >
       {getButtonContent()}
     </Button>

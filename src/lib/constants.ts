@@ -31,3 +31,15 @@ export const API_ENDPOINTS = {
   releases: '/api/postgrest/releases',
   metadata: '/api/postgrest/metadata'
 } as const;
+
+export const CART_CONFIG = {
+  VALIDATION_INTERVAL: 5 * 60 * 1000, // 5 minutes in milliseconds
+  WHATSAPP_MESSAGE_LIMIT: 4096,
+  SUPPORT_EMAIL: 'rafavasquezf@gmail.com',
+  WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER
+} as const;
+
+export const QUEUE_LIMITS = {
+  MAX_SIZE: 20,
+  RESERVATION_DAYS: 7
+} as const;

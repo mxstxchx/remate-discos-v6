@@ -53,3 +53,41 @@ export type PostgRESTOperator =
   | 'ilike'
   | 'cs'
   | 'cd';
+
+export type CartItemStatus = 'AVAILABLE' | 'RESERVED_BY_OTHERS' | 'IN_QUEUE';
+export type ReservationStatus = 'RESERVED' | 'SOLD';
+
+export interface CartItem {
+  id: string;
+  user_alias: string;
+  release_id: number;
+  status: CartItemStatus;
+  last_validated_at: string;
+  releases: Release;
+}
+
+export interface Reservation {
+  id: string;
+  release_id: number;
+  user_alias: string;
+  status: ReservationStatus;
+  expires_at: string;
+}
+
+export interface QueuePosition {
+  id: string;
+  release_id: number;
+  user_alias: string;
+  queue_position: number;
+  joined_at: string;
+}
+
+export interface RecordStatus {
+  cartStatus: CartItemStatus;
+  reservation: {
+    status: ReservationStatus | null;
+    user_alias: string | null;
+  } | null;
+  queuePosition?: number;
+  lastValidated: string;
+}
