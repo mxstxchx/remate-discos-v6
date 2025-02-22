@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useStore, useSession } from '@/store';
 import { CartOperationError } from '@/lib/errors';
@@ -9,6 +9,37 @@ export function useCart() {
   const session = useSession();
   const cartItems = useStore(state => state.cartItems);
   const setCartItems = useStore(state => state.setCartItems);
+  const [lastValidated, setLastValidated] = useState<Date | null>(null);
+
+  // Background validation
+  useEffect(() => {
+    if (!session?.user_alias) return;
+
+    console.log('[Cart_Items] Starting background validation');
+    
+    // Initial validation
+    validateCart().then(() => {
+      setLastValidated(new Date());
+    });
+
+    // Set up interval - 5 minutes
+    const interval = setInterval(async () => {
+      console.log('[Cart_Items] Running scheduled validation, last validated:', lastValidated?.toISOString());
+      
+      try {
+        await validateCart();
+        setLastValidated(new Date());
+      } catch (error) {
+        console.error('[Cart_Items] Background validation failed:', error);
+      }
+    }, 5 * 60 * 1000); // 5 minutes in milliseconds
+
+    // Cleanup
+    return () => {
+      console.log('[Cart_Items] Cleaning up background validation');
+      clearInterval(interval);
+    };
+  }, [session?.user_alias]); // Only re-run if user changes
 
   const validateCart = useCallback(async () => {
     if (!session?.user_alias) {
@@ -175,6 +206,8 @@ export function useCart() {
     addToCart,
     removeFromCart,
     validateCart,
-    isEmpty: cartItems.length === 0
+    isEmpty: cartItems.length === 0,
+    lastValidated,
+    isValidating: false
   };
 }

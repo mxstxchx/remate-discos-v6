@@ -29,7 +29,7 @@ const getStatusVariant = (status: string) => {
 
 export function CartSheet() {
   const { t } = useTranslation();
-  const { items, removeFromCart } = useCart();
+  const { items, removeFromCart, lastValidated } = useCart();
   const { handleCheckout, isLoading: checkoutLoading } = useCheckout();
 
   useEffect(() => {
@@ -116,6 +116,11 @@ export function CartSheet() {
           </ScrollArea>
 
           <div className="border-t pt-4 space-y-4">
+            {lastValidated && (
+              <div className="text-xs text-muted-foreground text-center">
+                Last validated: {new Date(lastValidated).toLocaleTimeString()}
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="font-medium">
                 {t('cart.total', 'Total')}
