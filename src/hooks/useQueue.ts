@@ -7,6 +7,35 @@ export function useQueue() {
   const session = useSession();
   const updateRecordStatuses = useStore(state => state.updateRecordStatuses);
 
+  const leaveQueue = useCallback(async (recordId: number) => {
+    if (!session?.user_alias) return;
+
+    try {
+      const { error } = await supabase
+        .from('reservation_queue')
+        .delete()
+        .eq('release_id', recordId)
+        .eq('user_alias', session.user_alias);
+
+      if (error) throw error;
+
+      // Update status in store
+      updateRecordStatuses({
+        [recordId]: {
+          cartStatus: 'AVAILABLE',
+          reservation: null,
+          queuePosition: undefined,
+          lastValidated: new Date().toISOString()
+        }
+      });
+
+      console.log('[QUEUE] Left queue for record:', recordId);
+    } catch (error) {
+      console.error('[QUEUE] Failed to leave queue:', error);
+      throw error;
+    }
+  }, [session?.user_alias, updateRecordStatuses]);
+
   const joinQueue = useCallback(async (recordId: number) => {
     if (!session?.user_alias) return;
 
@@ -62,5 +91,5 @@ export function useQueue() {
     }
   }, [session?.user_alias, updateRecordStatuses]);
 
-  return { joinQueue };
+  return { joinQueue, leaveQueue };
 }

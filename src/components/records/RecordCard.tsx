@@ -21,7 +21,7 @@ export const RecordCard = React.memo(function RecordCard({
 }: RecordCardProps) {
   const router = useRouter();
   const { addToCart } = useCart();
-  const { joinQueue } = useQueue();
+  const { joinQueue, leaveQueue } = useQueue();
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     console.log(`${APP_LOG} Image load failed for record ${record.id}, falling back to thumb`);
@@ -46,6 +46,16 @@ export const RecordCard = React.memo(function RecordCard({
       console.log('[QUEUE] Joined queue for:', record.id);
     } catch (error) {
       console.error('[QUEUE] Failed to join queue:', error);
+    }
+  };
+
+  const handleLeaveQueue = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await leaveQueue(record.id);
+      console.log('[QUEUE] Left queue for:', record.id);
+    } catch (error) {
+      console.error('[QUEUE] Failed to leave queue:', error);
     }
   };
 
@@ -105,6 +115,8 @@ export const RecordCard = React.memo(function RecordCard({
                 recordId={record.id}
                 onAddToCart={handleAddToCart}
                 onJoinQueue={handleJoinQueue}
+                onLeaveQueue={handleLeaveQueue}
+                recordTitle={record.title}
                 className="w-full"
               />
             </div>
@@ -168,6 +180,8 @@ export const RecordCard = React.memo(function RecordCard({
               recordId={record.id}
               onAddToCart={handleAddToCart}
               onJoinQueue={handleJoinQueue}
+              onLeaveQueue={handleLeaveQueue}
+              recordTitle={record.title}
               className="w-full"
             />
           </div>
