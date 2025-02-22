@@ -8,6 +8,15 @@ import type { CartItem } from '@/types/database';
 
 export function useCheckout() {
   const [isLoading, setIsLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalActions, setModalActions] = useState<{
+    confirm: () => void;
+    cancel: () => void;
+  }>({ confirm: () => {}, cancel: () => {} });
+  const [reservedItems, setReservedItems] = useState<Array<{
+    release_id: number;
+    title: string;
+  }>>([]);
   const supabase = createClientComponentClient();
   const session = useSession();
   const { items, validateCart } = useCart();
@@ -98,9 +107,13 @@ export function useCheckout() {
 
       // Handle conflicts first
       if (conflicts.length > 0) {
-        const shouldQueue = window.confirm(
-          'Some items are no longer available. Would you like to join the queue for these items?'
-        );
+        setShowModal(true);
+        const shouldQueue = await new Promise<boolean>((resolve) => {
+          setModalActions({
+            confirm: () => resolve(true),
+            cancel: () => resolve(false)
+          });
+        });
 
         if (shouldQueue) {
           console.log('[CHECKOUT] Processing queue joins');
@@ -211,7 +224,11 @@ export function useCheckout() {
 
   return {
     handleCheckout,
-    isLoading
+    isLoading,
+    showModal,
+    setShowModal,
+    modalActions,
+    reservedItems
   };
 }
 

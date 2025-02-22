@@ -8,6 +8,7 @@ import { X, ShoppingCart, ArrowRight } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useCheckout } from '@/hooks/useCheckout';
 import { formatPrice } from '@/lib/utils';
+import { CheckoutModal } from '@/components/cart/CheckoutModal';
 
 const getStatusVariant = (status: string) => {
   console.log('[Cart_Items] Getting badge variant for status:', status);
@@ -30,7 +31,7 @@ const getStatusVariant = (status: string) => {
 export function CartSheet() {
   const { t } = useTranslation();
   const { items, removeFromCart, lastValidated } = useCart();
-  const { handleCheckout, isLoading: checkoutLoading } = useCheckout();
+  const { handleCheckout, isLoading: checkoutLoading, showModal, setShowModal, modalActions, reservedItems } = useCheckout();
 
   useEffect(() => {
     console.log('[Cart_Items] CartSheet items:', {
@@ -114,6 +115,19 @@ export function CartSheet() {
               ))}
             </div>
           </ScrollArea>
+
+          <CheckoutModal
+            isOpen={showModal}
+            onClose={() => {
+              setShowModal(false);
+              modalActions.cancel();
+            }}
+            onConfirm={async () => {
+              modalActions.confirm();
+            }}
+            items={items}
+            reservedItems={reservedItems}
+          />
 
           <div className="border-t pt-4 space-y-4">
             {lastValidated && (
