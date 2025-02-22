@@ -33,7 +33,8 @@ export const ActionButton = memo(function ActionButton({
     AVAILABLE: 'bg-primary hover:bg-primary/90',
     RESERVED_BY_OTHERS: 'bg-info hover:bg-info/90',
     RESERVED: 'bg-success hover:bg-success/90',
-    IN_QUEUE: 'bg-muted hover:bg-destructive/90'
+    IN_QUEUE: 'bg-muted hover:bg-destructive/90',
+    IN_CART: 'bg-secondary hover:bg-secondary/90'
   };
 
   const currentStatus = status?.cartStatus || 'AVAILABLE';
@@ -43,6 +44,13 @@ export const ActionButton = memo(function ActionButton({
     console.log('[ACTION_BUTTON] Getting content for status:', currentStatus); // Debug log
 
     switch (currentStatus) {
+      case 'IN_CART':
+        return (
+          <>
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            In Cart
+          </>
+        );
       case 'IN_QUEUE':
         return isHoveringQueue ? (
           <>
@@ -56,19 +64,15 @@ export const ActionButton = memo(function ActionButton({
           </>
         );
       case 'RESERVED':
-        return (
+        return isMyReservation ? (
           <>
-            {isMyReservation ? (
-              <>
-                <Check className="mr-2 h-4 w-4" />
-                Reserved
-              </>
-            ) : (
-              <>
-                <Users className="mr-2 h-4 w-4" />
-                Join Queue
-              </>
-            )}
+            <Check className="mr-2 h-4 w-4" />
+            Reserved
+          </>
+        ) : (
+          <>
+            <Users className="mr-2 h-4 w-4" />
+            Join Queue
           </>
         );
       case 'RESERVED_BY_OTHERS':

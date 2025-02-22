@@ -68,7 +68,16 @@ const store = create<Store>()(
       setCurrentPage: (currentPage) => set({ currentPage }),
       setScrollPosition: (scrollPosition) => set({ scrollPosition }),
       
-      setCartItems: (cartItems) => set({ cartItems }),
+      setCartItems: (cartItems: CartItem[]) => {
+        console.log('[Cart_Items] Updating store cart items:',
+          cartItems.map(item => ({
+            id: item.release_id,
+            status: item.status,
+            queuePosition: item.queue_position
+          }))
+        );
+        set({ cartItems });
+      },
       
       updateRecordStatuses: (statuses) => set({
         recordStatuses: statuses,

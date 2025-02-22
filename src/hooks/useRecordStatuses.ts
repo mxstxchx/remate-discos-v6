@@ -13,7 +13,7 @@ export function useRecordStatuses() {
 
     try {
       // Get all statuses in one go
-      const [reservations, queuePositions] = await Promise.all([
+      const [reservations, queuePositions, cartItems] = await Promise.all([
         supabase
           .from('reservations')
           .select('release_id, status, user_alias')
@@ -22,15 +22,30 @@ export function useRecordStatuses() {
         supabase
           .from('reservation_queue')
           .select('release_id, queue_position')
+          .eq('user_alias', session.user_alias),
+
+        supabase
+          .from('cart_items')
+          .select('release_id')
           .eq('user_alias', session.user_alias)
       ]);
 
       // Create a map of statuses
       const statusMap: Record<number, RecordStatus> = {};
 
-      // First process reservations
+      // First, process cart items
+      cartItems.data?.forEach(item => {
+        statusMap[item.release_id] = {
+          cartStatus: 'IN_CART',
+          reservation: null,
+          lastValidated: new Date().toISOString()
+        };
+      });
+
+      // Then process reservations
       reservations.data?.forEach(reservation => {
         statusMap[reservation.release_id] = {
+          ...statusMap[reservation.release_id],
           cartStatus: reservation.user_alias === session.user_alias ? 'RESERVED' : 'RESERVED_BY_OTHERS',
           reservation: {
             status: reservation.status,
@@ -40,7 +55,7 @@ export function useRecordStatuses() {
         };
       });
 
-      // Then process queue positions - this should override the status if the user is in queue
+      // Finally process queue positions - this should override other statuses
       queuePositions.data?.forEach(queue => {
         statusMap[queue.release_id] = {
           cartStatus: 'IN_QUEUE',
@@ -85,6 +100,15 @@ export function useRecordStatuses() {
           event: '*',
           schema: 'public',
           table: 'reservation_queue'
+        },
+        () => fetchAllStatuses()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'cart_items'
         },
         () => fetchAllStatuses()
       )

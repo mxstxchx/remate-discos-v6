@@ -10,10 +10,12 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const supabase = createClientComponentClient()
   const setSession = useStore((state) => state.setSession)
+  const setCartItems = useStore((state) => state.setCartItems)
 
   const signIn = async (alias: string, language: 'es' | 'en') => {
+    const supabase = createClientComponentClient()
+    console.log('[Cart_Items] Starting sign in process for:', alias)
     try {
       const { error: userError } = await supabase
         .from('users')
@@ -36,10 +38,87 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (sessionError) throw sessionError
 
-      setSession(session)
-      useAuthStore.getState().setAuthenticated(true)
-      useAuthStore.getState().setModalOpen(false)
-      useAuthStore.getState().setError(null)
+      console.log('[Cart_Items] Auth success, session created:', session);
+      setSession(session);
+
+      try {
+        // Get cart items
+        const { data: cartItems, error: cartError } = await supabase
+          .from('cart_items')
+          .select(`
+            *,
+            releases (
+              id,
+              title,
+              price,
+              artists,
+              labels,
+              thumb,
+              primary_image
+            )
+          `)
+          .eq('user_alias', alias);
+
+        if (cartError) throw cartError;
+        
+        // Get reservations for these items
+        const { data: reservations, error: resError } = await supabase
+          .from('reservations')
+          .select('release_id, user_alias, status')
+          .in('release_id', cartItems?.map(item => item.release_id) || [])
+          .eq('status', 'RESERVED');
+
+        if (resError) throw resError;
+
+        // Get queue positions
+        const { data: queuePositions, error: queueError } = await supabase
+          .from('reservation_queue')
+          .select('release_id, queue_position')
+          .in('release_id', cartItems?.map(item => item.release_id) || [])
+          .eq('user_alias', alias);
+
+        if (queueError) throw queueError;
+
+        // Update status for each item
+        const updatedItems = cartItems?.map(item => {
+          const reservation = reservations?.find(r => r.release_id === item.release_id);
+          const queuePosition = queuePositions?.find(q => q.release_id === item.release_id);
+          
+          let status = 'AVAILABLE';
+          
+          if (queuePosition) {
+            status = 'IN_QUEUE';
+          } else if (reservation) {
+            status = reservation.user_alias === alias ? 'RESERVED' : 'RESERVED_BY_OTHERS';
+          }
+
+          return {
+            ...item,
+            status,
+            queue_position: queuePosition?.queue_position
+          };
+        });
+
+        console.log('[Cart_Items] Setting initial cart items with status:',
+          updatedItems?.map(item => ({
+            id: item.release_id,
+            status: item.status,
+            queuePos: item.queue_position
+          }))
+        );
+        
+        setCartItems(updatedItems || []);
+      } catch (error) {
+        console.error('[Cart_Items] Failed to load cart items:', error);
+      }
+
+      // Update global state
+      useStore.getState().fetchAllStatuses?.();
+      useAuthStore.getState().setAuthenticated(true);
+      useAuthStore.getState().setModalOpen(false);
+      useAuthStore.getState().setError(null);
+
+      console.log('[Cart_Items] Sign in process completed');
     } catch (error) {
       console.error('Sign in error:', error)
       useAuthStore.getState().setError(error instanceof Error ? error.message : 'Unknown error')

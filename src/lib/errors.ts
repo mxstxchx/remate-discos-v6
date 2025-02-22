@@ -20,13 +20,15 @@ export class ReservationError extends Error {
   }
 }
 
+export interface CheckoutConflict {
+  release_id: number;
+  title: string;
+}
+
 export class CheckoutError extends Error {
   constructor(
     message: string,
-    public conflicts: Array<{
-      release_id: number;
-      title: string;
-    }>
+    public conflicts: CheckoutConflict[]
   ) {
     super(message);
     this.name = 'CheckoutError';

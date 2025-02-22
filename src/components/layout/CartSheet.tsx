@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useEffect } from 'react';
 import { SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,18 +9,48 @@ import { useCart } from '@/hooks/useCart';
 import { useCheckout } from '@/hooks/useCheckout';
 import { formatPrice } from '@/lib/utils';
 
+const getStatusVariant = (status: string) => {
+  console.log('[Cart_Items] Getting badge variant for status:', status);
+  switch (status) {
+    case 'AVAILABLE':
+      return 'default';
+    case 'IN_QUEUE':
+      return 'secondary';
+    case 'RESERVED':
+      return 'success';
+    case 'RESERVED_BY_OTHERS':
+      return 'destructive';
+    case 'IN_CART':
+      return 'outline';
+    default:
+      return 'secondary';
+  }
+};
+
 export function CartSheet() {
   const { t } = useTranslation();
   const { items, removeFromCart } = useCart();
   const { handleCheckout, isLoading: checkoutLoading } = useCheckout();
-  
+
+  useEffect(() => {
+    console.log('[Cart_Items] CartSheet items:', {
+      count: items.length,
+      items: items.map(item => ({
+        id: item.release_id,
+        title: item.releases?.title,
+        status: item.status,
+        queuePosition: item.queue_position
+      }))
+    });
+  }, [items]);
+
   const total = items.reduce((sum, item) => sum + (item.releases?.price || 0), 0);
 
   const handleRemoveItem = async (recordId: number) => {
     try {
       await removeFromCart(recordId);
     } catch (error) {
-      console.error('[CART] Failed to remove item:', error);
+      console.error('[Cart_Items] Failed to remove item:', error);
     }
   };
 
@@ -60,10 +91,16 @@ export function CartSheet() {
                       {formatPrice(item.releases?.price || 0)}
                     </p>
                     <Badge
-                      variant={item.status === 'AVAILABLE' ? 'default' : 'secondary'}
+                      variant={getStatusVariant(item.status)}
                       className="mt-2"
                     >
-                      {item.status}
+                      {item.status === 'IN_QUEUE' ? (
+                        <>Queue Position {item.queue_position}</>
+                      ) : item.status === 'RESERVED_BY_OTHERS' ? (
+                        'Reserved by Others'
+                      ) : (
+                        item.status
+                      )}
                     </Badge>
                   </div>
                   <Button
