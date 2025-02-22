@@ -160,6 +160,36 @@ export function useCheckout() {
         '_blank'
       );
 
+      // Clean up cart items based on results
+      console.log('[CHECKOUT] Cleaning up cart');
+      
+      const itemsToRemove = itemStates
+        .filter(({ isReserved, inQueue, item }) => {
+          // Remove if:
+          // 1. Successfully reserved (available items)
+          // 2. User declined to join queue for reserved items
+          // 3. Already in queue
+          const wasReserved = availableItems.some(i => i.release_id === item.release_id);
+          return wasReserved || (isReserved && !shouldQueue) || inQueue;
+        })
+        .map(({ item }) => item.release_id);
+
+      if (itemsToRemove.length > 0) {
+        console.log('[CHECKOUT] Removing from cart:', itemsToRemove);
+        
+        const { error: cleanupError } = await supabase
+          .from('cart_items')
+          .delete()
+          .in('release_id', itemsToRemove)
+          .eq('user_alias', session.user_alias);
+
+        if (cleanupError) {
+          console.error('[CHECKOUT] Cart cleanup failed:', cleanupError);
+        } else {
+          console.log('[CHECKOUT] Cart cleanup successful');
+        }
+      }
+
       await validateCart();
 
       if (conflicts.length > 0) {
