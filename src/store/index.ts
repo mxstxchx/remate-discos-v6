@@ -3,29 +3,26 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { Session } from '@/lib/supabase/types';
 import type { Release } from './recordsSlice';
-import type { CartItem } from '@/types/database';
+import type { CartItem, RecordStatus } from '@/types/database';
 
 interface AppState {
   session: Session | null;
   language: 'es' | 'en';
   viewPreference: 'grid' | 'list';
   releases: Release[];
-  recordStatuses: Record<number, RecordStatus>;
-  statusLastFetched: string | null;
   loading: boolean;
   error: string | null;
   totalPages: number;
   currentPage: number;
   scrollPosition: number;
   cartItems: CartItem[];
-  cartLastValidated: string;
+  recordStatuses: Record<number, RecordStatus>;
+  statusLastFetched: string | null;
 }
 
 interface AppActions {
   setSession: (session: Session | null) => void;
   setLanguage: (language: 'es' | 'en') => void;
-  updateRecordStatuses: (statuses: Record<number, RecordStatus>) => void;
-  updateSingleStatus: (recordId: number, status: RecordStatus) => void;
   setViewPreference: (view: 'grid' | 'list') => void;
   setReleases: (releases: Release[]) => void;
   setLoading: (loading: boolean) => void;
@@ -33,14 +30,14 @@ interface AppActions {
   setTotalPages: (total: number) => void;
   setCurrentPage: (page: number) => void;
   setScrollPosition: (position: number) => void;
-  loadPersistedCart: (alias: string) => Promise<void>;
+  setCartItems: (items: CartItem[]) => void;
+  updateRecordStatuses: (statuses: Record<number, RecordStatus>) => void;
+  updateSingleStatus: (recordId: number, status: RecordStatus) => void;
 }
 
 type Store = AppState & AppActions;
 
 const initialState: AppState = {
-  recordStatuses: {},
-  statusLastFetched: null,
   session: null,
   language: 'es',
   viewPreference: 'grid',
@@ -51,7 +48,8 @@ const initialState: AppState = {
   currentPage: 1,
   scrollPosition: 0,
   cartItems: [],
-  cartLastValidated: new Date().toISOString()
+  recordStatuses: {},
+  statusLastFetched: null
 };
 
 const store = create<Store>()(
@@ -59,24 +57,7 @@ const store = create<Store>()(
     (set, get) => ({
       ...initialState,
       
-      setSession: (session) => {
-        set({ session });
-        if (session?.user_alias) {
-          get().loadPersistedCart(session.user_alias);
-        }
-      },
-
-      updateRecordStatuses: (statuses) => set({
-        recordStatuses: statuses,
-        statusLastFetched: new Date().toISOString()
-      }),
-
-      updateSingleStatus: (recordId, status) => set(state => ({
-        recordStatuses: {
-          ...state.recordStatuses,
-          [recordId]: status
-        }
-      })),
+      setSession: (session) => set({ session }),
       
       setLanguage: (language) => set({ language }),
       setViewPreference: (view) => set({ viewPreference: view }),
@@ -87,18 +68,19 @@ const store = create<Store>()(
       setCurrentPage: (currentPage) => set({ currentPage }),
       setScrollPosition: (scrollPosition) => set({ scrollPosition }),
       
-      loadPersistedCart: async (alias) => {
-        const supabase = createClientComponentClient();
-        const { data } = await supabase
-          .from('cart_items')
-          .select('*, releases(*)')
-          .eq('user_alias', alias);
-          
-        set(state => ({
-          cartItems: data || [],
-          cartLastValidated: new Date().toISOString()
-        }));
-      }
+      setCartItems: (cartItems) => set({ cartItems }),
+      
+      updateRecordStatuses: (statuses) => set({
+        recordStatuses: statuses,
+        statusLastFetched: new Date().toISOString()
+      }),
+      
+      updateSingleStatus: (recordId, status) => set(state => ({
+        recordStatuses: {
+          ...state.recordStatuses,
+          [recordId]: status
+        }
+      }))
     }),
     {
       name: 'remate-discos-storage',
@@ -107,8 +89,7 @@ const store = create<Store>()(
         language: state.language,
         viewPreference: state.viewPreference,
         session: state.session,
-        cartItems: state.cartItems,
-        cartLastValidated: state.cartLastValidated
+        cartItems: state.cartItems
       })
     }
   )
@@ -118,9 +99,8 @@ export const useStore = store;
 
 // Export selector hooks to prevent unnecessary re-renders
 export const useSession = () => useStore(state => state.session);
+export const useCartItems = () => useStore(state => state.cartItems);
 export const useRecordStatus = (recordId: number) =>
   useStore(state => state.recordStatuses[recordId]);
 export const useStatusLastFetched = () =>
   useStore(state => state.statusLastFetched);
-export const useCartItems = () => useStore(state => state.cartItems);
-export const useCartValidation = () => useStore(state => state.cartLastValidated);
