@@ -1,75 +1,14 @@
-import { useState, useEffect } from 'react';
-import { useSession } from './use-session';
+import { useCallback } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { QUEUE_LIMITS } from '@/lib/constants';
-import type { QueuePosition } from '@/types/database';
+import { useSession, useStore } from '@/store';
 
-export function useQueue(recordId: number) {
-  const [position, setPosition] = useState<number | null>(null);
-  const [lastPosition, setLastPosition] = useState<number | null>(null);
-  const { session } = useSession();
+export function useQueue() {
   const supabase = createClientComponentClient();
+  const session = useSession();
+  const updateRecordStatuses = useStore(state => state.updateRecordStatuses);
 
-  useEffect(() => {
+  const joinQueue = useCallback(async (recordId: number) => {
     if (!session?.user_alias) return;
-
-    const fetchPosition = async () => {
-      const { data } = await supabase
-        .from('reservation_queue')
-        .select('queue_position')
-        .eq('release_id', recordId)
-        .eq('user_alias', session.user_alias)
-        .single();
-
-      const newPosition = data?.queue_position || null;
-      
-      if (position !== null && newPosition !== position) {
-        console.log('[QUEUE] Position changed:', { old: position, new: newPosition });
-        setLastPosition(position);
-      }
-      
-      setPosition(newPosition);
-    };
-
-    fetchPosition();
-
-    const subscription = supabase
-      .channel(`queue-${recordId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'reservation_queue',
-          filter: `release_id=eq.${recordId}`
-        },
-        () => {
-          console.log('[QUEUE] Queue change detected');
-          fetchPosition();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [recordId, session?.user_alias]);
-
-  // Get next available queue position
-  const getNextPosition = async (): Promise<number> => {
-    const { data } = await supabase
-      .from('reservation_queue')
-      .select('queue_position')
-      .eq('release_id', recordId)
-      .order('queue_position', { ascending: false })
-      .limit(1);
-
-    return (data?.[0]?.queue_position || 0) + 1;
-  };
-
-  // Join queue for item
-  const joinQueue = async (): Promise<boolean> => {
-    if (!session?.user_alias) return false;
 
     try {
       // Check queue size
@@ -78,34 +17,50 @@ export function useQueue(recordId: number) {
         .select('*', { count: 'exact' })
         .eq('release_id', recordId);
 
-      if (count && count >= QUEUE_LIMITS.MAX_SIZE) {
+      if (count && count >= 20) {
         throw new Error('Queue is full');
       }
 
-      const nextPosition = await getNextPosition();
-      
-      const { error } = await supabase
+      // Get next queue position
+      const { data: currentQueue } = await supabase
+        .from('reservation_queue')
+        .select('queue_position')
+        .eq('release_id', recordId)
+        .order('queue_position', { ascending: false })
+        .limit(1);
+
+      const nextPosition = (currentQueue?.[0]?.queue_position || 0) + 1;
+
+      // Join queue
+      const { data, error } = await supabase
         .from('reservation_queue')
         .insert({
           release_id: recordId,
           user_alias: session.user_alias,
           queue_position: nextPosition
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
-      
-      console.log('[QUEUE] Successfully joined queue at position:', nextPosition);
-      return true;
+
+      // Update status in store
+      updateRecordStatuses({
+        [recordId]: {
+          cartStatus: 'IN_QUEUE',
+          reservation: null,
+          queuePosition: nextPosition,
+          lastValidated: new Date().toISOString()
+        }
+      });
+
+      console.log('[QUEUE] Joined queue:', data);
+      return data;
     } catch (error) {
       console.error('[QUEUE] Failed to join queue:', error);
-      return false;
+      throw error;
     }
-  };
+  }, [session?.user_alias, updateRecordStatuses]);
 
-  return {
-    position,
-    lastPosition,
-    hasChangedPosition: lastPosition !== null && position !== lastPosition,
-    joinQueue
-  };
+  return { joinQueue };
 }

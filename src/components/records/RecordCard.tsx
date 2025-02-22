@@ -2,6 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useCart } from '@/hooks/useCart';
+import { useQueue } from '@/hooks/useQueue';
 import { Release } from '@/store/recordsSlice';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ export const RecordCard = React.memo(function RecordCard({
 }: RecordCardProps) {
   const router = useRouter();
   const { addToCart } = useCart();
+  const { joinQueue } = useQueue();
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     console.log(`${APP_LOG} Image load failed for record ${record.id}, falling back to thumb`);
@@ -27,7 +29,8 @@ export const RecordCard = React.memo(function RecordCard({
     img.src = record.thumb;
   };
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     try {
       await addToCart(record.id);
       console.log('[CART] Added to cart:', record.id);
@@ -36,16 +39,25 @@ export const RecordCard = React.memo(function RecordCard({
     }
   };
 
-  const handleJoinQueue = async () => {
-    // Queue handling will be implemented later
-    console.log('[QUEUE] Join queue for:', record.id);
+  const handleJoinQueue = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await joinQueue(record.id);
+      console.log('[QUEUE] Joined queue for:', record.id);
+    } catch (error) {
+      console.error('[QUEUE] Failed to join queue:', error);
+    }
+  };
+
+  const handleCardClick = () => {
+    router.push(`/${record.id}`);
   };
 
   if (viewPreference === 'grid') {
     return (
       <Card
         className="h-full bg-card hover:bg-muted transition-colors cursor-pointer"
-        onClick={() => router.push(`/${record.id}`)}
+        onClick={handleCardClick}
       >
         <div className="relative aspect-square w-full overflow-hidden">
           <Image
@@ -88,7 +100,7 @@ export const RecordCard = React.memo(function RecordCard({
           </CardContent>
 
           <CardFooter className="mt-auto">
-            <div className="flex justify-end w-full">
+            <div className="flex justify-end w-full" onClick={e => e.stopPropagation()}>
               <ActionButton
                 recordId={record.id}
                 onAddToCart={handleAddToCart}
@@ -105,7 +117,7 @@ export const RecordCard = React.memo(function RecordCard({
   return (
     <Card
       className="flex flex-row bg-card hover:bg-muted transition-colors p-3 gap-3 cursor-pointer"
-      onClick={() => router.push(`/${record.id}`)}
+      onClick={handleCardClick}
     >
       <div className="w-28 sm:w-32 flex-shrink-0">
         <div className="relative aspect-square w-full overflow-hidden">
@@ -151,7 +163,7 @@ export const RecordCard = React.memo(function RecordCard({
         </div>
 
         <CardFooter className="mt-auto p-0 pt-2">
-          <div className="flex justify-end w-full">
+          <div className="flex justify-end w-full" onClick={e => e.stopPropagation()}>
             <ActionButton
               recordId={record.id}
               onAddToCart={handleAddToCart}

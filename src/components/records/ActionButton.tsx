@@ -6,8 +6,8 @@ import type { RecordStatus } from '@/types/database';
 
 interface ActionButtonProps {
   recordId: number;
-  onAddToCart?: () => void;
-  onJoinQueue?: () => void;
+  onAddToCart?: (e: React.MouseEvent) => void;
+  onJoinQueue?: (e: React.MouseEvent) => void;
   className?: string;
 }
 
@@ -27,7 +27,6 @@ export const ActionButton = memo(function ActionButton({
     IN_QUEUE: 'bg-muted hover:bg-muted/90'
   };
 
-  // Default to AVAILABLE if no status is found
   const currentStatus = status?.cartStatus || 'AVAILABLE';
   const isMyReservation = status?.reservation?.user_alias === session?.user_alias;
 
@@ -73,12 +72,14 @@ export const ActionButton = memo(function ActionButton({
     }
   };
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    
     if (currentStatus === 'AVAILABLE') {
-      onAddToCart?.();
+      onAddToCart?.(e);
     } else if (currentStatus === 'RESERVED_BY_OTHERS' ||
                (currentStatus === 'RESERVED' && !isMyReservation)) {
-      onJoinQueue?.();
+      onJoinQueue?.(e);
     }
   };
 
