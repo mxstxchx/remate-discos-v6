@@ -1,7 +1,7 @@
 import React, { memo, useState } from 'react';
 import { useRecordStatus, useSession } from '@/store';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Clock, Users, Check, LogOut } from 'lucide-react';
+import { ShoppingCart, Clock, Users, Check, LogOut, Ban } from 'lucide-react';
 import type { RecordStatus } from '@/types/database';
 import { QueueExitModal } from './QueueExitModal';
 
@@ -34,7 +34,8 @@ export const ActionButton = memo(function ActionButton({
     RESERVED_BY_OTHERS: 'bg-info hover:bg-info/90',
     RESERVED: 'bg-success hover:bg-success/90',
     IN_QUEUE: 'bg-muted hover:bg-destructive/90',
-    IN_CART: 'bg-secondary hover:bg-secondary/90'
+    IN_CART: 'bg-secondary hover:bg-secondary/90',
+    SOLD: 'bg-muted/50 hover:bg-muted/50 cursor-not-allowed'
   };
 
   const currentStatus = status?.cartStatus || 'AVAILABLE';
@@ -44,6 +45,13 @@ export const ActionButton = memo(function ActionButton({
     console.log('[ACTION_BUTTON] Getting content for status:', currentStatus); // Debug log
 
     switch (currentStatus) {
+      case 'SOLD':
+        return (
+          <>
+            <Ban className="mr-2 h-4 w-4" />
+            Sold
+          </>
+        );
       case 'IN_CART':
         return (
           <>

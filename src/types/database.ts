@@ -54,7 +54,7 @@ export type PostgRESTOperator =
   | 'cs'
   | 'cd';
 
-export type CartItemStatus = 'AVAILABLE' | 'RESERVED' | 'RESERVED_BY_OTHERS' | 'IN_QUEUE' | 'IN_CART';
+export type CartItemStatus = 'AVAILABLE' | 'RESERVED' | 'RESERVED_BY_OTHERS' | 'IN_QUEUE' | 'IN_CART' | 'SOLD';
 export type ReservationStatus = 'RESERVED' | 'SOLD';
 
 export interface CartItem {
