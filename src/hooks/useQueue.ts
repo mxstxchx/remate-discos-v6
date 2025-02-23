@@ -1,95 +1,138 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useSession, useStore } from '@/store';
+import { useToast } from '@/components/ui/use-toast';
 
 export function useQueue() {
-  const supabase = createClientComponentClient();
-  const session = useSession();
-  const updateRecordStatuses = useStore(state => state.updateRecordStatuses);
+ const supabase = createClientComponentClient();
+ const session = useSession();
+ const updateRecordStatuses = useStore(state => state.updateRecordStatuses);
+ const { toast } = useToast();
 
-  const leaveQueue = useCallback(async (recordId: number) => {
-    if (!session?.user_alias) return;
+ // Monitor reservation acquisitions
+ useEffect(() => {
+   if (!session?.user_alias) return;
 
-    try {
-      const { error } = await supabase
-        .from('reservation_queue')
-        .delete()
-        .eq('release_id', recordId)
-        .eq('user_alias', session.user_alias);
+   const channel = supabase
+     .channel('reservation-updates')
+     .on(
+       'postgres_changes',
+       {
+         event: 'INSERT',
+         schema: 'public',
+         table: 'reservations',
+         filter: `user_alias=eq.${session.user_alias}`
+       },
+       async (payload) => {
+         if (payload.new) {
+           // Get record details
+           const { data: record } = await supabase
+             .from('releases')
+             .select('title')
+             .eq('id', payload.new.release_id)
+             .single();
 
-      if (error) throw error;
+           if (record) {
+             toast({
+               title: "Record Available!",
+               description: `The record "${record.title}" is now reserved for you! You have 7 days to pick it up.`,
+               variant: "success",
+               duration: 10000 // Show for 10 seconds given the importance
+             });
+           }
+         }
+       }
+     )
+     .subscribe();
 
-      // Update status in store
-      updateRecordStatuses({
-        [recordId]: {
-          cartStatus: 'AVAILABLE',
-          reservation: null,
-          queuePosition: undefined,
-          lastValidated: new Date().toISOString()
-        }
-      });
+   return () => {
+     supabase.removeChannel(channel);
+   };
+ }, [session?.user_alias, toast]);
 
-      console.log('[QUEUE] Left queue for record:', recordId);
-    } catch (error) {
-      console.error('[QUEUE] Failed to leave queue:', error);
-      throw error;
-    }
-  }, [session?.user_alias, updateRecordStatuses]);
+ const leaveQueue = useCallback(async (recordId: number) => {
+   if (!session?.user_alias) return;
 
-  const joinQueue = useCallback(async (recordId: number) => {
-    if (!session?.user_alias) return;
+   try {
+     const { error } = await supabase
+       .from('reservation_queue')
+       .delete()
+       .eq('release_id', recordId)
+       .eq('user_alias', session.user_alias);
 
-    try {
-      // Check queue size
-      const { count } = await supabase
-        .from('reservation_queue')
-        .select('*', { count: 'exact' })
-        .eq('release_id', recordId);
+     if (error) throw error;
 
-      if (count && count >= 20) {
-        throw new Error('Queue is full');
-      }
+     // Update status in store
+     updateRecordStatuses({
+       [recordId]: {
+         cartStatus: 'AVAILABLE',
+         reservation: null,
+         queuePosition: undefined,
+         lastValidated: new Date().toISOString()
+       }
+     });
 
-      // Get next queue position
-      const { data: currentQueue } = await supabase
-        .from('reservation_queue')
-        .select('queue_position')
-        .eq('release_id', recordId)
-        .order('queue_position', { ascending: false })
-        .limit(1);
+     console.log('[QUEUE] Left queue for record:', recordId);
+   } catch (error) {
+     console.error('[QUEUE] Failed to leave queue:', error);
+     throw error;
+   }
+ }, [session?.user_alias, updateRecordStatuses]);
 
-      const nextPosition = (currentQueue?.[0]?.queue_position || 0) + 1;
+ const joinQueue = useCallback(async (recordId: number) => {
+   if (!session?.user_alias) return;
 
-      // Join queue
-      const { data, error } = await supabase
-        .from('reservation_queue')
-        .insert({
-          release_id: recordId,
-          user_alias: session.user_alias,
-          queue_position: nextPosition
-        })
-        .select()
-        .single();
+   try {
+     // Check queue size
+     const { count } = await supabase
+       .from('reservation_queue')
+       .select('*', { count: 'exact' })
+       .eq('release_id', recordId);
 
-      if (error) throw error;
+     if (count && count >= 20) {
+       throw new Error('Queue is full');
+     }
 
-      // Update status in store
-      updateRecordStatuses({
-        [recordId]: {
-          cartStatus: 'IN_QUEUE',
-          reservation: null,
-          queuePosition: nextPosition,
-          lastValidated: new Date().toISOString()
-        }
-      });
+     // Get next queue position
+     const { data: currentQueue } = await supabase
+       .from('reservation_queue')
+       .select('queue_position')
+       .eq('release_id', recordId)
+       .order('queue_position', { ascending: false })
+       .limit(1);
 
-      console.log('[QUEUE] Joined queue:', data);
-      return data;
-    } catch (error) {
-      console.error('[QUEUE] Failed to join queue:', error);
-      throw error;
-    }
-  }, [session?.user_alias, updateRecordStatuses]);
+     const nextPosition = (currentQueue?.[0]?.queue_position || 0) + 1;
 
-  return { joinQueue, leaveQueue };
+     // Join queue
+     const { data, error } = await supabase
+       .from('reservation_queue')
+       .insert({
+         release_id: recordId,
+         user_alias: session.user_alias,
+         queue_position: nextPosition
+       })
+       .select()
+       .single();
+
+     if (error) throw error;
+
+     // Update status in store
+     updateRecordStatuses({
+       [recordId]: {
+         cartStatus: 'IN_QUEUE',
+         reservation: null,
+         queuePosition: nextPosition,
+         lastValidated: new Date().toISOString()
+       }
+     });
+
+     console.log('[QUEUE] Joined queue:', data);
+     return data;
+   } catch (error) {
+     console.error('[QUEUE] Failed to join queue:', error);
+     throw error;
+   }
+ }, [session?.user_alias, updateRecordStatuses]);
+
+ return { joinQueue, leaveQueue };
 }
