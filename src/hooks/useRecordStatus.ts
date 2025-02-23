@@ -1,71 +1,64 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useCallback } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { debounce } from 'lodash';
-
-// Define status types for better type safety
-export type RecordStatus = {
-  type: 'AVAILABLE' | 'RESERVED' | 'IN_QUEUE';
-  reservedBy?: string;
-};
-
-const statusCache = new Map<number, RecordStatus>();
-
-const DEFAULT_STATUS: RecordStatus = {
-  type: 'AVAILABLE'
-};
+import { useSession, useStore } from '@/store';
+import type { RecordStatus } from '@/types/database';
 
 export function useRecordStatus(recordId: number) {
-  const [status, setStatus] = useState<RecordStatus>(() =>
-    statusCache.get(recordId) || DEFAULT_STATUS
-  );
-  
   const supabase = createClientComponentClient();
-  const isMounted = useRef(true);
+  const session = useSession();
+  const updateRecordStatuses = useStore(state => state.updateRecordStatuses);
+  const status = useStore(state => state.recordStatuses[recordId]);
 
+  const fetchStatus = useCallback(async () => {
+    if (!recordId || !session?.user_alias) return;
+
+    try {
+      // Get reservation status
+      const { data: reservation } = await supabase
+        .from('reservations')
+        .select('status, user_alias')
+        .eq('release_id', recordId)
+        .eq('status', 'RESERVED')
+        .maybeSingle();
+
+      // Get queue position
+      const { data: queuePosition } = await supabase
+        .from('reservation_queue')
+        .select('queue_position')
+        .eq('release_id', recordId)
+        .eq('user_alias', session.user_alias)
+        .maybeSingle();
+
+      const newStatus: RecordStatus = {
+        cartStatus: queuePosition ? 'IN_QUEUE' :
+                   (reservation ? (reservation.user_alias === session.user_alias ? 'RESERVED' : 'RESERVED_BY_OTHERS') :
+                   'AVAILABLE'),
+        reservation: reservation ? {
+          status: reservation.status,
+          user_alias: reservation.user_alias
+        } : null,
+        queuePosition: queuePosition?.queue_position,
+        lastValidated: new Date().toISOString()
+      };
+
+      console.log('[STATUS] Updated status for record:', recordId, newStatus);
+      updateRecordStatuses({
+        [recordId]: newStatus
+      });
+    } catch (error) {
+      console.error('[STATUS] Error fetching status:', error);
+    }
+  }, [recordId, session?.user_alias, updateRecordStatuses]);
+
+  // Initial fetch
   useEffect(() => {
-    const fetchStatus = async () => {
-      try {
-        // Only fetch active reservations (status = 'RESERVED')
-        const { data, error } = await supabase
-          .from('reservations')
-          .select('status, user_alias')
-          .eq('release_id', recordId)
-          .eq('status', 'RESERVED')
-          .maybeSingle(); // Use maybeSingle instead of single to handle no results gracefully
+    fetchStatus();
+  }, [fetchStatus]);
 
-        if (error) {
-          // Only log real errors, not "no rows returned"
-          if (error.code !== 'PGRST116') {
-            console.error(`[APP:recordStatus] Error fetching status for ${recordId}:`, error);
-          }
-        }
+  // Subscribe to changes
+  useEffect(() => {
+    if (!recordId) return;
 
-        // If we have data, it means there's an active reservation
-        const newStatus: RecordStatus = data
-          ? { type: 'RESERVED', reservedBy: data.user_alias }
-          : DEFAULT_STATUS;
-
-        if (isMounted.current) {
-          setStatus(newStatus);
-          statusCache.set(recordId, newStatus);
-        }
-      } catch (err) {
-        // In case of any error, default to AVAILABLE
-        console.error(`[APP:recordStatus] Error fetching status for ${recordId}:`, err);
-        if (isMounted.current) {
-          setStatus(DEFAULT_STATUS);
-          statusCache.set(recordId, DEFAULT_STATUS);
-        }
-      }
-    };
-
-    // Debounced status update
-    const debouncedFetch = debounce(fetchStatus, 300);
-
-    // Initial fetch
-    debouncedFetch();
-
-    // Subscribe to changes in reservations
     const subscription = supabase
       .channel(`record-${recordId}`)
       .on(
@@ -76,38 +69,24 @@ export function useRecordStatus(recordId: number) {
           table: 'reservations',
           filter: `release_id=eq.${recordId}`
         },
-        (payload) => {
-          // Handle different types of changes
-          if (payload.eventType === 'DELETE' ||
-              (payload.eventType === 'UPDATE' && payload.new.status !== 'RESERVED')) {
-            // If reservation is deleted or status changed from RESERVED
-            if (isMounted.current) {
-              const newStatus = DEFAULT_STATUS;
-              setStatus(newStatus);
-              statusCache.set(recordId, newStatus);
-            }
-          } else if (payload.eventType === 'INSERT' ||
-                     (payload.eventType === 'UPDATE' && payload.new.status === 'RESERVED')) {
-            // If new reservation is created or status changed to RESERVED
-            if (isMounted.current) {
-              const newStatus = {
-                type: 'RESERVED',
-                reservedBy: payload.new.user_alias
-              };
-              setStatus(newStatus);
-              statusCache.set(recordId, newStatus);
-            }
-          }
-        }
+        () => fetchStatus()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reservation_queue',
+          filter: `release_id=eq.${recordId}`
+        },
+        () => fetchStatus()
       )
       .subscribe();
 
     return () => {
-      isMounted.current = false;
       subscription.unsubscribe();
-      debouncedFetch.cancel();
     };
-  }, [recordId, supabase]);
+  }, [recordId, fetchStatus]);
 
   return status;
 }

@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Providers } from './providers'
+import { Toaster } from '@/components/toaster'
 import { AuthModal } from '@/components/auth'
 import './globals.css'
 
@@ -30,6 +31,7 @@ export default function RootLayout({
         <Providers>
           <AuthModal />
           {children}
+          <Toaster />
         </Providers>
       </body>
     </html>

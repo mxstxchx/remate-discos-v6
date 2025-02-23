@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { Session } from '@/lib/supabase/types';
 import type { Release } from './recordsSlice';
+import type { CartItem, RecordStatus } from '@/types/database';
 
 interface AppState {
   session: Session | null;
@@ -13,6 +15,9 @@ interface AppState {
   totalPages: number;
   currentPage: number;
   scrollPosition: number;
+  cartItems: CartItem[];
+  recordStatuses: Record<number, RecordStatus>;
+  statusLastFetched: string | null;
 }
 
 interface AppActions {
@@ -25,6 +30,9 @@ interface AppActions {
   setTotalPages: (total: number) => void;
   setCurrentPage: (page: number) => void;
   setScrollPosition: (position: number) => void;
+  setCartItems: (items: CartItem[]) => void;
+  updateRecordStatuses: (statuses: Record<number, RecordStatus>) => void;
+  updateSingleStatus: (recordId: number, status: RecordStatus) => void;
 }
 
 type Store = AppState & AppActions;
@@ -38,14 +46,19 @@ const initialState: AppState = {
   error: null,
   totalPages: 1,
   currentPage: 1,
-  scrollPosition: 0
+  scrollPosition: 0,
+  cartItems: [],
+  recordStatuses: {},
+  statusLastFetched: null
 };
 
-export const useStore = create<Store>()(
+const store = create<Store>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...initialState,
+      
       setSession: (session) => set({ session }),
+      
       setLanguage: (language) => set({ language }),
       setViewPreference: (view) => set({ viewPreference: view }),
       setReleases: (releases) => set({ releases }),
@@ -53,7 +66,30 @@ export const useStore = create<Store>()(
       setError: (error) => set({ error }),
       setTotalPages: (totalPages) => set({ totalPages }),
       setCurrentPage: (currentPage) => set({ currentPage }),
-      setScrollPosition: (scrollPosition) => set({ scrollPosition })
+      setScrollPosition: (scrollPosition) => set({ scrollPosition }),
+      
+      setCartItems: (cartItems: CartItem[]) => {
+        console.log('[Cart_Items] Updating store cart items:',
+          cartItems.map(item => ({
+            id: item.release_id,
+            status: item.status,
+            queuePosition: item.queue_position
+          }))
+        );
+        set({ cartItems });
+      },
+      
+      updateRecordStatuses: (statuses) => set({
+        recordStatuses: statuses,
+        statusLastFetched: new Date().toISOString()
+      }),
+      
+      updateSingleStatus: (recordId, status) => set(state => ({
+        recordStatuses: {
+          ...state.recordStatuses,
+          [recordId]: status
+        }
+      }))
     }),
     {
       name: 'remate-discos-storage',
@@ -61,10 +97,19 @@ export const useStore = create<Store>()(
       partialize: (state) => ({
         language: state.language,
         viewPreference: state.viewPreference,
-        session: state.session
+        session: state.session,
+        cartItems: state.cartItems
       })
     }
   )
 );
 
-export type { Store as AppStore, AppState, AppActions };
+export const useStore = store;
+
+// Export selector hooks to prevent unnecessary re-renders
+export const useSession = () => useStore(state => state.session);
+export const useCartItems = () => useStore(state => state.cartItems);
+export const useRecordStatus = (recordId: number) =>
+  useStore(state => state.recordStatuses[recordId]);
+export const useStatusLastFetched = () =>
+  useStore(state => state.statusLastFetched);
