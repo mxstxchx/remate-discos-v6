@@ -6,6 +6,20 @@ import { CART_CONFIG } from '@/lib/constants';
 import { CheckoutError } from '@/lib/errors';
 import type { CartItem } from '@/types/database';
 
+interface CheckoutResult {
+  success: boolean;
+  hasConflicts: boolean;
+  message: string;
+  conflicts?: Array<{
+    release_id: number;
+    title: string;
+  }>;
+  reserved: Array<{
+    release_id: number;
+    title: string;
+  }>;
+}
+
 export function useCheckout() {
  const [isLoading, setIsLoading] = useState(false);
  const [showModal, setShowModal] = useState(false);
@@ -227,18 +241,41 @@ export function useCheckout() {
        '_blank'
      );
 
-     if (conflicts.length > 0) {
-       throw new CheckoutError(
-         'Some items were recently reserved',
-         conflicts.map(({ item }) => ({
-           release_id: item.release_id,
-           title: item.releases.title
-         }))
-       );
-     }
-   } catch (error) {
-     console.error('[CHECKOUT] Error:', error);
-     throw error;
+      // Handle results notification
+      if (conflicts.length > 0) {
+        // Return result object instead of throwing
+        return {
+          success: true,
+          hasConflicts: true,
+          message: 'Checkout completed with some items unavailable',
+          conflicts: conflicts.map(({ item }) => ({
+            release_id: item.release_id,
+            title: item.releases.title
+          })),
+          reserved: availableItems.map(item => ({
+            release_id: item.release_id,
+            title: item.releases.title
+          }))
+        };
+      }
+
+      return {
+        success: true,
+        hasConflicts: false,
+        message: 'Checkout completed successfully',
+        reserved: availableItems.map(item => ({
+          release_id: item.release_id,
+          title: item.releases.title
+        }))
+      };
+    } catch (error) {
+      console.error('[CHECKOUT] Error:', error);
+      return {
+        success: false,
+        hasConflicts: false,
+        message: 'An error occurred during checkout',
+        reserved: []
+      };
    } finally {
      setIsLoading(false);
    }

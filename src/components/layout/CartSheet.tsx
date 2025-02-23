@@ -8,6 +8,7 @@ import { X, ShoppingCart, ArrowRight } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useCheckout } from '@/hooks/useCheckout';
 import { formatPrice } from '@/lib/utils';
+import { useToast } from "@/components/ui/use-toast";
 import { CheckoutModal } from '@/components/cart/CheckoutModal';
 
 const getStatusVariant = (status: string) => {
@@ -29,6 +30,7 @@ const getStatusVariant = (status: string) => {
 };
 
 export function CartSheet() {
+  const { toast } = useToast();
   const { t } = useTranslation();
   const { items, removeFromCart, lastValidated } = useCart();
   const { handleCheckout, isLoading: checkoutLoading, showModal, setShowModal, modalActions, reservedItems } = useCheckout();
@@ -147,7 +149,33 @@ export function CartSheet() {
             <Button
               className="w-full"
               size="lg"
-              onClick={handleCheckout}
+              onClick={async () => {
+                try {
+                  const result = await handleCheckout();
+                  if (result.success) {
+                    // Show success toast with appropriate message
+                    toast({
+                      title: result.hasConflicts ? "Partial Success" : "Success",
+                      description: result.message,
+                      variant: result.hasConflicts ? "warning" : "success",
+                    });
+                  } else {
+                    // Show error toast
+                    toast({
+                      title: "Error",
+                      description: result.message,
+                      variant: "destructive",
+                    });
+                  }
+                } catch (error) {
+                  // Show error toast for unexpected errors
+                  toast({
+                    title: "Error",
+                    description: "An unexpected error occurred",
+                    variant: "destructive",
+                  });
+                }
+              }}
               disabled={checkoutLoading}
             >
               {checkoutLoading ?
