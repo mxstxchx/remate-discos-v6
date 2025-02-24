@@ -1,4 +1,5 @@
 import { createContext, useContext, ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useAuthStore } from './hooks'
 import { useStore } from '@/store'
@@ -10,6 +11,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const setSession = useStore((state) => state.setSession)
   const setCartItems = useStore((state) => state.setCartItems)
 
@@ -17,6 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const supabase = createClientComponentClient()
     console.log('[Cart_Items] Starting sign in process for:', alias)
     try {
+      // First upsert user
       const { error: userError } = await supabase
         .from('users')
         .upsert({
@@ -26,12 +29,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (userError) throw userError
 
+      // Then fetch complete user data including admin status
+      const { data: userData, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('alias', alias)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      console.log('[Auth] User data fetched:', userData);
+
+      // Create session with admin status in metadata
       const { data: session, error: sessionError } = await supabase
         .from('sessions')
         .insert([{
           user_alias: alias,
           language,
-          metadata: {}
+          metadata: {
+            is_admin: userData.is_admin,
+            language
+          }
         }])
         .select()
         .single()
@@ -117,6 +135,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       useAuthStore.getState().setAuthenticated(true);
       useAuthStore.getState().setModalOpen(false);
       useAuthStore.getState().setError(null);
+
+      // Redirect admin users
+      if (userData?.is_admin) {
+        router.push('/admin');
+      }
 
       console.log('[Cart_Items] Sign in process completed');
     } catch (error) {

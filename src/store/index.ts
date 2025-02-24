@@ -4,10 +4,41 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { Session } from '@/lib/supabase/types';
 import type { Release } from './recordsSlice';
 import type { CartItem, RecordStatus } from '@/types/database';
+import type { AdminState, AdminActions } from '@/types/admin';
+import { createAdminSlice } from './adminSlice';
+
+interface AdminState {
+  stats: {
+    activeReservations: number;
+    queuedItems: number;
+    activeSessions: number;
+    totalRecords: number;
+    soldRecords: number;
+    updatedAt: string;
+  };
+  isLoading: boolean;
+  error: string | null;
+}
 
 interface AppState {
   session: Session | null;
   language: 'es' | 'en';
+  // Admin state
+  admin: {
+    stats: {
+      activeReservations: number;
+      queuedItems: number;
+      activeSessions: number;
+      totalRecords: number;
+      soldRecords: number;
+      updatedAt: string;
+    };
+    reservations: any[];
+    sessions: any[];
+    activityLog: any[];
+    isLoading: boolean;
+    error: string | null;
+  };
   viewPreference: 'grid' | 'list';
   releases: Release[];
   loading: boolean;
@@ -35,11 +66,39 @@ interface AppActions {
   updateSingleStatus: (recordId: number, status: RecordStatus) => void;
 }
 
-type Store = AppState & AppActions;
+type Store = AppState & AppActions & AdminState & AdminActions;
+
+const initialAdminState: AdminState = {
+  stats: {
+    activeReservations: 0,
+    queuedItems: 0,
+    activeSessions: 0,
+    totalRecords: 0,
+    soldRecords: 0,
+    updatedAt: new Date().toISOString()
+  },
+  isLoading: false,
+  error: null
+};
 
 const initialState: AppState = {
   session: null,
   language: 'es',
+  admin: {
+    stats: {
+      activeReservations: 0,
+      queuedItems: 0,
+      activeSessions: 0,
+      totalRecords: 0,
+      soldRecords: 0,
+      updatedAt: new Date().toISOString()
+    },
+    reservations: [],
+    sessions: [],
+    activityLog: [],
+    isLoading: false,
+    error: null
+  },
   viewPreference: 'grid',
   releases: [],
   loading: false,
@@ -56,9 +115,11 @@ const store = create<Store>()(
   persist(
     (set, get) => ({
       ...initialState,
+      admin: initialAdminState,
+      ...initialState,
+      ...createAdminSlice(set, get),
       
       setSession: (session) => set({ session }),
-      
       setLanguage: (language) => set({ language }),
       setViewPreference: (view) => set({ viewPreference: view }),
       setReleases: (releases) => set({ releases }),

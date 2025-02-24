@@ -29,7 +29,7 @@ export interface FilterState {
 }
 
 export interface PostgRESTResponse<T> {
-  data: T[];
+  metadata: SessionMetadata;
   count: number | null;
   error: string | null;
 }
@@ -66,7 +66,13 @@ export interface CartItem {
   releases: Release;
 }
 
-export interface Reservation {
+export interface SessionMetadata {
+  is_admin: boolean;
+  language: 'es' | 'en';
+  filters?: Record<string, any>;
+}
+
+export interface Session {
   id: string;
   release_id: number;
   user_alias: string;
