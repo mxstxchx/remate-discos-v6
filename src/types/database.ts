@@ -29,7 +29,7 @@ export interface FilterState {
 }
 
 export interface PostgRESTResponse<T> {
-  data: T[];
+  metadata: SessionMetadata;
   count: number | null;
   error: string | null;
 }
@@ -54,7 +54,7 @@ export type PostgRESTOperator =
   | 'cs'
   | 'cd';
 
-export type CartItemStatus = 'AVAILABLE' | 'RESERVED' | 'RESERVED_BY_OTHERS' | 'IN_QUEUE' | 'IN_CART';
+export type CartItemStatus = 'AVAILABLE' | 'RESERVED' | 'RESERVED_BY_OTHERS' | 'IN_QUEUE' | 'IN_CART' | 'SOLD';
 export type ReservationStatus = 'RESERVED' | 'SOLD';
 
 export interface CartItem {
@@ -66,7 +66,13 @@ export interface CartItem {
   releases: Release;
 }
 
-export interface Reservation {
+export interface SessionMetadata {
+  is_admin: boolean;
+  language: 'es' | 'en';
+  filters?: Record<string, any>;
+}
+
+export interface Session {
   id: string;
   release_id: number;
   user_alias: string;

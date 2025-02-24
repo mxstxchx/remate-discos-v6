@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useCart } from '@/hooks/useCart';
@@ -66,7 +67,9 @@ export const RecordCard = React.memo(function RecordCard({
   if (viewPreference === 'grid') {
     return (
       <Card
-        className="h-full bg-card hover:bg-muted transition-colors cursor-pointer"
+        className={`h-full bg-card hover:bg-muted transition-colors cursor-pointer ${
+          status?.cartStatus === 'SOLD' ? 'opacity-75' : ''
+        }`}
         onClick={handleCardClick}
       >
         <div className="relative aspect-square w-full overflow-hidden">

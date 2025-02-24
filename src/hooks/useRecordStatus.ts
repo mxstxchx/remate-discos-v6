@@ -13,6 +13,27 @@ export function useRecordStatus(recordId: number) {
     if (!recordId || !session?.user_alias) return;
 
     try {
+      // First check if record is sold
+      const { data: release } = await supabase
+        .from('releases')
+        .select('sold_at, sold_by')
+        .eq('id', recordId)
+        .maybeSingle();
+
+      if (release?.sold_at) {
+        const newStatus: RecordStatus = {
+          cartStatus: 'SOLD',
+          reservation: null,
+          soldAt: release.sold_at,
+          soldBy: release.sold_by,
+          lastValidated: new Date().toISOString()
+        };
+        updateRecordStatuses({
+          [recordId]: newStatus
+        });
+        return;
+      }
+
       // Get reservation status
       const { data: reservation } = await supabase
         .from('reservations')
@@ -61,6 +82,16 @@ export function useRecordStatus(recordId: number) {
 
     const subscription = supabase
       .channel(`record-${recordId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'releases',
+          filter: `id=eq.${recordId}`
+        },
+        () => fetchStatus()
+      )
       .on(
         'postgres_changes',
         {
