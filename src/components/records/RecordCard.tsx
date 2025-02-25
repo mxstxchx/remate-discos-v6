@@ -88,9 +88,6 @@ export const RecordCard = React.memo(function RecordCard({
           >
             {record.condition}
           </Badge>
-          
-          {/* Vinyl hole effect in the center */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/80 border-4 border-black/20"></div>
         </div>
 
         <div className="flex flex-col flex-grow relative">
@@ -159,9 +156,6 @@ export const RecordCard = React.memo(function RecordCard({
           <div className="absolute -bottom-0 left-0 right-0 text-xs text-center text-muted-foreground bg-black/50 backdrop-blur-sm p-1 truncate md:hidden">
             {record.styles.join(' / ')}
           </div>
-          
-          {/* Small vinyl hole for list view */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/80 border-2 border-black/20"></div>
         </div>
       </div>
 

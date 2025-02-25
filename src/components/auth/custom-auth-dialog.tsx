@@ -1,20 +1,18 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { X } from "lucide-react"
+import * as React from "react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { X } from "lucide-react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
-const Dialog = DialogPrimitive.Root
+const AuthDialog = DialogPrimitive.Root;
 
-const DialogTrigger = DialogPrimitive.Trigger
+const AuthDialogTrigger = DialogPrimitive.Trigger;
 
-const DialogPortal = DialogPrimitive.Portal
+const AuthDialogClose = DialogPrimitive.Close;
 
-const DialogClose = DialogPrimitive.Close
-
-const DialogOverlay = React.forwardRef<
+const AuthDialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
@@ -26,23 +24,28 @@ const DialogOverlay = React.forwardRef<
     )}
     {...props}
   />
-))
-DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
+));
+AuthDialogOverlay.displayName = "AuthDialogOverlay";
 
-const DialogContent = React.forwardRef<
+const AuthDialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
+  <DialogPrimitive.Portal>
+    <AuthDialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-[51] grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border border-primary/10 bg-background p-6 shadow-lg sm:rounded-lg isolate before:hidden before:content-none after:hidden after:content-none",
-        // IMPORTANT: Simplified animations for stability
+        "fixed left-[50%] top-[50%] z-[51] grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border border-primary/10 bg-background p-6 shadow-lg sm:rounded-lg overflow-hidden",
         "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "before:!hidden before:!content-none after:!hidden after:!content-none",
         className
       )}
+      style={{
+        // Ensure no pseudo-elements are applied
+        "--before-content": "none",
+        "--after-content": "none",
+      }}
       {...props}
     >
       {children}
@@ -51,11 +54,11 @@ const DialogContent = React.forwardRef<
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
-  </DialogPortal>
-))
-DialogContent.displayName = DialogPrimitive.Content.displayName
+  </DialogPrimitive.Portal>
+));
+AuthDialogContent.displayName = "AuthDialogContent";
 
-const DialogHeader = ({
+const AuthDialogHeader = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
@@ -66,10 +69,10 @@ const DialogHeader = ({
     )}
     {...props}
   />
-)
-DialogHeader.displayName = "DialogHeader"
+);
+AuthDialogHeader.displayName = "AuthDialogHeader";
 
-const DialogFooter = ({
+const AuthDialogFooter = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
@@ -80,10 +83,10 @@ const DialogFooter = ({
     )}
     {...props}
   />
-)
-DialogFooter.displayName = "DialogFooter"
+);
+AuthDialogFooter.displayName = "AuthDialogFooter";
 
-const DialogTitle = React.forwardRef<
+const AuthDialogTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
 >(({ className, ...props }, ref) => (
@@ -95,10 +98,10 @@ const DialogTitle = React.forwardRef<
     )}
     {...props}
   />
-))
-DialogTitle.displayName = DialogPrimitive.Title.displayName
+));
+AuthDialogTitle.displayName = "AuthDialogTitle";
 
-const DialogDescription = React.forwardRef<
+const AuthDialogDescription = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
 >(({ className, ...props }, ref) => (
@@ -107,18 +110,16 @@ const DialogDescription = React.forwardRef<
     className={cn("text-sm text-muted-foreground", className)}
     {...props}
   />
-))
-DialogDescription.displayName = DialogPrimitive.Description.displayName
+));
+AuthDialogDescription.displayName = "AuthDialogDescription";
 
 export {
-  Dialog,
-  DialogPortal,
-  DialogOverlay,
-  DialogTrigger,
-  DialogClose,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
-  DialogDescription,
-}
+  AuthDialog,
+  AuthDialogTrigger,
+  AuthDialogClose,
+  AuthDialogContent,
+  AuthDialogHeader,
+  AuthDialogFooter,
+  AuthDialogTitle,
+  AuthDialogDescription,
+};

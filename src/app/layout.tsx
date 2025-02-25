@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { Inter, Roboto_Slab, JetBrains_Mono } from 'next/font/google'
 import { Providers } from './providers'
 import { Toaster } from '@/components/toaster'
-import { AuthModal } from '@/components/auth'
+import { BasicAuthModal } from '@/components/auth/basic-auth-modal'
 import MaterialFilters from '@/components/ui/MaterialFilters'
 import { ThemeProvider } from '@/providers/theme-provider'
 import './globals.css'
@@ -42,7 +42,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <MaterialFilters />
           <Providers>
-            <AuthModal />
+            <BasicAuthModal />
             {children}
             <Toaster />
           </Providers>
