@@ -1,18 +1,29 @@
 import { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Inter, Roboto_Slab, JetBrains_Mono } from 'next/font/google'
 import { Providers } from './providers'
 import { Toaster } from '@/components/toaster'
 import { AuthModal } from '@/components/auth'
+import MaterialFilters from '@/components/ui/MaterialFilters'
+import { ThemeProvider } from '@/providers/theme-provider'
 import './globals.css'
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+// Load fonts
+const inter = Inter({
   subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-sans',
 })
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const robotoSlab = Roboto_Slab({
   subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-heading',
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-mono',
 })
 
 export const metadata: Metadata = {
@@ -26,13 +37,16 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es" className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Providers>
-          <AuthModal />
-          {children}
-          <Toaster />
-        </Providers>
+    <html lang="es" suppressHydrationWarning>
+      <body className={`${inter.variable} ${robotoSlab.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <MaterialFilters />
+          <Providers>
+            <AuthModal />
+            {children}
+            <Toaster />
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   )

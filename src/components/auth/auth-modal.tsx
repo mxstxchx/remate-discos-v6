@@ -50,15 +50,16 @@ export function AuthModal() {
    >
      <DialogContent className="sm:max-w-md">
        <DialogHeader>
-         <DialogTitle>{t('modal.title')}</DialogTitle>
+         <DialogTitle className="font-heading">{t('modal.title')}</DialogTitle>
          <DialogDescription>{t('modal.subtitle')}</DialogDescription>
        </DialogHeader>
 
        <form onSubmit={handleSubmit} className="space-y-4">
          <div className="space-y-2">
-           <Label htmlFor="alias">{t('modal.aliasLabel')}</Label>
+           <Label htmlFor="alias" className="font-heading">{t('modal.aliasLabel')}</Label>
            <Input
              id="alias"
+             variant="inset"
              value={alias}
              onChange={(e) => setAlias(e.target.value)}
              placeholder={t('modal.aliasPlaceholder')}
@@ -79,7 +80,7 @@ export function AuthModal() {
 
          <Button
            type="submit"
-           className="w-full"
+           className="w-full font-heading"
            disabled={loading || alias.length < 6}
          >
            {loading ? t('modal.loading') : t('modal.submit')}

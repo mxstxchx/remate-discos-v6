@@ -56,7 +56,7 @@ export const RecordCard = React.memo(function RecordCard({
       await leaveQueue(record.id);
       console.log('[QUEUE] Left queue for:', record.id);
     } catch (error) {
-      console.error('[QUEUE] Failed to leave queue:', error);
+      console.error('[QUEUE] Failed to leave queue:', record.id);
     }
   };
 
@@ -67,12 +67,14 @@ export const RecordCard = React.memo(function RecordCard({
   if (viewPreference === 'grid') {
     return (
       <Card
-        className={`h-full bg-card hover:bg-muted transition-colors cursor-pointer ${
+        variant="vinyl"
+        hover="lift"
+        className={`h-full cursor-pointer ${
           status?.cartStatus === 'SOLD' ? 'opacity-75' : ''
         }`}
         onClick={handleCardClick}
       >
-        <div className="relative aspect-square w-full overflow-hidden">
+        <div className="relative aspect-square w-full overflow-hidden rounded-t-xl">
           <Image
             src={record.primary_image || record.thumb}
             alt={record.title}
@@ -81,14 +83,17 @@ export const RecordCard = React.memo(function RecordCard({
             onError={handleImageError}
           />
           <Badge
-            variant="secondary"
-            className="absolute top-2 right-2 bg-black/50 text-white backdrop-blur-sm"
+            variant="metallic"
+            className="absolute top-2 right-2 backdrop-blur-sm"
           >
             {record.condition}
           </Badge>
+          
+          {/* Vinyl hole effect in the center */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/80 border-4 border-black/20"></div>
         </div>
 
-        <div className="flex flex-col flex-grow">
+        <div className="flex flex-col flex-grow relative">
           <CardHeader>
             <CardTitle className="line-clamp-2">{record.title}</CardTitle>
             <div className="flex justify-between items-start gap-2">
@@ -100,7 +105,7 @@ export const RecordCard = React.memo(function RecordCard({
                   {record.labels.map(l => `${l.name} - ${l.catno}`).join(' / ')}
                 </div>
               </div>
-              <span className="font-mono text-2xl font-semibold text-primary whitespace-nowrap shrink-0">
+              <span className="font-mono text-2xl font-semibold text-primary whitespace-nowrap shrink-0" style={{ fontFamily: 'var(--font-mono)' }}>
                 {Math.floor(record.price)}€
               </span>
             </div>
@@ -131,11 +136,13 @@ export const RecordCard = React.memo(function RecordCard({
 
   return (
     <Card
-      className="flex flex-row bg-card hover:bg-muted transition-colors p-3 gap-3 cursor-pointer"
+      variant="metallic"
+      hover="lift"
+      className="flex flex-row p-3 gap-3 cursor-pointer"
       onClick={handleCardClick}
     >
       <div className="w-28 sm:w-32 flex-shrink-0">
-        <div className="relative aspect-square w-full overflow-hidden">
+        <div className="relative aspect-square w-full overflow-hidden rounded-md">
           <Image
             src={record.primary_image || record.thumb}
             alt={record.title}
@@ -144,14 +151,17 @@ export const RecordCard = React.memo(function RecordCard({
             onError={handleImageError}
           />
           <Badge
-            variant="secondary"
-            className="absolute top-2 right-2 bg-black/50 text-white backdrop-blur-sm"
+            variant="metallic"
+            className="absolute top-2 right-2 backdrop-blur-sm"
           >
             {record.condition}
           </Badge>
           <div className="absolute -bottom-0 left-0 right-0 text-xs text-center text-muted-foreground bg-black/50 backdrop-blur-sm p-1 truncate md:hidden">
             {record.styles.join(' / ')}
           </div>
+          
+          {/* Small vinyl hole for list view */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/80 border-2 border-black/20"></div>
         </div>
       </div>
 
@@ -167,7 +177,7 @@ export const RecordCard = React.memo(function RecordCard({
                 {record.labels.map(l => `${l.name} - ${l.catno}`).join(' / ')}
               </div>
             </div>
-            <span className="font-mono text-2xl font-semibold text-primary whitespace-nowrap shrink-0">
+            <span className="text-2xl font-semibold text-primary whitespace-nowrap shrink-0" style={{ fontFamily: 'var(--font-mono)' }}>
               {Math.floor(record.price)}€
             </span>
           </div>
