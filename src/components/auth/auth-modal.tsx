@@ -3,13 +3,19 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertCircle } from 'lucide-react'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { useAuthContext } from '@/lib/auth/provider'
 import { useAuthStore } from '@/lib/auth/hooks'
 import { LanguageSelector } from './language-selector'
+import {
+  AuthDialog,
+  AuthDialogContent,
+  AuthDialogDescription,
+  AuthDialogHeader,
+  AuthDialogTitle,
+} from './custom-auth-dialog'
 
 export function AuthModal() {
  const { t, i18n } = useTranslation('auth')
@@ -39,26 +45,27 @@ export function AuthModal() {
   if (isAuthenticated && !modalOpen) return null
   if (!isAuthenticated && !modalOpen) setModalOpen(true) // Show modal if not authenticated
 
- return (
-   <Dialog
-     open={modalOpen}
-     onOpenChange={(open) => {
-       if (!open && isAuthenticated) {
-         setModalOpen(false)
-       }
-     }}
-   >
-     <DialogContent className="sm:max-w-md">
-       <DialogHeader>
-         <DialogTitle>{t('modal.title')}</DialogTitle>
-         <DialogDescription>{t('modal.subtitle')}</DialogDescription>
-       </DialogHeader>
+  return (
+    <AuthDialog
+      open={modalOpen}
+      onOpenChange={(open) => {
+        if (!open && isAuthenticated) {
+          setModalOpen(false)
+        }
+      }}
+    >
+      <AuthDialogContent className="sm:max-w-md bg-background">
+        <AuthDialogHeader>
+          <AuthDialogTitle className="font-heading">{t('modal.title')}</AuthDialogTitle>
+          <AuthDialogDescription>{t('modal.subtitle')}</AuthDialogDescription>
+        </AuthDialogHeader>
 
        <form onSubmit={handleSubmit} className="space-y-4">
          <div className="space-y-2">
-           <Label htmlFor="alias">{t('modal.aliasLabel')}</Label>
+           <Label htmlFor="alias" className="font-heading">{t('modal.aliasLabel')}</Label>
            <Input
              id="alias"
+             variant="inset"
              value={alias}
              onChange={(e) => setAlias(e.target.value)}
              placeholder={t('modal.aliasPlaceholder')}
@@ -79,13 +86,13 @@ export function AuthModal() {
 
          <Button
            type="submit"
-           className="w-full"
+           className="w-full font-heading"
            disabled={loading || alias.length < 6}
          >
            {loading ? t('modal.loading') : t('modal.submit')}
          </Button>
        </form>
-     </DialogContent>
-   </Dialog>
- )
+      </AuthDialogContent>
+    </AuthDialog>
+  )
 }

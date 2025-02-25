@@ -29,17 +29,36 @@ export const ActionButton = memo(function ActionButton({
 
   console.log('[ACTION_BUTTON] Status:', { recordId, status }); // Debug log
 
-  const buttonStyles = {
-    AVAILABLE: 'bg-primary hover:bg-primary/90',
-    RESERVED_BY_OTHERS: 'bg-info hover:bg-info/90',
-    RESERVED: 'bg-success hover:bg-success/90',
-    IN_QUEUE: 'bg-muted hover:bg-destructive/90',
-    IN_CART: 'bg-secondary hover:bg-secondary/90',
-    SOLD: 'bg-muted/50 hover:bg-muted/50 cursor-not-allowed'
-  };
-
   const currentStatus = status?.cartStatus || 'AVAILABLE';
   const isMyReservation = status?.reservation?.user_alias === session?.user_alias;
+
+  // Map status to button variants and LED colors
+  const getButtonConfig = () => {
+    switch (currentStatus) {
+      case 'SOLD':
+        return { variant: 'secondary', led: 'off', ledColor: 'none' };
+      case 'IN_CART':
+        return { variant: 'knurled', led: 'off', ledColor: 'none' };
+      case 'IN_QUEUE':
+        return { 
+          variant: 'led', 
+          led: undefined, 
+          ledColor: isHoveringQueue ? 'error' : 'warning'
+        };
+      case 'RESERVED':
+        return { 
+          variant: isMyReservation ? 'led' : 'knurled', 
+          led: undefined, 
+          ledColor: isMyReservation ? 'success' : 'none'
+        };
+      case 'RESERVED_BY_OTHERS':
+        return { variant: 'knurled', led: 'off', ledColor: 'none' };
+      default: // AVAILABLE
+        return { variant: 'default', led: 'off', ledColor: 'none' };
+    }
+  };
+
+  const buttonConfig = getButtonConfig();
 
   const getButtonContent = () => {
     console.log('[ACTION_BUTTON] Getting content for status:', currentStatus); // Debug log
@@ -49,52 +68,52 @@ export const ActionButton = memo(function ActionButton({
         return (
           <>
             <Ban className="mr-2 h-4 w-4" />
-            Sold
+            <span className="font-heading">Sold</span>
           </>
         );
       case 'IN_CART':
         return (
           <>
             <ShoppingCart className="mr-2 h-4 w-4" />
-            In Cart
+            <span className="font-heading">In Cart</span>
           </>
         );
       case 'IN_QUEUE':
         return isHoveringQueue ? (
           <>
             <LogOut className="mr-2 h-4 w-4" />
-            Leave Queue
+            <span className="font-heading">Leave Queue</span>
           </>
         ) : (
           <>
             <Clock className="mr-2 h-4 w-4" />
-            Position {status?.queuePosition}
+            <span className="font-heading">Position {status?.queuePosition}</span>
           </>
         );
       case 'RESERVED':
         return isMyReservation ? (
           <>
             <Check className="mr-2 h-4 w-4" />
-            Reserved
+            <span className="font-heading">Reserved</span>
           </>
         ) : (
           <>
             <Users className="mr-2 h-4 w-4" />
-            Join Queue
+            <span className="font-heading">Join Queue</span>
           </>
         );
       case 'RESERVED_BY_OTHERS':
         return (
           <>
             <Users className="mr-2 h-4 w-4" />
-            Join Queue
+            <span className="font-heading">Join Queue</span>
           </>
         );
       default: // AVAILABLE
         return (
           <>
             <ShoppingCart className="mr-2 h-4 w-4" />
-            Add to Cart
+            <span className="font-heading">Add to Cart</span>
           </>
         );
     }
@@ -119,7 +138,9 @@ export const ActionButton = memo(function ActionButton({
       <Button
         onClick={handleClick}
         disabled={currentStatus === 'RESERVED' && isMyReservation}
-        className={`flex-1 ${buttonStyles[currentStatus]} ${className}`}
+        variant={buttonConfig.variant}
+        ledColor={buttonConfig.ledColor}
+        className={`${className} font-heading`}
         onMouseEnter={() => currentStatus === 'IN_QUEUE' && setIsHoveringQueue(true)}
         onMouseLeave={() => setIsHoveringQueue(false)}
       >

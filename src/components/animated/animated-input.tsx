@@ -1,6 +1,9 @@
+"use client"
+
 import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
+import { animate } from "motion"
 import { cn } from "@/lib/utils"
+import { cva, type VariantProps } from "class-variance-authority"
 
 const inputVariants = cva(
   "flex h-9 w-full rounded-md border border-input shadow-sm transition-all file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
@@ -27,22 +30,57 @@ const inputVariants = cva(
   }
 )
 
-export interface InputProps
+export interface AnimatedInputProps
   extends React.InputHTMLAttributes<HTMLInputElement>,
     VariantProps<typeof inputVariants> {}
 
-const Input = React.forwardRef<HTMLInputElement, InputProps>(
+const AnimatedInput = React.forwardRef<HTMLInputElement, AnimatedInputProps>(
   ({ className, type, variant, size, ...props }, ref) => {
+    const inputRef = React.useRef<HTMLInputElement>(null);
+    const combinedRef = (node: HTMLInputElement) => {
+      inputRef.current = node;
+      if (typeof ref === 'function') ref(node);
+      else if (ref) ref.current = node;
+    };
+
+    // Handle focus/blur animations
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+      if (props.onFocus) props.onFocus(e);
+      
+      if (inputRef.current) {
+        animate(
+          inputRef.current,
+          { scale: 1.01 },
+          { duration: 0.25, easing: "ease-out" }
+        );
+      }
+    };
+
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+      if (props.onBlur) props.onBlur(e);
+      
+      if (inputRef.current) {
+        animate(
+          inputRef.current,
+          { scale: 1 },
+          { duration: 0.25, easing: "ease-out" }
+        );
+      }
+    };
+
     return (
       <input
         type={type}
         className={cn(inputVariants({ variant, size, className }))}
-        ref={ref}
+        ref={combinedRef}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         {...props}
       />
-    )
+    );
   }
-)
-Input.displayName = "Input"
+);
 
-export { Input, inputVariants }
+AnimatedInput.displayName = "AnimatedInput";
+
+export { AnimatedInput, inputVariants };
