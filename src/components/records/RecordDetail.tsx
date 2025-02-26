@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { ActionButton } from './ActionButton';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import { Play } from 'lucide-react';
 import type { Release } from '@/store/recordsSlice';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import YouTube from 'react-youtube';
 
 // Extract video ID from YouTube URL
 const getVideoId = (url: string) => {
@@ -21,7 +21,9 @@ export function RecordDetail({ id }: RecordDetailProps) {
   const [record, setRecord] = useState<Release | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeVideoIndex, setActiveVideoIndex] = useState<number | null>(null);
   const supabase = createClientComponentClient();
+  const videoContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchRecord() {
@@ -44,6 +46,16 @@ export function RecordDetail({ id }: RecordDetailProps) {
 
     fetchRecord();
   }, [id, supabase]);
+
+  // Function to generate YouTube thumbnail URL
+  const getYouTubeThumbnail = (videoId: string) => {
+    return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+  };
+
+  // Handler for clicking a video thumbnail
+  const handleVideoClick = (index: number) => {
+    setActiveVideoIndex(index);
+  };
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -142,37 +154,59 @@ export function RecordDetail({ id }: RecordDetailProps) {
             </div>
           )}
 
-          {/* Videos Section */}
+          {/* Videos Section - Optimized with thumbnails */}
           {record.videos && record.videos.length > 0 && (
-            <div>
+            <div ref={videoContainerRef}>
               <div className="flex justify-between items-center mb-2">
                 <p className="text-sm text-muted-foreground">Videos</p>
                 {record.videos.length > 1 && (
                   <span className="text-xs text-muted-foreground">Scroll for more →</span>
                 )}
               </div>
+              
+              {/* Active Video Player */}
+              {activeVideoIndex !== null && (
+                <div className="aspect-video rounded-md overflow-hidden mb-4">
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${getVideoId(record.videos[activeVideoIndex].url)}?modestbranding=1&rel=0`}
+                    title={record.videos[activeVideoIndex].title || 'Video'}
+                    allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+                    className="w-full h-full"
+                    loading="lazy"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                  />
+                </div>
+              )}
+              
+              {/* Video Thumbnails */}
               <div className="relative">
                 <div className="overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
                   <div className="flex gap-3">
-                    {record.videos.map((video, index) => (
-                      <div key={index} className="w-[180px] flex-none">
-                        <div className="aspect-video rounded-md overflow-hidden">
-                          <YouTube
-                            videoId={getVideoId(video.url)}
-                            className="w-full h-full"
-                            opts={{
-                              width: '100%',
-                              height: '100%',
-                              playerVars: {
-                                autoplay: 0,
-                                modestbranding: 1,
-                                rel: 0
-                              }
-                            }}
-                          />
+                    {record.videos.map((video, index) => {
+                      const videoId = getVideoId(video.url);
+                      return (
+                        <div 
+                          key={index} 
+                          className="w-[180px] flex-none cursor-pointer"
+                          onClick={() => handleVideoClick(index)}
+                        >
+                          <div className="aspect-video rounded-md overflow-hidden relative group">
+                            <Image
+                              src={getYouTubeThumbnail(videoId)}
+                              alt={video.title || 'Video thumbnail'}
+                              width={180}
+                              height={101}
+                              className="object-cover w-full h-full"
+                              loading="lazy"
+                            />
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Play className="w-10 h-10 text-white" />
+                            </div>
+                          </div>
+                          <p className="text-xs mt-1 truncate">{video.title || 'Play video'}</p>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
                 {record.videos.length > 1 && (

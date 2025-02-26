@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import YouTube from 'react-youtube';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -14,6 +13,31 @@ interface VideoCarouselProps {
 
 export function VideoCarousel({ videos }: VideoCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Lazy load videos when they come into view
+  useEffect(() => {
+    // Create IntersectionObserver to detect when video is visible
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setIsVideoLoaded(true);
+          // Disconnect after loading
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 } // Load when 10% visible
+    );
+    
+    if (videoContainerRef.current) {
+      observer.observe(videoContainerRef.current);
+    }
+    
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   // Extract video ID from YouTube URL
   const getVideoId = (url: string) => {
@@ -31,20 +55,27 @@ export function VideoCarousel({ videos }: VideoCarouselProps) {
 
   return (
     <div className="space-y-4">
-      <div className="relative aspect-video">
-        <YouTube
-          videoId={getVideoId(videos[currentIndex].url)}
-          className="w-full h-full"
-          opts={{
-            width: '100%',
-            height: '100%',
-            playerVars: {
-              autoplay: 0,
-              modestbranding: 1,
-              rel: 0
-            }
-          }}
-        />
+      <div ref={videoContainerRef} className="relative aspect-video bg-black/20 rounded-lg overflow-hidden">
+        {isVideoLoaded ? (
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${getVideoId(videos[currentIndex].url)}?modestbranding=1&rel=0`}
+            title={videos[currentIndex].title}
+            allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+            className="w-full h-full"
+            loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
+          />
+        ) : (
+          <div 
+            className="w-full h-full flex items-center justify-center bg-black/30 cursor-pointer"
+            onClick={() => setIsVideoLoaded(true)}
+          >
+            <div className="text-center">
+              <p className="text-sm">Click to load video</p>
+              <p className="text-xs text-muted-foreground mt-1">{videos[currentIndex].title}</p>
+            </div>
+          </div>
+        )}
         
         <div className="absolute inset-x-0 bottom-0 flex items-center justify-between p-4">
           <Button
