@@ -1,9 +1,9 @@
 import React from 'react';
-import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useCart } from '@/hooks/useCart';
 import { useQueue } from '@/hooks/useQueue';
+import { useStore } from '@/store';
 import { Release } from '@/store/recordsSlice';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,8 @@ export const RecordCard = React.memo(function RecordCard({
   const router = useRouter();
   const { addToCart } = useCart();
   const { joinQueue, leaveQueue } = useQueue();
+  // Get record status from global store
+  const status = useStore(state => state.recordStatuses[record.id]);
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     console.log(`${APP_LOG} Image load failed for record ${record.id}, falling back to thumb`);

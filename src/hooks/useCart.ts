@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useStore, useSession } from '@/store';
 import { CartOperationError } from '@/lib/errors';
+import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import type { CartItem } from '@/types/database';
 
 export function useCart() {
@@ -9,13 +10,15 @@ export function useCart() {
   const session = useSession();
   const cartItems = useStore(state => state.cartItems);
   const setCartItems = useStore(state => state.setCartItems);
+  const { refreshSingleStatus } = useGlobalStatus();
   const [lastValidated, setLastValidated] = useState<Date | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
 
   // Background validation
   useEffect(() => {
     if (!session?.user_alias) return;
 
-    console.log('[Cart_Items] Starting background validation');
+    console.log('[CART] Starting background validation');
     
     // Initial validation
     validateCart().then(() => {
@@ -24,122 +27,97 @@ export function useCart() {
 
     // Set up interval - 5 minutes
     const interval = setInterval(async () => {
-      console.log('[Cart_Items] Running scheduled validation, last validated:', lastValidated?.toISOString());
+      console.log('[CART] Running scheduled validation, last validated:', lastValidated?.toISOString());
       
       try {
         await validateCart();
         setLastValidated(new Date());
       } catch (error) {
-        console.error('[Cart_Items] Background validation failed:', error);
+        console.error('[CART] Background validation failed:', error);
       }
     }, 5 * 60 * 1000); // 5 minutes in milliseconds
 
     // Cleanup
     return () => {
-      console.log('[Cart_Items] Cleaning up background validation');
+      console.log('[CART] Cleaning up background validation');
       clearInterval(interval);
     };
   }, [session?.user_alias]); // Only re-run if user changes
 
+  // Optimized cart validation that leverages our global status
   const validateCart = useCallback(async () => {
-    if (!session?.user_alias) {
-      console.log('[Cart_Items] No session, skipping validation');
+    if (!session?.user_alias || cartItems.length === 0) {
+      console.log('[CART] No session or empty cart, skipping validation');
       return;
     }
 
+    setIsValidating(true);
     try {
-      console.log('[Cart_Items] Starting cart validation for:', session.user_alias);
+      console.log('[CART] Starting cart validation for:', session.user_alias);
       
-      // Get cart items with releases
-      const { data: cartItems, error: cartError } = await supabase
+      // Only fetch the cart items themselves, not the complete record data
+      const { data: cartData, error: cartError } = await supabase
         .from('cart_items')
-        .select(`
-          *,
-          releases (
-            id,
-            title,
-            price,
-            artists,
-            labels,
-            thumb,
-            primary_image
-          )
-        `)
+        .select('release_id')
         .eq('user_alias', session.user_alias);
 
       if (cartError) throw cartError;
 
-      console.log('[Cart_Items] Found cart items:', cartItems?.length || 0);
+      // Use our efficient API endpoint to get all statuses at once
+      const recordIds = cartData.map(item => item.release_id);
+      
+      // Get fresh release data for these cart items
+      const { data: releases, error: releasesError } = await supabase
+        .from('releases')
+        .select('id, title, price, artists, labels, thumb, primary_image')
+        .in('id', recordIds);
 
-      // Get reservations for these items
-      const { data: reservations, error: resError } = await supabase
-        .from('reservations')
-        .select('release_id, user_alias, status')
-        .in('release_id', cartItems?.map(item => item.release_id) || [])
-        .eq('status', 'RESERVED');
-
-      if (resError) throw resError;
-
-      // Get queue positions
-      const { data: queuePositions, error: queueError } = await supabase
-        .from('reservation_queue')
-        .select('release_id, queue_position')
-        .in('release_id', cartItems?.map(item => item.release_id) || [])
-        .eq('user_alias', session.user_alias);
-
-      if (queueError) throw queueError;
-
-      console.log('[Cart_Items] Found data:', {
-        cartItems: cartItems?.length || 0,
-        reservations: reservations?.length || 0,
-        queuePositions: queuePositions?.length || 0
+      if (releasesError) throw releasesError;
+      
+      // Prepare a map of releases for faster lookups
+      const releaseMap = {};
+      releases?.forEach(release => {
+        releaseMap[release.id] = release;
       });
 
-      // Update status for each item
-      const updatedItems = cartItems?.map(item => {
-        const reservation = reservations?.find(r => r.release_id === item.release_id);
-        const queuePosition = queuePositions?.find(q => q.release_id === item.release_id);
+      // Get all status information for cart items in a single call
+      const statusResponse = await fetch(`/api/status?user_alias=${encodeURIComponent(session.user_alias)}`);
+      const { statusMap, error: statusError } = await statusResponse.json();
+      
+      if (statusError) throw new Error(statusError);
+      
+      // Convert the raw IDs to full cart items
+      const updatedItems = cartData.map(item => {
+        const status = statusMap[item.release_id];
+        const release = releaseMap[item.release_id];
         
-        let status = 'AVAILABLE';
-        
-        if (queuePosition) {
-          status = 'IN_QUEUE';
-          console.log('[Cart_Items] Item in queue:', {
-            id: item.release_id,
-            position: queuePosition.queue_position
-          });
-        } else if (reservation) {
-          status = reservation.user_alias === session.user_alias ? 'RESERVED' : 'RESERVED_BY_OTHERS';
-          console.log('[Cart_Items] Item reserved:', {
-            id: item.release_id,
-            by: reservation.user_alias,
-            status
-          });
-        }
-
         return {
-          ...item,
-          status,
-          queue_position: queuePosition?.queue_position
+          id: crypto.randomUUID(),
+          release_id: item.release_id,
+          user_alias: session.user_alias,
+          // Extract status information from our global status
+          status: status?.cartStatus || 'AVAILABLE',
+          queue_position: status?.queuePosition,
+          last_validated_at: new Date().toISOString(),
+          // Add release data
+          releases: release
         };
       });
-
-      console.log('[Cart_Items] Updated items:', updatedItems?.map(item => ({
-        id: item.release_id,
-        status: item.status,
-        queuePos: item.queue_position
-      })));
-
-      setCartItems(updatedItems || []);
+      
+      console.log(`[CART] Validated ${updatedItems.length} cart items`);
+      setCartItems(updatedItems);
+      setLastValidated(new Date());
     } catch (error) {
-      console.error('[Cart_Items] Cart validation failed:', error);
+      console.error('[CART] Cart validation failed:', error);
       throw new CartOperationError(
         'Failed to validate cart',
         'VALIDATION',
         error
       );
+    } finally {
+      setIsValidating(false);
     }
-  }, [session?.user_alias, supabase, setCartItems]);
+  }, [session?.user_alias, cartItems.length, setCartItems]);
 
   const addToCart = useCallback(async (recordId: number) => {
     if (!session?.user_alias) return;
@@ -147,37 +125,56 @@ export function useCart() {
     try {
       const existing = cartItems.find(item => item.release_id === recordId);
       if (existing) {
-        console.log('[Cart_Items] Item already in cart:', recordId);
+        console.log('[CART] Item already in cart:', recordId);
         return;
       }
 
+      // Insert into cart_items - cart_item_validation trigger will handle status
       const { data, error } = await supabase
         .from('cart_items')
         .insert({
           release_id: recordId,
           user_alias: session.user_alias,
-          status: 'AVAILABLE'
+          status: 'AVAILABLE' // Initial status, trigger will validate
         })
-        .select('*, releases(*)')
+        .select()
         .single();
 
       if (error) throw error;
 
-      console.log('[Cart_Items] Added to cart:', {
+      // Get release data
+      const { data: release, error: releaseError } = await supabase
+        .from('releases')
+        .select('id, title, price, artists, labels, thumb, primary_image')
+        .eq('id', recordId)
+        .single();
+
+      if (releaseError) throw releaseError;
+
+      // Update single status - this is efficient because it only fetches one record
+      await refreshSingleStatus(recordId);
+
+      console.log('[CART] Added to cart:', {
         id: recordId,
         status: data.status
       });
 
-      setCartItems([...cartItems, data]);
+      // Combine data and release for cart item
+      const newCartItem = {
+        ...data,
+        releases: release
+      };
+
+      setCartItems([...cartItems, newCartItem]);
     } catch (error) {
-      console.error('[Cart_Items] Add to cart failed:', error);
+      console.error('[CART] Add to cart failed:', error);
       throw new CartOperationError(
         'Failed to add item to cart',
         'VALIDATION',
         error
       );
     }
-  }, [session?.user_alias, cartItems, setCartItems, supabase]);
+  }, [session?.user_alias, cartItems, setCartItems, refreshSingleStatus]);
 
   const removeFromCart = useCallback(async (recordId: number) => {
     if (!session?.user_alias) return;
@@ -189,17 +186,22 @@ export function useCart() {
         .eq('release_id', recordId)
         .eq('user_alias', session.user_alias);
 
-      console.log('[Cart_Items] Removed from cart:', recordId);
+      console.log('[CART] Removed from cart:', recordId);
+      
+      // Update the status after removal to ensure UI is in sync
+      await refreshSingleStatus(recordId);
+      
+      // Update cart items
       setCartItems(cartItems.filter(item => item.release_id !== recordId));
     } catch (error) {
-      console.error('[Cart_Items] Remove from cart failed:', error);
+      console.error('[CART] Remove from cart failed:', error);
       throw new CartOperationError(
         'Failed to remove item from cart',
         'VALIDATION',
         error
       );
     }
-  }, [session?.user_alias, cartItems, setCartItems, supabase]);
+  }, [session?.user_alias, cartItems, setCartItems, refreshSingleStatus]);
 
   return {
     items: cartItems,
@@ -208,6 +210,6 @@ export function useCart() {
     validateCart,
     isEmpty: cartItems.length === 0,
     lastValidated,
-    isValidating: false
+    isValidating
   };
 }

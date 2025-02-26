@@ -1,8 +1,7 @@
-import React, { memo, useState } from 'react';
-import { useRecordStatus, useSession } from '@/store';
+import React, { memo, useState, useMemo } from 'react';
+import { useSession, useStore } from '@/store';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Clock, Users, Check, LogOut, Ban } from 'lucide-react';
-import type { RecordStatus } from '@/types/database';
 import { QueueExitModal } from './QueueExitModal';
 
 interface ActionButtonProps {
@@ -22,14 +21,30 @@ export const ActionButton = memo(function ActionButton({
   recordTitle,
   className = ''
 }: ActionButtonProps) {
-  const status = useRecordStatus(recordId);
+  // Use global status from store instead of individual hook
+  const status = useStore(state => state.recordStatuses[recordId]);
   const session = useSession();
   const [showExitModal, setShowExitModal] = useState(false);
   const [isHoveringQueue, setIsHoveringQueue] = useState(false);
 
-  console.log('[ACTION_BUTTON] Status:', { recordId, status }); // Debug log
-
-  const currentStatus = status?.cartStatus || 'AVAILABLE';
+  // Improved status determination logic
+  const currentStatus = useMemo(() => {
+    if (!status) {
+      console.log(`[AB_FIX] No status for record ${recordId}, defaulting to AVAILABLE`);
+      return 'AVAILABLE';
+    }
+    
+    // Priority 1: Check for queue position - if user is in a queue, this takes precedence
+    if (status.queuePosition !== undefined && status.queuePosition !== null) {
+      console.log(`[AB_FIX] Record ${recordId} has queue position ${status.queuePosition}, using IN_QUEUE status`);
+      return 'IN_QUEUE';
+    }
+    
+    // Priority 2: Use cartStatus
+    console.log(`[AB_FIX] Record ${recordId} using cartStatus: ${status.cartStatus}`);
+    return status.cartStatus || 'AVAILABLE';
+  }, [recordId, status]);
+  
   const isMyReservation = status?.reservation?.user_alias === session?.user_alias;
 
   // Map status to button variants and LED colors
@@ -61,8 +76,6 @@ export const ActionButton = memo(function ActionButton({
   const buttonConfig = getButtonConfig();
 
   const getButtonContent = () => {
-    console.log('[ACTION_BUTTON] Getting content for status:', currentStatus); // Debug log
-
     switch (currentStatus) {
       case 'SOLD':
         return (
@@ -121,7 +134,7 @@ export const ActionButton = memo(function ActionButton({
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('[ACTION_BUTTON] Click with status:', currentStatus); // Debug log
+    console.log(`[AB_FIX] Button clicked for record ${recordId} with status: ${currentStatus}`);
     
     if (currentStatus === 'AVAILABLE') {
       onAddToCart?.(e);
