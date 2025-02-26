@@ -97,6 +97,7 @@ export function RecordGrid({ records = [], loading = false, viewPreference = 'gr
         <RecordCard
           key={record.id}
           record={record}
+          status={recordStatuses[record.id]}
           viewPreference={viewPreference}
         />
       ))}

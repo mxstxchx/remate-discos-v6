@@ -13,18 +13,18 @@ const APP_LOG = '[APP:recordCard]';
 
 interface RecordCardProps {
   record: Release;
+  status?: RecordStatus;
   viewPreference?: 'grid' | 'list';
 }
 
 export const RecordCard = React.memo(function RecordCard({
   record,
+  status, // Get status from props instead of store lookup
   viewPreference = 'grid'
 }: RecordCardProps) {
   const router = useRouter();
   const { addToCart } = useCart();
   const { joinQueue, leaveQueue } = useQueue();
-  // Get record status from global store
-  const status = useStore(state => state.recordStatuses[record.id]);
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     console.log(`${APP_LOG} Image load failed for record ${record.id}, falling back to thumb`);
@@ -120,6 +120,7 @@ export const RecordCard = React.memo(function RecordCard({
             <div className="flex justify-end w-full" onClick={e => e.stopPropagation()}>
               <ActionButton
                 recordId={record.id}
+                status={status}
                 onAddToCart={handleAddToCart}
                 onJoinQueue={handleJoinQueue}
                 onLeaveQueue={handleLeaveQueue}
@@ -187,6 +188,7 @@ export const RecordCard = React.memo(function RecordCard({
           <div className="flex justify-end w-full" onClick={e => e.stopPropagation()}>
             <ActionButton
               recordId={record.id}
+              status={status}
               onAddToCart={handleAddToCart}
               onJoinQueue={handleJoinQueue}
               onLeaveQueue={handleLeaveQueue}

@@ -6,6 +6,7 @@ import { useStore, useSession } from '@/store';
 const globalInitMap = {
   initialLoadStarted: false,
   initialLoadComplete: false,
+  isLoading: false,
   loadRequested: {}
 };
 
@@ -19,6 +20,14 @@ export function useGlobalStatus() {
   const session = useSession();
   const updateRecordStatuses = useStore(state => state.updateRecordStatuses);
   
+  // Reference to track if component is mounted
+  const isMounted = useRef(true);
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+  
   // Initial load - visible records and their statuses
   useEffect(() => {
     // Skip if already loaded or requested
@@ -27,9 +36,16 @@ export function useGlobalStatus() {
       return;
     }
     
+    // Check if another hook is currently loading the data
+    if (globalInitMap.isLoading) {
+      console.log(`[GS_FIX] ${hookId.current} - Another hook is currently loading status data, waiting...`);
+      return;
+    }
+    
     const loadInitialStatuses = async () => {
-      // Set flag before async operation to prevent race conditions
+      // Set flags before async operation to prevent race conditions
       globalInitMap.initialLoadStarted = true;
+      globalInitMap.isLoading = true;
       
       setIsLoading(true);
       try {
@@ -49,7 +65,10 @@ export function useGlobalStatus() {
         // Reset the flag on error so we can try again
         globalInitMap.initialLoadStarted = false;
       } finally {
-        setIsLoading(false);
+        globalInitMap.isLoading = false;
+        if (isMounted.current) {
+          setIsLoading(false);
+        }
       }
     };
     

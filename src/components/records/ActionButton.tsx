@@ -6,6 +6,7 @@ import { QueueExitModal } from './QueueExitModal';
 
 interface ActionButtonProps {
   recordId: number;
+  status?: RecordStatus; // Add status prop
   onAddToCart?: (e: React.MouseEvent) => void;
   onJoinQueue?: (e: React.MouseEvent) => void;
   onLeaveQueue?: (e: React.MouseEvent) => void;
@@ -15,14 +16,13 @@ interface ActionButtonProps {
 
 export const ActionButton = memo(function ActionButton({
   recordId,
+  status, // Get status from props
   onAddToCart,
   onJoinQueue,
   onLeaveQueue,
   recordTitle,
   className = ''
 }: ActionButtonProps) {
-  // Use global status from store instead of individual hook
-  const status = useStore(state => state.recordStatuses[recordId]);
   const session = useSession();
   const [showExitModal, setShowExitModal] = useState(false);
   const [isHoveringQueue, setIsHoveringQueue] = useState(false);

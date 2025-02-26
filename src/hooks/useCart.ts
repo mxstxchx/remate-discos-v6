@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
+
+// Module-level cache to prevent redundant loading
+let cartCache = {
+  items: [],
+  userAlias: null,
+  lastLoaded: null,
+  isLoading: false
+};
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useStore, useSession } from '@/store';
 import { CartOperationError } from '@/lib/errors';
@@ -14,16 +22,41 @@ export function useCart() {
   const [lastValidated, setLastValidated] = useState<Date | null>(null);
   const [isValidating, setIsValidating] = useState(false);
 
+  // Track mounted state to prevent updates after unmount
+  const isMounted = useRef(true);
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   // Background validation
   useEffect(() => {
     if (!session?.user_alias) return;
 
+    // Check if we already have cached cart data for this user
+    const cacheIsValid = 
+      cartCache.userAlias === session.user_alias && 
+      cartCache.lastLoaded && 
+      (Date.now() - cartCache.lastLoaded) < 120000; // 2 minute cache
+    
+    if (cacheIsValid && cartCache.items.length > 0) {
+      console.log('[CART] Using cached cart data');
+      setCartItems(cartCache.items);
+      setLastValidated(new Date(cartCache.lastLoaded));
+      return;
+    }
+    
     console.log('[CART] Starting background validation');
     
     // Initial validation
-    validateCart().then(() => {
-      setLastValidated(new Date());
-    });
+    if (!cartCache.isLoading) {
+      validateCart().then(() => {
+        if (isMounted.current) {
+          setLastValidated(new Date());
+        }
+      });
+    }
 
     // Set up interval - 5 minutes
     const interval = setInterval(async () => {
@@ -46,12 +79,19 @@ export function useCart() {
 
   // Optimized cart validation that leverages our global status
   const validateCart = useCallback(async () => {
-    if (!session?.user_alias || cartItems.length === 0) {
-      console.log('[CART] No session or empty cart, skipping validation');
+    if (!session?.user_alias) {
+      console.log('[CART] No session, skipping validation');
+      return;
+    }
+    
+    // Prevent duplicate in-flight requests
+    if (cartCache.isLoading) {
+      console.log('[CART] Validation already in progress, skipping');
       return;
     }
 
     setIsValidating(true);
+    cartCache.isLoading = true;
     try {
       console.log('[CART] Starting cart validation for:', session.user_alias);
       
@@ -105,8 +145,19 @@ export function useCart() {
       });
       
       console.log(`[CART] Validated ${updatedItems.length} cart items`);
-      setCartItems(updatedItems);
-      setLastValidated(new Date());
+      
+      // Update cache
+      cartCache = {
+        items: updatedItems,
+        userAlias: session.user_alias,
+        lastLoaded: Date.now(),
+        isLoading: false
+      };
+      
+      if (isMounted.current) {
+        setCartItems(updatedItems);
+        setLastValidated(new Date());
+      }
     } catch (error) {
       console.error('[CART] Cart validation failed:', error);
       throw new CartOperationError(
@@ -115,7 +166,10 @@ export function useCart() {
         error
       );
     } finally {
-      setIsValidating(false);
+      cartCache.isLoading = false;
+      if (isMounted.current) {
+        setIsValidating(false);
+      }
     }
   }, [session?.user_alias, cartItems.length, setCartItems]);
 
