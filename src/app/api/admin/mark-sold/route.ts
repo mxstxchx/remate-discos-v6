@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
     const { error: fnError } = await supabase
       .rpc('mark_record_as_sold', {
         p_release_id: releaseId,
+        p_admin_alias: userAlias,
         p_notes: notes || null
       });
 

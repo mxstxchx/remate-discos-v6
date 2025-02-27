@@ -64,6 +64,7 @@ interface AppActions {
   setCartItems: (items: CartItem[]) => void;
   updateRecordStatuses: (statuses: Record<number, RecordStatus>) => void;
   updateSingleStatus: (recordId: number, status: RecordStatus) => void;
+  clearAllStatuses: () => void;
 }
 
 type Store = AppState & AppActions & AdminState & AdminActions;
@@ -140,17 +141,46 @@ const store = create<Store>()(
         set({ cartItems });
       },
       
-      updateRecordStatuses: (statuses) => set({
-        recordStatuses: statuses,
-        statusLastFetched: new Date().toISOString()
-      }),
-      
-      updateSingleStatus: (recordId, status) => set(state => ({
-        recordStatuses: {
-          ...state.recordStatuses,
-          [recordId]: status
+      // Updated to handle both complete replacement and partial updates
+      updateRecordStatuses: (statuses) => {
+        const currentStatuses = get().recordStatuses;
+        
+        // Check if it's a complete replacement or partial update
+        if (Object.keys(statuses).length > 10) {
+          // For large updates, replace the entire state
+          console.log(`[STORE] Complete status replacement with ${Object.keys(statuses).length} items`);
+          set({
+            recordStatuses: statuses,
+            statusLastFetched: new Date().toISOString()
+          });
+        } else {
+          // For small updates, merge with existing state
+          console.log(`[STORE] Partial status update for ${Object.keys(statuses).length} items`);
+          set({
+            recordStatuses: { ...currentStatuses, ...statuses },
+            statusLastFetched: new Date().toISOString()
+          });
         }
-      }))
+      },
+      
+      updateSingleStatus: (recordId, status) => {
+        console.log(`[STORE] Updating single status for record ${recordId}:`, status);
+        set(state => ({
+          recordStatuses: {
+            ...state.recordStatuses,
+            [recordId]: status
+          },
+          statusLastFetched: new Date().toISOString()
+        }));
+      },
+      
+      clearAllStatuses: () => {
+        console.log('[STORE] Clearing all record statuses');
+        set({
+          recordStatuses: {},
+          statusLastFetched: new Date().toISOString()
+        });
+      }
     }),
     {
       name: 'remate-discos-storage',

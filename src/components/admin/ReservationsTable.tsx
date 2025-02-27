@@ -120,13 +120,14 @@ export function ReservationsTable() {
 
   const handleMarkAsSold = async (releaseId: number) => {
     try {
+      // Add a notes parameter with a default value (null)
       const response = await fetch('/api/admin/mark-sold', {
         method: 'POST',
         headers: {
           'X-User-Alias': session?.user_alias || '',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ releaseId })
+        body: JSON.stringify({ releaseId, notes: null })
       });
       
       if (!response.ok) {

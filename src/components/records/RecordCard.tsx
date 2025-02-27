@@ -1,9 +1,9 @@
 import React from 'react';
-import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useCart } from '@/hooks/useCart';
 import { useQueue } from '@/hooks/useQueue';
+import { useStore } from '@/store';
 import { Release } from '@/store/recordsSlice';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,11 +13,13 @@ const APP_LOG = '[APP:recordCard]';
 
 interface RecordCardProps {
   record: Release;
+  status?: RecordStatus;
   viewPreference?: 'grid' | 'list';
 }
 
 export const RecordCard = React.memo(function RecordCard({
   record,
+  status, // Get status from props instead of store lookup
   viewPreference = 'grid'
 }: RecordCardProps) {
   const router = useRouter();
@@ -118,6 +120,7 @@ export const RecordCard = React.memo(function RecordCard({
             <div className="flex justify-end w-full" onClick={e => e.stopPropagation()}>
               <ActionButton
                 recordId={record.id}
+                status={status}
                 onAddToCart={handleAddToCart}
                 onJoinQueue={handleJoinQueue}
                 onLeaveQueue={handleLeaveQueue}
@@ -185,6 +188,7 @@ export const RecordCard = React.memo(function RecordCard({
           <div className="flex justify-end w-full" onClick={e => e.stopPropagation()}>
             <ActionButton
               recordId={record.id}
+              status={status}
               onAddToCart={handleAddToCart}
               onJoinQueue={handleJoinQueue}
               onLeaveQueue={handleLeaveQueue}
