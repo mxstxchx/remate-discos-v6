@@ -130,48 +130,25 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // First, get the reservation details
-    const { data: reservation, error: fetchError } = await supabase
-      .from('reservations')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (fetchError) {
-      return NextResponse.json({
-        error: 'Reservation not found',
-        details: fetchError
-      }, { status: 404 });
-    }
-
-    // Instead of deleting, set expires_at to yesterday to trigger the existing expiration logic
-    // This works with the existing handle_reservation_expiry trigger
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    const { error: updateError } = await supabase
-      .from('reservations')
-      .update({
-        expires_at: yesterday.toISOString()
-      })
-      .eq('id', id);
-
-    if (updateError) {
-      throw updateError;
-    }
-
-    // Log the action
-    await supabase
-      .from('audit_logs')
-      .insert({
-        user_alias: userAlias,
-        release_id: reservation.release_id,
-        action: 'EXPIRE_RESERVATION_ADMIN',
-        details: {
-          reservation_id: id,
-          trigger_method: 'expiry_date'
-        }
+    // Use the dedicated admin_expire_reservation function instead of manipulating expiry dates
+    const { error: fnError } = await supabase
+      .rpc('admin_expire_reservation', {
+        p_reservation_id: id,
+        p_admin_alias: userAlias
       });
+
+    if (fnError) {
+      // If the function fails, it might be because the reservation doesn't exist
+      if (fnError.message?.includes('Reservation not found')) {
+        return NextResponse.json({
+          error: 'Reservation not found',
+          details: fnError
+        }, { status: 404 });
+      }
+      throw fnError;
+    }
+
+    // The function handles logging, so we don't need to log the action separately
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -65,9 +65,16 @@ export function useAdmin() {
     try {
       setAdmin({ isLoading: true, error: null });
 
+      // Get the current session's user alias
+      const session = useStore.getState().session;
+      if (!session?.user_alias) {
+        throw new Error('No active session');
+      }
+
       const { error: fnError } = await supabase
         .rpc('mark_record_as_sold', {
           p_release_id: releaseId,
+          p_admin_alias: session.user_alias,
           p_notes: notes
         });
 
@@ -133,12 +140,20 @@ export function useAdmin() {
     try {
       setAdmin({ isLoading: true, error: null });
 
-      const { error } = await supabase
-        .from('reservations')
-        .update({ expires_at: new Date().toISOString() })
-        .eq('id', reservationId);
+      // Get the current session's user alias
+      const session = useStore.getState().session;
+      if (!session?.user_alias) {
+        throw new Error('No active session');
+      }
 
-      if (error) throw error;
+      // Use the dedicated admin_expire_reservation function
+      const { error: fnError } = await supabase
+        .rpc('admin_expire_reservation', {
+          p_reservation_id: reservationId,
+          p_admin_alias: session.user_alias
+        });
+
+      if (fnError) throw fnError;
 
       await fetchReservations();
       await fetchStats();
