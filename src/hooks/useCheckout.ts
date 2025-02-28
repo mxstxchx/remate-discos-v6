@@ -1,6 +1,18 @@
+// Add TypeScript declaration for window.cartCache
+declare global {
+  interface Window {
+    cartCache?: {
+      items: any[];
+      userAlias: string | null;
+      lastLoaded: number | null;
+      isLoading: boolean;
+    };
+  }
+}
+
 import { useState, useCallback } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useSession } from '@/store';
+import { useSession, useStore } from '@/store';
 import { useCart } from '@/hooks/useCart';
 import { CART_CONFIG } from '@/lib/constants';
 import { CheckoutError } from '@/lib/errors';
@@ -35,6 +47,8 @@ export function useCheckout() {
  const supabase = createClientComponentClient();
  const session = useSession();
  const { items, validateCart } = useCart();
+ // Get direct access to setCartItems
+ const setCartItems = useStore(state => state.setCartItems);
 
  const joinQueue = async (recordId: number) => {
    console.log('[CHECKOUT] Joining queue for record:', recordId);
@@ -232,7 +246,23 @@ export function useCheckout() {
        }
      }
 
+     // Clean up cart cache explicitly
+     if (window && window.cartCache) {
+       window.cartCache = {
+         items: [],
+         userAlias: session.user_alias,
+         lastLoaded: Date.now(),
+         isLoading: false
+       };
+     }
+     
      await validateCart();
+     
+     // Force clear the cart in store directly
+     setCartItems([]);
+     
+     // Add a small delay to ensure UI updates
+     await new Promise(resolve => setTimeout(resolve, 100));
 
      // Format message for WhatsApp
      const message = formatWhatsAppMessage(items, session.user_alias);

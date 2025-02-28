@@ -1,5 +1,17 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
 
+// Add TypeScript declaration for window.cartCache
+declare global {
+  interface Window {
+    cartCache?: {
+      items: any[];
+      userAlias: string | null;
+      lastLoaded: number | null;
+      isLoading: boolean;
+    };
+  }
+}
+
 // Module-level cache to prevent redundant loading
 let cartCache = {
   items: [],
@@ -7,6 +19,11 @@ let cartCache = {
   lastLoaded: null,
   isLoading: false
 };
+
+// Make cartCache accessible globally for direct resets
+if (typeof window !== 'undefined') {
+  window.cartCache = cartCache;
+}
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useStore, useSession } from '@/store';
 import { CartOperationError } from '@/lib/errors';
@@ -150,13 +167,19 @@ export function useCart() {
       
       console.log(`[CART] Validated ${updatedItems.length} cart items`);
       
-      // Update cache
+      // Update both local cache and global window reference
       cartCache = {
         items: updatedItems,
         userAlias: session.user_alias,
         lastLoaded: Date.now(),
         isLoading: false
       };
+      
+      if (window) {
+        window.cartCache = cartCache;
+      }
+      
+      console.log(`[CART] Updated cart cache with ${updatedItems.length} items`);
       
       if (isMounted.current) {
         setCartItems(updatedItems);
