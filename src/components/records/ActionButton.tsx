@@ -40,7 +40,13 @@ export const ActionButton = memo(function ActionButton({
       return 'IN_QUEUE';
     }
     
-    // Priority 2: Use cartStatus
+    // Priority 2: Check if item is in cart
+    if (status.inCart) {
+      console.log(`[AB_FIX] Record ${recordId} is in cart, using IN_CART status`);
+      return 'IN_CART';
+    }
+    
+    // Priority 3: Use cartStatus
     console.log(`[AB_FIX] Record ${recordId} using cartStatus: ${status.cartStatus}`);
     return status.cartStatus || 'AVAILABLE';
   }, [recordId, status]);

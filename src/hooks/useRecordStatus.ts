@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useSession, useStore } from '@/store';
 import type { RecordStatus } from '@/types/database';
@@ -8,6 +8,27 @@ export function useRecordStatus(recordId: number) {
   const session = useSession();
   const updateRecordStatuses = useStore(state => state.updateRecordStatuses);
   const status = useStore(state => state.recordStatuses[recordId]);
+  // Get cart items from the store
+  const cartItems = useStore(state => state.cartItems);
+  
+  // Check if record is in cart
+  const isInCart = useMemo(() => {
+    return cartItems.some(item => item.release_id === recordId);
+  }, [cartItems, recordId]);
+  
+  // Update status with cart info if needed
+  useEffect(() => {
+    if (status && isInCart && status.cartStatus !== 'IN_CART' && status.cartStatus !== 'IN_QUEUE') {
+      console.log(`[STATUS_FIX] Record ${recordId} is in cart but status doesn't reflect it, updating status`);
+      updateRecordStatuses({
+        [recordId]: {
+          ...status,
+          cartStatus: 'IN_CART',
+          inCart: true
+        }
+      });
+    }
+  }, [recordId, status, isInCart, updateRecordStatuses]);
 
   const fetchStatus = useCallback(async () => {
     if (!recordId || !session?.user_alias) return;
@@ -50,8 +71,12 @@ export function useRecordStatus(recordId: number) {
         .eq('user_alias', session.user_alias)
         .maybeSingle();
 
+      // Check if the item is already in the cart for the user
+      const isItemInCart = cartItems.some(item => item.release_id === recordId);
+
       const newStatus: RecordStatus = {
         cartStatus: queuePosition ? 'IN_QUEUE' :
+                   isItemInCart ? 'IN_CART' :
                    (reservation ? (reservation.user_alias === session.user_alias ? 'RESERVED' : 'RESERVED_BY_OTHERS') :
                    'AVAILABLE'),
         reservation: reservation ? {
@@ -59,6 +84,7 @@ export function useRecordStatus(recordId: number) {
           user_alias: reservation.user_alias
         } : null,
         queuePosition: queuePosition?.queue_position,
+        inCart: isItemInCart,
         lastValidated: new Date().toISOString()
       };
 
@@ -69,7 +95,7 @@ export function useRecordStatus(recordId: number) {
     } catch (error) {
       console.error('[STATUS] Error fetching status:', error);
     }
-  }, [recordId, session?.user_alias, updateRecordStatuses]);
+  }, [recordId, session?.user_alias, updateRecordStatuses, cartItems]);
 
   // Initial fetch
   useEffect(() => {
