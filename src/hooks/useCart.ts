@@ -79,8 +79,34 @@ export function useCart() {
       });
     }
 
-    // Set up interval - 5 minutes
+    // User activity tracking
+    let lastUserActivity = Date.now();
+    const INACTIVITY_THRESHOLD = 10 * 60 * 1000; // 10 minutes
+    
+    // Update last activity timestamp on user interactions
+    const updateLastActivity = () => {
+      lastUserActivity = Date.now();
+      console.log('[CART] User activity detected, updated timestamp');
+    };
+    
+    // Add activity listeners
+    window.addEventListener('mousemove', updateLastActivity);
+    window.addEventListener('keydown', updateLastActivity);
+    window.addEventListener('click', updateLastActivity);
+    window.addEventListener('touchstart', updateLastActivity);
+    window.addEventListener('scroll', updateLastActivity);
+    
+    // Set up interval - 10 minutes (increased from 5 minutes)
     const interval = setInterval(async () => {
+      // Skip validation if user has been inactive
+      const inactiveTime = Date.now() - lastUserActivity;
+      if (inactiveTime > INACTIVITY_THRESHOLD) {
+        console.log('[CART] Skipping scheduled validation due to user inactivity:', {
+          inactiveMinutes: Math.floor(inactiveTime / 60000)
+        });
+        return;
+      }
+      
       console.log('[CART] Running scheduled validation, last validated:', lastValidated?.toISOString());
       
       try {
@@ -89,12 +115,18 @@ export function useCart() {
       } catch (error) {
         console.error('[CART] Background validation failed:', error);
       }
-    }, 5 * 60 * 1000); // 5 minutes in milliseconds
+    }, 10 * 60 * 1000); // 10 minutes in milliseconds (increased from 5 minutes)
 
     // Cleanup
     return () => {
       console.log('[CART] Cleaning up background validation');
       clearInterval(interval);
+      // Remove activity listeners
+      window.removeEventListener('mousemove', updateLastActivity);
+      window.removeEventListener('keydown', updateLastActivity);
+      window.removeEventListener('click', updateLastActivity);
+      window.removeEventListener('touchstart', updateLastActivity);
+      window.removeEventListener('scroll', updateLastActivity);
     };
   }, [session?.user_alias]); // Only re-run if user changes
 
@@ -108,6 +140,12 @@ export function useCart() {
     // Prevent duplicate in-flight requests
     if (cartCache.isLoading) {
       console.log('[CART] Validation already in progress, skipping');
+      return;
+    }
+    
+    // If cart is empty, skip validation to save API calls
+    if (cartItems.length === 0) {
+      console.log('[CART] Cart is empty, skipping validation');
       return;
     }
 
