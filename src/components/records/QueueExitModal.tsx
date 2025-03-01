@@ -35,8 +35,16 @@ export function QueueExitModal({
           <Button
             variant="destructive"
             onClick={async () => {
-              await onConfirm();
-              onClose();
+              console.log('[MODAL] Leave Queue button clicked for:', recordTitle);
+              try {
+                await onConfirm();
+                console.log('[MODAL] onConfirm completed successfully');
+              } catch (error) {
+                console.error('[MODAL] Error in onConfirm:', error);
+              } finally {
+                console.log('[MODAL] Closing modal');
+                onClose();
+              }
             }}
           >
             Leave Queue

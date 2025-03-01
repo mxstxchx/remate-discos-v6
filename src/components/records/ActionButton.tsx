@@ -34,6 +34,16 @@ export const ActionButton = memo(function ActionButton({
       return 'AVAILABLE';
     }
     
+    console.log(`[AB_FIX] Determining status for record ${recordId}:`, {
+      hasQueuePosition: status.queuePosition !== undefined && status.queuePosition !== null,
+      queuePosition: status.queuePosition,
+      inCart: status.inCart,
+      cartStatus: status.cartStatus,
+      hasReservation: !!status.reservation,
+      reservation: status.reservation,
+      isMyReservation: status.reservation?.user_alias === session?.user_alias
+    });
+    
     // Priority 1: Check for queue position - if user is in a queue, this takes precedence
     if (status.queuePosition !== undefined && status.queuePosition !== null) {
       console.log(`[AB_FIX] Record ${recordId} has queue position ${status.queuePosition}, using IN_QUEUE status`);

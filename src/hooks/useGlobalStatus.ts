@@ -124,17 +124,32 @@ export function useGlobalStatus() {
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'audit_logs' },
         (payload) => {
+          console.log(`[GS_FIX] ${hookId.current} - Received audit log event:`, {
+            id: payload.new?.id,
+            action: payload.new?.action,
+            release_id: payload.new?.release_id,
+            user_alias: payload.new?.user_alias,
+            timestamp: new Date().toISOString()
+          });
+          
           const releaseId = payload.new?.release_id;
           if (releaseId) {
-            console.log(`[GS_FIX] ${hookId.current} - Received status change for release ${releaseId}`);
+            console.log(`[GS_FIX] ${hookId.current} - Processing status change for release ${releaseId}`);
             
             // Fetch just this specific record's status
             fetch(`/api/status/single?release_id=${releaseId}${session?.user_alias ? `&user_alias=${encodeURIComponent(session.user_alias)}` : ''}`)
               .then(res => res.json())
               .then(({ status }) => {
-                if (status) {
-                  console.log(`[GS_FIX] ${hookId.current} - Updating status for release ${releaseId}`);
-                  updateRecordStatuses({ [releaseId]: status });
+              if (status) {
+              console.log(`[GS_FIX] ${hookId.current} - Received updated status from API:`, {
+                releaseId,
+                cartStatus: status.cartStatus,
+                hasReservation: !!status.reservation,
+                reservation: status.reservation,
+                queuePosition: status.queuePosition,
+                inCart: status.inCart
+              });
+              updateRecordStatuses({ [releaseId]: status });
                   setLastUpdated(new Date());
                 }
               })
