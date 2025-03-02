@@ -55,9 +55,14 @@ graph TD
         adminActivitiesAPI["/app/api/admin/activities/route.ts"]
     end
     
+    subgraph External["External Services"]
+        WhatsApp["WhatsApp Integration"]
+    end
+    
     subgraph State["State Management"]
         %% Core Hooks
         globalStatusHook["/hooks/useGlobalStatus.ts"]
+        useRecordStatus["/hooks/useRecordStatus.ts"]
         cartHook["/hooks/useCart.ts"]
         queueHook["/hooks/useQueue.ts"]
         checkoutHook["/hooks/useCheckout.ts"]
@@ -65,6 +70,9 @@ graph TD
         filtersHook["/hooks/useFilters.ts"]
         adminHook["/hooks/useAdmin.ts"]
         sessionHook["/hooks/useSession.ts"]
+        
+        %% Cache
+        cartCache["Module-Level Cart Cache"]
         
         %% Store
         zustandStore["/store/index.ts"]
@@ -80,6 +88,10 @@ graph TD
         zustandStore --> storeCart
         zustandStore --> storeRecords
         zustandStore --> storeAdmin
+        
+        %% Cache Connections
+        cartCache <--> cartHook
+        cartCache -.->|global access| checkoutHook
     end
     
     subgraph UI["UI Components"]
@@ -152,15 +164,18 @@ graph TD
     
     %% Hook to Store Connections
     globalStatusHook -->|updates| storeStatus
+    useRecordStatus -->|updates| storeStatus
     cartHook -->|updates| storeCart
     recordsHook -->|updates| storeRecords
     adminHook -->|updates| storeAdmin
     AuthProvider -->|updates| storeSession
+    checkoutHook -->|direct clear| storeCart
     
     %% Hooks to API Connections (actions)
     cartHook -.->|cart operations| cart_items
     queueHook -.->|queue operations| reservation_queue
     checkoutHook -.->|reservation creation| reservations
+    checkoutHook -.->|opens| WhatsApp
     adminHook -.->|admin operations| adminMarkSoldAPI
     adminHook -.->|admin operations| adminReservationsAPI
     
@@ -187,6 +202,7 @@ graph TD
     BrowsePage -->|renders| RecordGrid
     BrowsePage -->|renders| ActiveFilters
     DetailPage -->|renders| RecordDetail
+    RecordDetail -->|renders| ActionButton
     AdminLayout -->|renders| AdminPage
     AdminPage -->|renders| ReservationsTable
     AdminPage -->|renders| QueueTable
@@ -196,9 +212,21 @@ graph TD
     RecordCard -->|renders| RecordStatus
     RecordCard -->|renders| ActionButton
     
+    %% Note on status priority
+    note right of ActionButton
+        Status Priority:
+        1. Queue position (IN_QUEUE)
+        2. Cart status (IN_CART)
+        3. Reservation status
+        4. Default (AVAILABLE)
+    end note
+    
     %% Hook Usage in Components
     RecordCard -.->|uses| cartHook
     RecordCard -.->|uses| queueHook
+    RecordDetail -.->|uses| useRecordStatus
+    DetailPage -.->|uses| useRecordStatus
+    ActionButton -.->|uses| useRecordStatus
     CartSheet -.->|uses| cartHook
     CartSheet -.->|uses| checkoutHook
     ActionButton -.->|uses| queueHook
