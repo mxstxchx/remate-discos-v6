@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useSession, useStore } from '@/store';
 import { useCart } from '@/hooks/useCart';
@@ -35,11 +35,22 @@ interface CheckoutResult {
 export function useCheckout() {
  const [isLoading, setIsLoading] = useState(false);
  const [showModal, setShowModal] = useState(false);
+ const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+ // Debug success modal state changes
+ useEffect(() => {
+   console.log('[CHECKOUT] showSuccessModal state changed:', showSuccessModal);
+ }, [showSuccessModal]);
  const [modalActions, setModalActions] = useState<{
    confirm: () => void;
    cancel: () => void;
  }>({ confirm: () => {}, cancel: () => {} });
  const [reservedItems, setReservedItems] = useState<Array<{
+   release_id: number;
+   title: string;
+   price: number;
+ }>>([]);
+ const [queuedItems, setQueuedItems] = useState<Array<{
    release_id: number;
    title: string;
  }>>([]);
@@ -258,18 +269,46 @@ export function useCheckout() {
      
      await validateCart();
      
-     // Force clear the cart in store directly
-     setCartItems([]);
-     
-     // Add a small delay to ensure UI updates
-     await new Promise(resolve => setTimeout(resolve, 100));
+     // First show the success modal
+     if (availableItems.length > 0) {
+       // Debug log for available items
+       console.log('[CHECKOUT] Available items for reservation:', availableItems.map(item => ({
+         id: item.release_id,
+         title: item.releases?.title,
+         price: item.releases?.price,
+         hasReleases: !!item.releases
+       })));
 
-     // Format message for WhatsApp
-     const message = formatWhatsAppMessage(items, session.user_alias);
-     window.open(
-       `https://wa.me/${CART_CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`,
-       '_blank'
-     );
+       setReservedItems(availableItems.map(item => ({
+         release_id: item.release_id,
+         title: item.releases?.title || `Record #${item.release_id}`,
+         price: item.releases?.price || 0
+       })));
+       
+       // Save queued items separately if user chose to join queue
+       if (shouldQueue) {
+         setQueuedItems(conflicts.map(({ item }) => ({
+           release_id: item.release_id,
+           title: item.releases?.title || `Record #${item.release_id}`
+         })));
+       }
+       
+       // Show success modal before clearing cart
+       setShowSuccessModal(true);
+       console.log('[CHECKOUT] Set showSuccessModal to true');
+       
+       // Delay cart clearing slightly to ensure modal shows
+       setTimeout(() => {
+         // Force clear the cart in store directly
+         setCartItems([]);
+         console.log('[CHECKOUT] Cleared cart items with delay');
+       }, 100);
+     } else {
+       // No reservations, just clear cart
+       setCartItems([]);
+     }
+     
+     // No immediate WhatsApp trigger - user will use modal buttons
 
       // Handle results notification
       if (conflicts.length > 0) {
@@ -311,25 +350,73 @@ export function useCheckout() {
    }
  }, [items, session?.user_alias, supabase, validateCart]);
 
+ // Create contact methods
+ const handleWhatsAppContact = useCallback(() => {
+   const message = formatWhatsAppMessage(reservedItems, session.user_alias);
+   window.open(`https://wa.me/${CART_CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+ }, [reservedItems, session?.user_alias]);
+
+ const handleEmailContact = useCallback(() => {
+   const subject = `Vinyl Reservation - ${session.user_alias}`;
+   const body = formatEmailMessage(reservedItems, session.user_alias); 
+   window.open(`mailto:${CART_CONFIG.SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+ }, [reservedItems, session?.user_alias]);
+ 
  return {
    handleCheckout,
    isLoading,
    showModal,
    setShowModal,
+   showSuccessModal,
+   setShowSuccessModal,
    modalActions,
-   reservedItems
+   reservedItems,
+   queuedItems,
+   handleWhatsAppContact,
+   handleEmailContact
  };
 }
 
-function formatWhatsAppMessage(items: CartItem[], userAlias: string): string {
- const formattedItems = items
-   .map(item => `- ${item.releases.title} [${item.releases.labels[0]?.catno}] (${item.releases.price}€)`)
+// Format WhatsApp message for contact
+function formatWhatsAppMessage(
+  reservedItems: Array<{ release_id: number, title: string, price: number }>, 
+  userAlias: string
+): string {
+ const formattedItems = reservedItems
+   .map(item => `- ${item.title || `Record #${item.release_id}`} (${item.price || 0}€)`)
    .join('\n');
 
- const total = items.reduce((sum, item) => sum + item.releases.price, 0);
+ const total = reservedItems.reduce((sum, item) => sum + (item.price || 0), 0);
 
- return `Hi! I would like to pick up:
+ return `Hi! I would like to pick up my reserved items:
 ${formattedItems}
 Total: ${total}€
 Alias: ${userAlias}`;
+}
+
+// Format email message for contact
+function formatEmailMessage(
+  reservedItems: Array<{ release_id: number, title: string, price: number }>, 
+  userAlias: string
+): string {
+ const formattedItems = reservedItems
+   .map(item => `- ${item.title || `Record #${item.release_id}`} (${item.price || 0}€)`)
+   .join('\n');
+
+ const total = reservedItems.reduce((sum, item) => sum + (item.price || 0), 0);
+ const date = new Date().toLocaleDateString();
+
+ return `Hello,
+
+I would like to coordinate pickup for my reserved vinyl records:
+
+${formattedItems}
+
+Total: ${total}€
+Reservation Date: ${date}
+Alias: ${userAlias}
+
+Please let me know what times are convenient for pickup.
+
+Thank you.`;
 }
