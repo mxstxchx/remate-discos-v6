@@ -1,5 +1,17 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
 
+// Add TypeScript declaration for window.cartCache
+declare global {
+  interface Window {
+    cartCache?: {
+      items: any[];
+      userAlias: string | null;
+      lastLoaded: number | null;
+      isLoading: boolean;
+    };
+  }
+}
+
 // Module-level cache to prevent redundant loading
 let cartCache = {
   items: [],
@@ -7,11 +19,16 @@ let cartCache = {
   lastLoaded: null,
   isLoading: false
 };
+
+// Make cartCache accessible globally for direct resets
+if (typeof window !== 'undefined') {
+  window.cartCache = cartCache;
+}
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useStore, useSession } from '@/store';
 import { CartOperationError } from '@/lib/errors';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
-import type { CartItem } from '@/types/database';
+import type { CartItem, RecordStatus } from '@/types/database';
 
 export function useCart() {
   const supabase = createClientComponentClient();
@@ -21,6 +38,10 @@ export function useCart() {
   const { refreshSingleStatus } = useGlobalStatus();
   const [lastValidated, setLastValidated] = useState<Date | null>(null);
   const [isValidating, setIsValidating] = useState(false);
+  
+  // Get status update function from the store
+  const updateRecordStatuses = useStore(state => state.updateRecordStatuses);
+  const recordStatuses = useStore(state => state.recordStatuses);
 
   // Track mounted state to prevent updates after unmount
   const isMounted = useRef(true);
@@ -58,8 +79,34 @@ export function useCart() {
       });
     }
 
-    // Set up interval - 5 minutes
+    // User activity tracking
+    let lastUserActivity = Date.now();
+    const INACTIVITY_THRESHOLD = 10 * 60 * 1000; // 10 minutes
+    
+    // Update last activity timestamp on user interactions
+    const updateLastActivity = () => {
+      lastUserActivity = Date.now();
+      console.log('[CART] User activity detected, updated timestamp');
+    };
+    
+    // Add activity listeners
+    window.addEventListener('mousemove', updateLastActivity);
+    window.addEventListener('keydown', updateLastActivity);
+    window.addEventListener('click', updateLastActivity);
+    window.addEventListener('touchstart', updateLastActivity);
+    window.addEventListener('scroll', updateLastActivity);
+    
+    // Set up interval - 10 minutes (increased from 5 minutes)
     const interval = setInterval(async () => {
+      // Skip validation if user has been inactive
+      const inactiveTime = Date.now() - lastUserActivity;
+      if (inactiveTime > INACTIVITY_THRESHOLD) {
+        console.log('[CART] Skipping scheduled validation due to user inactivity:', {
+          inactiveMinutes: Math.floor(inactiveTime / 60000)
+        });
+        return;
+      }
+      
       console.log('[CART] Running scheduled validation, last validated:', lastValidated?.toISOString());
       
       try {
@@ -68,12 +115,18 @@ export function useCart() {
       } catch (error) {
         console.error('[CART] Background validation failed:', error);
       }
-    }, 5 * 60 * 1000); // 5 minutes in milliseconds
+    }, 10 * 60 * 1000); // 10 minutes in milliseconds (increased from 5 minutes)
 
     // Cleanup
     return () => {
       console.log('[CART] Cleaning up background validation');
       clearInterval(interval);
+      // Remove activity listeners
+      window.removeEventListener('mousemove', updateLastActivity);
+      window.removeEventListener('keydown', updateLastActivity);
+      window.removeEventListener('click', updateLastActivity);
+      window.removeEventListener('touchstart', updateLastActivity);
+      window.removeEventListener('scroll', updateLastActivity);
     };
   }, [session?.user_alias]); // Only re-run if user changes
 
@@ -87,6 +140,12 @@ export function useCart() {
     // Prevent duplicate in-flight requests
     if (cartCache.isLoading) {
       console.log('[CART] Validation already in progress, skipping');
+      return;
+    }
+    
+    // If cart is empty, skip validation to save API calls
+    if (cartItems.length === 0) {
+      console.log('[CART] Cart is empty, skipping validation');
       return;
     }
 
@@ -146,13 +205,19 @@ export function useCart() {
       
       console.log(`[CART] Validated ${updatedItems.length} cart items`);
       
-      // Update cache
+      // Update both local cache and global window reference
       cartCache = {
         items: updatedItems,
         userAlias: session.user_alias,
         lastLoaded: Date.now(),
         isLoading: false
       };
+      
+      if (window) {
+        window.cartCache = cartCache;
+      }
+      
+      console.log(`[CART] Updated cart cache with ${updatedItems.length} items`);
       
       if (isMounted.current) {
         setCartItems(updatedItems);
@@ -182,6 +247,23 @@ export function useCart() {
         console.log('[CART] Item already in cart:', recordId);
         return;
       }
+      
+      // Get current status from store
+      const currentStatus = recordStatuses[recordId] || {
+        cartStatus: 'AVAILABLE',
+        reservation: null,
+        lastValidated: new Date().toISOString()
+      };
+      
+      // Immediately update status to show item is in cart
+      updateRecordStatuses({
+        [recordId]: {
+          ...currentStatus,
+          cartStatus: 'IN_CART',
+          inCart: true,
+          lastValidated: new Date().toISOString()
+        }
+      });
 
       // Insert into cart_items - cart_item_validation trigger will handle status
       const { data, error } = await supabase
@@ -194,7 +276,13 @@ export function useCart() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // If DB operation failed, revert the optimistic update
+        updateRecordStatuses({
+          [recordId]: currentStatus
+        });
+        throw error;
+      }
 
       // Get release data
       const { data: release, error: releaseError } = await supabase
@@ -203,9 +291,14 @@ export function useCart() {
         .eq('id', recordId)
         .single();
 
-      if (releaseError) throw releaseError;
+      if (releaseError) {
+        // We won't revert the status here since the item is in the cart,
+        // but we might not have all the release details
+        throw releaseError;
+      }
 
-      // Update single status - this is efficient because it only fetches one record
+      // Update single status through API to ensure consistency
+      // This is still valuable as it will update any other status information
       await refreshSingleStatus(recordId);
 
       console.log('[CART] Added to cart:', {
@@ -228,21 +321,51 @@ export function useCart() {
         error
       );
     }
-  }, [session?.user_alias, cartItems, setCartItems, refreshSingleStatus]);
+  }, [session?.user_alias, cartItems, setCartItems, refreshSingleStatus, recordStatuses, updateRecordStatuses]);
 
   const removeFromCart = useCallback(async (recordId: number) => {
     if (!session?.user_alias) return;
 
     try {
-      await supabase
+      // Get current status from store before removal
+      const currentStatus = recordStatuses[recordId];
+      
+      if (currentStatus) {
+        // Immediately update status to reflect item removal from cart
+        updateRecordStatuses({
+          [recordId]: {
+            ...currentStatus,
+            cartStatus: currentStatus.queuePosition ? 'IN_QUEUE' : 
+                       (currentStatus.reservation ? 
+                        (currentStatus.reservation.user_alias === session.user_alias ? 
+                         'RESERVED' : 'RESERVED_BY_OTHERS') : 
+                        'AVAILABLE'),
+            inCart: false,
+            lastValidated: new Date().toISOString()
+          }
+        });
+      }
+
+      // Remove from database
+      const { error } = await supabase
         .from('cart_items')
         .delete()
         .eq('release_id', recordId)
         .eq('user_alias', session.user_alias);
 
+      if (error) {
+        // If removal failed, revert the status update
+        if (currentStatus) {
+          updateRecordStatuses({
+            [recordId]: currentStatus
+          });
+        }
+        throw error;
+      }
+
       console.log('[CART] Removed from cart:', recordId);
       
-      // Update the status after removal to ensure UI is in sync
+      // Update the status after removal to ensure API consistency
       await refreshSingleStatus(recordId);
       
       // Update cart items
@@ -255,7 +378,7 @@ export function useCart() {
         error
       );
     }
-  }, [session?.user_alias, cartItems, setCartItems, refreshSingleStatus]);
+  }, [session?.user_alias, cartItems, setCartItems, refreshSingleStatus, recordStatuses, updateRecordStatuses]);
 
   return {
     items: cartItems,

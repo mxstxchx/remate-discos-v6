@@ -6,7 +6,7 @@ import { useToast } from '@/components/ui/use-toast';
 export function useQueue() {
  const supabase = createClientComponentClient();
  const session = useSession();
- const updateRecordStatuses = useStore(state => state.updateRecordStatuses);
+ const updateSingleStatus = useStore(state => state.updateSingleStatus);
  const { toast } = useToast();
 
  // Monitor reservation acquisitions
@@ -53,7 +53,24 @@ export function useQueue() {
  const leaveQueue = useCallback(async (recordId: number) => {
    if (!session?.user_alias) return;
 
+   console.log(`[QUEUE] Starting leave queue process for record: ${recordId}`);
+   
    try {
+     // First, check if there is a reservation for this record before we do anything
+     const { data: reservation, error: reservationError } = await supabase
+       .from('reservations')
+       .select('user_alias, status')
+       .eq('release_id', recordId)
+       .eq('status', 'RESERVED')
+       .maybeSingle();
+       
+     if (reservationError) {
+       console.error('[QUEUE] Error checking reservation:', reservationError);
+     } else {
+       console.log(`[QUEUE] Checked reservation status for ${recordId}:`, reservation);
+     }
+     
+     // Now delete the queue entry
      const { error } = await supabase
        .from('reservation_queue')
        .delete()
@@ -61,23 +78,47 @@ export function useQueue() {
        .eq('user_alias', session.user_alias);
 
      if (error) throw error;
+     
+     console.log(`[QUEUE] Successfully deleted queue entry for ${recordId}`);
 
-     // Update status in store
-     updateRecordStatuses({
-       [recordId]: {
+     // Construct the new status with guaranteed correct reservation info
+     let newStatus;
+     
+     if (reservation) {
+       const isMyReservation = reservation.user_alias === session.user_alias;
+       console.log(`[QUEUE] Record ${recordId} is reserved by ${isMyReservation ? 'me' : 'someone else'}`);
+       
+       newStatus = {
+         cartStatus: isMyReservation ? 'RESERVED' : 'RESERVED_BY_OTHERS',
+         reservation: {
+           status: reservation.status,
+           user_alias: reservation.user_alias
+         },
+         queuePosition: undefined,
+         inCart: false,
+         lastValidated: new Date().toISOString()
+       };
+     } else {
+       console.log(`[QUEUE] Record ${recordId} is not reserved by anyone`);
+       newStatus = {
          cartStatus: 'AVAILABLE',
          reservation: null,
          queuePosition: undefined,
+         inCart: false,
          lastValidated: new Date().toISOString()
-       }
-     });
-
-     console.log('[QUEUE] Left queue for record:', recordId);
+       };
+     }
+     
+     // Update the store with our guaranteed correct status
+     updateSingleStatus(recordId, newStatus);
+     console.log(`[QUEUE] Updated status after leaving queue:`, newStatus);
+     
+     console.log('[QUEUE] Left queue successfully for record:', recordId);
    } catch (error) {
      console.error('[QUEUE] Failed to leave queue:', error);
      throw error;
    }
- }, [session?.user_alias, updateRecordStatuses]);
+ }, [session?.user_alias, updateSingleStatus]);
 
  const joinQueue = useCallback(async (recordId: number) => {
    if (!session?.user_alias) return;
@@ -117,13 +158,11 @@ export function useQueue() {
      if (error) throw error;
 
      // Update status in store
-     updateRecordStatuses({
-       [recordId]: {
-         cartStatus: 'IN_QUEUE',
-         reservation: null,
-         queuePosition: nextPosition,
-         lastValidated: new Date().toISOString()
-       }
+     updateSingleStatus(recordId, {
+       cartStatus: 'IN_QUEUE',
+       reservation: null,
+       queuePosition: nextPosition,
+       lastValidated: new Date().toISOString()
      });
 
      console.log('[QUEUE] Joined queue:', data);
@@ -132,7 +171,7 @@ export function useQueue() {
      console.error('[QUEUE] Failed to join queue:', error);
      throw error;
    }
- }, [session?.user_alias, updateRecordStatuses]);
+ }, [session?.user_alias, updateSingleStatus]);
 
  return { joinQueue, leaveQueue };
 }

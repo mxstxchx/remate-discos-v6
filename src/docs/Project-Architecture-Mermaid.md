@@ -55,9 +55,15 @@ graph TD
         adminActivitiesAPI["/app/api/admin/activities/route.ts"]
     end
     
+    subgraph External["External Services"]
+        WhatsApp["WhatsApp Integration"]
+        Email["Email Client Integration"]
+    end
+    
     subgraph State["State Management"]
         %% Core Hooks
         globalStatusHook["/hooks/useGlobalStatus.ts"]
+        useRecordStatus["/hooks/useRecordStatus.ts"]
         cartHook["/hooks/useCart.ts"]
         queueHook["/hooks/useQueue.ts"]
         checkoutHook["/hooks/useCheckout.ts"]
@@ -65,6 +71,9 @@ graph TD
         filtersHook["/hooks/useFilters.ts"]
         adminHook["/hooks/useAdmin.ts"]
         sessionHook["/hooks/useSession.ts"]
+        
+        %% Cache
+        cartCache["Module-Level Cart Cache"]
         
         %% Store
         zustandStore["/store/index.ts"]
@@ -80,6 +89,10 @@ graph TD
         zustandStore --> storeCart
         zustandStore --> storeRecords
         zustandStore --> storeAdmin
+        
+        %% Cache Connections
+        cartCache <--> cartHook
+        cartCache -.->|global access| checkoutHook
     end
     
     subgraph UI["UI Components"]
@@ -104,6 +117,7 @@ graph TD
         %% Cart Components
         CartSheet["/components/layout/CartSheet.tsx"]
         CheckoutModal["/components/cart/CheckoutModal.tsx"]
+        SuccessModal["/components/cart/SuccessModal.tsx"]
         
         %% Filter Components
         ActiveFilters["/components/filters/ActiveFilters.tsx"]
@@ -152,15 +166,19 @@ graph TD
     
     %% Hook to Store Connections
     globalStatusHook -->|updates| storeStatus
+    useRecordStatus -->|updates| storeStatus
     cartHook -->|updates| storeCart
     recordsHook -->|updates| storeRecords
     adminHook -->|updates| storeAdmin
     AuthProvider -->|updates| storeSession
+    checkoutHook -->|direct clear| storeCart
     
     %% Hooks to API Connections (actions)
     cartHook -.->|cart operations| cart_items
     queueHook -.->|queue operations| reservation_queue
     checkoutHook -.->|reservation creation| reservations
+    checkoutHook -.->|contact option| WhatsApp
+    checkoutHook -.->|contact option| Email
     adminHook -.->|admin operations| adminMarkSoldAPI
     adminHook -.->|admin operations| adminReservationsAPI
     
@@ -187,6 +205,7 @@ graph TD
     BrowsePage -->|renders| RecordGrid
     BrowsePage -->|renders| ActiveFilters
     DetailPage -->|renders| RecordDetail
+    RecordDetail -->|renders| ActionButton
     AdminLayout -->|renders| AdminPage
     AdminPage -->|renders| ReservationsTable
     AdminPage -->|renders| QueueTable
@@ -196,9 +215,21 @@ graph TD
     RecordCard -->|renders| RecordStatus
     RecordCard -->|renders| ActionButton
     
+    %% Note on status priority
+    note right of ActionButton
+        Status Priority:
+        1. Queue position (IN_QUEUE)
+        2. Cart status (IN_CART)
+        3. Reservation status
+        4. Default (AVAILABLE)
+    end note
+    
     %% Hook Usage in Components
     RecordCard -.->|uses| cartHook
     RecordCard -.->|uses| queueHook
+    RecordDetail -.->|uses| useRecordStatus
+    DetailPage -.->|uses| useRecordStatus
+    ActionButton -.->|uses| useRecordStatus
     CartSheet -.->|uses| cartHook
     CartSheet -.->|uses| checkoutHook
     ActionButton -.->|uses| queueHook
@@ -210,6 +241,7 @@ graph TD
     ActionButton -.->|join/leave queue| queueHook
     CartSheet -.->|checkout| checkoutHook
     CheckoutModal -.->|confirm order| checkoutHook
+    SuccessModal -.->|contact options| checkoutHook
     ReservationsTable -.->|expire/sell| adminHook
     
     %% Style Definitions
@@ -229,6 +261,6 @@ graph TD
     class authAPI,statusAPI,singleStatusAPI,recordsAPI,adminStatsAPI,adminReservationsAPI,adminMarkSoldAPI,adminQueueAPI,adminSessionsAPI,adminActivitiesAPI api
     class globalStatusHook,cartHook,queueHook,checkoutHook,recordsHook,filtersHook,adminHook,sessionHook hook
     class zustandStore,storeSession,storeStatus,storeCart,storeRecords,storeAdmin store
-    class RecordGrid,RecordCard,RecordStatus,ActionButton,RecordDetail,CartSheet,CheckoutModal,ActiveFilters,FilterModal,ReservationsTable,QueueTable,ActivityLog,SessionsTable,AuthModal component
+    class RecordGrid,RecordCard,RecordStatus,ActionButton,RecordDetail,CartSheet,CheckoutModal,SuccessModal,ActiveFilters,FilterModal,ReservationsTable,QueueTable,ActivityLog,SessionsTable,AuthModal component
     class RootLayout,BrowsePage,DetailPage,AdminLayout,AdminPage,AuthProvider layout
 ```

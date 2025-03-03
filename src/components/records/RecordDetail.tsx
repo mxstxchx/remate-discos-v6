@@ -1,4 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
+import { useRecordStatus } from '@/hooks/useRecordStatus';
+import { useCart } from '@/hooks/useCart';
+import { useQueue } from '@/hooks/useQueue';
 import { Card } from '@/components/ui/card';
 import { ActionButton } from './ActionButton';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +27,13 @@ export function RecordDetail({ id }: RecordDetailProps) {
   const [activeVideoIndex, setActiveVideoIndex] = useState<number | null>(null);
   const supabase = createClientComponentClient();
   const videoContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Get record status
+  const status = useRecordStatus(id);
+  
+  // Get cart and queue hooks
+  const { addToCart } = useCart();
+  const { joinQueue, leaveQueue } = useQueue();
 
   useEffect(() => {
     async function fetchRecord() {
@@ -57,6 +67,37 @@ export function RecordDetail({ id }: RecordDetailProps) {
     setActiveVideoIndex(index);
   };
 
+  // Cart and queue handlers
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await addToCart(id);
+      console.log('[CART] Added to cart:', id);
+    } catch (error) {
+      console.error('[CART] Failed to add to cart:', error);
+    }
+  };
+
+  const handleJoinQueue = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await joinQueue(id);
+      console.log('[QUEUE] Joined queue for:', id);
+    } catch (error) {
+      console.error('[QUEUE] Failed to join queue:', error);
+    }
+  };
+
+  const handleLeaveQueue = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await leaveQueue(id);
+      console.log('[QUEUE] Left queue for:', id);
+    } catch (error) {
+      console.error('[QUEUE] Failed to leave queue:', id);
+    }
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
@@ -86,6 +127,11 @@ export function RecordDetail({ id }: RecordDetailProps) {
         <div className="mt-4 md:hidden">
           <ActionButton
             recordId={record.id}
+            status={status}
+            onAddToCart={handleAddToCart}
+            onJoinQueue={handleJoinQueue}
+            onLeaveQueue={handleLeaveQueue}
+            recordTitle={record.title}
             className="w-full"
           />
         </div>
@@ -221,6 +267,11 @@ export function RecordDetail({ id }: RecordDetailProps) {
         <div className="pt-4 hidden md:block">
           <ActionButton
             recordId={record.id}
+            status={status}
+            onAddToCart={handleAddToCart}
+            onJoinQueue={handleJoinQueue}
+            onLeaveQueue={handleLeaveQueue}
+            recordTitle={record.title}
             className="w-full"
           />
         </div>

@@ -99,6 +99,19 @@ export function ActivityLog() {
 
   // Helper function to format action for display
   const formatAction = (action: string) => {
+    // Parse standardized format (SOURCE_ACTION_ENTITY)
+    if (action.includes('_')) {
+      const parts = action.split('_');
+      if (parts.length >= 3) {
+        const source = parts[0].charAt(0) + parts[0].slice(1).toLowerCase();
+        const actionPart = parts[1].toLowerCase();
+        const entity = parts[2].charAt(0) + parts[2].slice(1).toLowerCase();
+        
+        return `${source}: ${actionPart} ${entity}`;
+      }
+    }
+    
+    // Fallback for legacy format
     return action
       .replace(/_/g, ' ')
       .toLowerCase()

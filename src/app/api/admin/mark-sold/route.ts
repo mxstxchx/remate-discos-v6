@@ -52,13 +52,13 @@ export async function POST(request: NextRequest) {
       throw fnError;
     }
 
-    // Log the action
+    // Log the action (using standardized format)
     await supabase
       .from('audit_logs')
       .insert({
         user_alias: userAlias,
         release_id: releaseId,
-        action: 'MARK_SOLD',
+        action: 'ADMIN_MARK_SOLD_RECORD',
         details: { notes }
       });
 

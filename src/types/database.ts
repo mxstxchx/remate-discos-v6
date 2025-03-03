@@ -95,5 +95,6 @@ export interface RecordStatus {
     user_alias: string | null;
   } | null;
   queuePosition?: number;
+  inCart?: boolean;
   lastValidated: string;
 }
