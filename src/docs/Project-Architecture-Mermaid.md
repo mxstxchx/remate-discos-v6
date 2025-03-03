@@ -57,6 +57,7 @@ graph TD
     
     subgraph External["External Services"]
         WhatsApp["WhatsApp Integration"]
+        Email["Email Client Integration"]
     end
     
     subgraph State["State Management"]
@@ -116,6 +117,7 @@ graph TD
         %% Cart Components
         CartSheet["/components/layout/CartSheet.tsx"]
         CheckoutModal["/components/cart/CheckoutModal.tsx"]
+        SuccessModal["/components/cart/SuccessModal.tsx"]
         
         %% Filter Components
         ActiveFilters["/components/filters/ActiveFilters.tsx"]
@@ -175,7 +177,8 @@ graph TD
     cartHook -.->|cart operations| cart_items
     queueHook -.->|queue operations| reservation_queue
     checkoutHook -.->|reservation creation| reservations
-    checkoutHook -.->|opens| WhatsApp
+    checkoutHook -.->|contact option| WhatsApp
+    checkoutHook -.->|contact option| Email
     adminHook -.->|admin operations| adminMarkSoldAPI
     adminHook -.->|admin operations| adminReservationsAPI
     
@@ -238,6 +241,7 @@ graph TD
     ActionButton -.->|join/leave queue| queueHook
     CartSheet -.->|checkout| checkoutHook
     CheckoutModal -.->|confirm order| checkoutHook
+    SuccessModal -.->|contact options| checkoutHook
     ReservationsTable -.->|expire/sell| adminHook
     
     %% Style Definitions
@@ -257,6 +261,6 @@ graph TD
     class authAPI,statusAPI,singleStatusAPI,recordsAPI,adminStatsAPI,adminReservationsAPI,adminMarkSoldAPI,adminQueueAPI,adminSessionsAPI,adminActivitiesAPI api
     class globalStatusHook,cartHook,queueHook,checkoutHook,recordsHook,filtersHook,adminHook,sessionHook hook
     class zustandStore,storeSession,storeStatus,storeCart,storeRecords,storeAdmin store
-    class RecordGrid,RecordCard,RecordStatus,ActionButton,RecordDetail,CartSheet,CheckoutModal,ActiveFilters,FilterModal,ReservationsTable,QueueTable,ActivityLog,SessionsTable,AuthModal component
+    class RecordGrid,RecordCard,RecordStatus,ActionButton,RecordDetail,CartSheet,CheckoutModal,SuccessModal,ActiveFilters,FilterModal,ReservationsTable,QueueTable,ActivityLog,SessionsTable,AuthModal component
     class RootLayout,BrowsePage,DetailPage,AdminLayout,AdminPage,AuthProvider layout
 ```
