@@ -12,7 +12,7 @@ i18n
       en: {
         auth: {
           modal: {
-            title: 'Welcome to Remate Discos',
+            title: 'Welcome!',
             subtitle: 'Please enter your alias to continue',
             aliasLabel: 'Your Alias',
             aliasPlaceholder: 'Enter your alias (min. 6 characters)',
@@ -30,7 +30,7 @@ i18n
       es: {
         auth: {
           modal: {
-            title: 'Bienvenido a Remate Discos',
+            title: 'Bienvenidx!',
             subtitle: 'Por favor ingresa tu alias para continuar',
             aliasLabel: 'Tu Alias',
             aliasPlaceholder: 'Ingresa tu alias (mín. 6 caracteres)',
