@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Remate Discos",
-    "tagline": "Venta de Colección de Vinilos"
+    "tagline": "Venta de Colección de Vinilos",
+    "browse_records": "Explorar Discos"
   },
   "navigation": {
     "home": "Inicio",

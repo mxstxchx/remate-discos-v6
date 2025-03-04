@@ -1,8 +1,10 @@
 import * as React from "react";
+import { useTranslation } from 'react-i18next';
 import { Slider } from "@/components/ui/slider";
 import { useFilters } from '@/hooks/useFilters';
 
 export function PriceRangeFilter() {
+  const { t } = useTranslation('filters');
   const { priceRange, setPriceRange } = useFilters();
   
   const handleChange = (value: number[]) => {
@@ -22,11 +24,11 @@ export function PriceRangeFilter() {
       />
       <div className="flex justify-between">
         <div className="text-sm font-mono" style={{ fontFamily: 'var(--font-mono)' }}>
-          <span className="text-primary-dark">€</span>
+          <span className="text-primary-dark">{t('price.currency')}</span>
           <span>{priceRange.min}</span>
         </div>
         <div className="text-sm font-mono" style={{ fontFamily: 'var(--font-mono)' }}>
-          <span className="text-primary-dark">€</span>
+          <span className="text-primary-dark">{t('price.currency')}</span>
           <span>{priceRange.max}</span>
         </div>
       </div>

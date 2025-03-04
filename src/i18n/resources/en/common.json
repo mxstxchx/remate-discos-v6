@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Remate Discos",
-    "tagline": "Vinyl Collection Sale"
+    "tagline": "Vinyl Collection Sale",
+    "browse_records": "Browse Records"
   },
   "navigation": {
     "home": "Home",

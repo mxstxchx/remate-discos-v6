@@ -1,0 +1,41 @@
+{
+  "title": "Filters",
+  "clearAll": "Clear All",
+  "apply": "Apply",
+  "cancel": "Cancel",
+  "search": "Search...",
+  "noResults": "No options found",
+  "loading": "Loading...",
+  "retry": "Retry",
+  "artists": {
+    "title": "Artists",
+    "buttonLabel": "Select Artists",
+    "loading": "Loading Artists...",
+    "error": "Error loading artists"
+  },
+  "labels": {
+    "title": "Labels",
+    "buttonLabel": "Select Labels", 
+    "loading": "Loading Labels...",
+    "error": "Error loading labels"
+  },
+  "styles": {
+    "title": "Styles",
+    "buttonLabel": "Select Styles",
+    "loading": "Loading Styles...",
+    "error": "Error loading styles"
+  },
+  "conditions": {
+    "title": "Condition",
+    "loading": "Loading Conditions...",
+    "error": "Error loading conditions",
+    "mint": "Mint",
+    "nearmint": "Near Mint",
+    "verygoodplus": "Very Good Plus",
+    "verygood": "Very Good"
+  },
+  "price": {
+    "title": "Price Range",
+    "currency": "€"
+  }
+}

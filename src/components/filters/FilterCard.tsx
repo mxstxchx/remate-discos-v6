@@ -1,4 +1,5 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useTranslation } from 'react-i18next';
 
 interface FilterCardProps {
   title: string;

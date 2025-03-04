@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
@@ -6,6 +7,7 @@ import { FilterModal } from './FilterModal';
 import { useFilters } from '@/hooks/useFilters';
 
 export function ArtistFilter() {
+  const { t } = useTranslation('filters');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [availableArtists, setAvailableArtists] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +47,7 @@ export function ArtistFilter() {
       <div className="space-y-2">
         <div className="flex items-center justify-center space-x-2">
           <Loader2 className="h-4 w-4 animate-spin" />
-          <span>Loading Artists...</span>
+          <span>{t('artists.loading')}</span>
         </div>
         <Button variant="outline" className="w-full" disabled>
           Select Artists
@@ -58,14 +60,14 @@ export function ArtistFilter() {
     return (
       <div className="space-y-2">
         <div className="text-sm text-destructive">
-          Error loading artists: {error}
+          {t('artists.error')}: {error}
         </div>
         <Button
           variant="outline"
           className="w-full"
           onClick={() => window.location.reload()}
         >
-          Retry
+          {t('retry')}
         </Button>
       </div>
     );
@@ -91,14 +93,14 @@ export function ArtistFilter() {
           onClick={() => setIsModalOpen(true)}
           disabled={isLoading || availableArtists.length === 0}
         >
-          Select Artists ({availableArtists.length})
+          {t('artists.buttonLabel')} ({availableArtists.length})
         </Button>
       </div>
 
       <FilterModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Select Artists"
+        title={t('artists.title')}
         options={availableArtists}
         selectedValues={artists}
         onApply={(newArtists) => {

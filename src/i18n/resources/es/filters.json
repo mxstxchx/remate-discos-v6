@@ -1,0 +1,41 @@
+{
+  "title": "Filtros",
+  "clearAll": "Borrar Todo",
+  "apply": "Aplicar",
+  "cancel": "Cancelar",
+  "search": "Buscar...",
+  "noResults": "No se encontraron opciones",
+  "loading": "Cargando...",
+  "retry": "Reintentar",
+  "artists": {
+    "title": "Artistas",
+    "buttonLabel": "Artistas",
+    "loading": "Cargando Artistas...",
+    "error": "Error al cargar artistas"
+  },
+  "labels": {
+    "title": "Sellos",
+    "buttonLabel": "Sellos",
+    "loading": "Cargando Sellos...",
+    "error": "Error al cargar sellos"
+  },
+  "styles": {
+    "title": "Estilos",
+    "buttonLabel": "Estilos",
+    "loading": "Cargando Estilos...",
+    "error": "Error al cargar estilos"
+  },
+  "conditions": {
+    "title": "Estado",
+    "loading": "Cargando Estados...",
+    "error": "Error al cargar estados",
+    "mint": "Perfecto",
+    "nearmint": "Casi Perfecto",
+    "verygoodplus": "Muy Bueno Plus",
+    "verygood": "Muy Bueno"
+  },
+  "price": {
+    "title": "Rango de Precio",
+    "currency": "€"
+  }
+}

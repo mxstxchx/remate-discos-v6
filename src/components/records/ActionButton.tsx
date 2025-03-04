@@ -1,4 +1,5 @@
 import React, { memo, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSession, useStore } from '@/store';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Clock, Users, Check, LogOut, Ban } from 'lucide-react';
@@ -24,6 +25,7 @@ export const ActionButton = memo(function ActionButton({
   className = ''
 }: ActionButtonProps) {
   const session = useSession();
+  const { t } = useTranslation('checkout');
   const [showExitModal, setShowExitModal] = useState(false);
   const [isHoveringQueue, setIsHoveringQueue] = useState(false);
 
@@ -97,52 +99,52 @@ export const ActionButton = memo(function ActionButton({
         return (
           <>
             <Ban className="mr-2 h-4 w-4" />
-            <span className="font-heading">Sold</span>
+            <span className="font-heading">{t('status.sold')}</span>
           </>
         );
       case 'IN_CART':
         return (
           <>
             <ShoppingCart className="mr-2 h-4 w-4" />
-            <span className="font-heading">In Cart</span>
+            <span className="font-heading">{t('status.in_cart')}</span>
           </>
         );
       case 'IN_QUEUE':
         return isHoveringQueue ? (
           <>
             <LogOut className="mr-2 h-4 w-4" />
-            <span className="font-heading">Leave Queue</span>
+            <span className="font-heading">{t('status.leave_queue')}</span>
           </>
         ) : (
           <>
             <Clock className="mr-2 h-4 w-4" />
-            <span className="font-heading">Position {status?.queuePosition}</span>
+            <span className="font-heading">{t('status.queue_position', { position: status?.queuePosition })}</span>
           </>
         );
       case 'RESERVED':
         return isMyReservation ? (
           <>
             <Check className="mr-2 h-4 w-4" />
-            <span className="font-heading">Reserved</span>
+            <span className="font-heading">{t('status.reserved')}</span>
           </>
         ) : (
           <>
             <Users className="mr-2 h-4 w-4" />
-            <span className="font-heading">Join Queue</span>
+            <span className="font-heading">{t('status.join_queue')}</span>
           </>
         );
       case 'RESERVED_BY_OTHERS':
         return (
           <>
             <Users className="mr-2 h-4 w-4" />
-            <span className="font-heading">Join Queue</span>
+            <span className="font-heading">{t('status.join_queue')}</span>
           </>
         );
       default: // AVAILABLE
         return (
           <>
             <ShoppingCart className="mr-2 h-4 w-4" />
-            <span className="font-heading">Add to Cart</span>
+            <span className="font-heading">{t('status.available')}</span>
           </>
         );
     }

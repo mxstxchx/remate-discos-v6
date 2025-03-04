@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 // Add TypeScript declaration for window.cartCache
 declare global {
   interface Window {
@@ -33,7 +35,8 @@ interface CheckoutResult {
 }
 
 export function useCheckout() {
- const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation('checkout');
+  const [isLoading, setIsLoading] = useState(false);
  const [showModal, setShowModal] = useState(false);
  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -350,17 +353,20 @@ export function useCheckout() {
    }
  }, [items, session?.user_alias, supabase, validateCart]);
 
- // Create contact methods
+ // Create contact methods with language awareness
  const handleWhatsAppContact = useCallback(() => {
-   const message = formatWhatsAppMessage(reservedItems, session.user_alias);
+   const message = formatWhatsAppMessage(reservedItems, session.user_alias, session.language, t);
    window.open(`https://wa.me/${CART_CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
- }, [reservedItems, session?.user_alias]);
+ }, [reservedItems, session?.user_alias, session?.language, t]);
 
  const handleEmailContact = useCallback(() => {
-   const subject = `Vinyl Reservation - ${session.user_alias}`;
-   const body = formatEmailMessage(reservedItems, session.user_alias); 
+   // Create subject from translation
+   const subject = t('messages.email_subject', { alias: session.user_alias });
+   
+   // Create body with translation function
+   const body = formatEmailMessage(reservedItems, session.user_alias, session.language, t); 
    window.open(`mailto:${CART_CONFIG.SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
- }, [reservedItems, session?.user_alias]);
+ }, [reservedItems, session?.user_alias, session?.language, t]);
  
  return {
    handleCheckout,
@@ -377,10 +383,12 @@ export function useCheckout() {
  };
 }
 
-// Format WhatsApp message for contact
+// Format WhatsApp message for contact based on language
 function formatWhatsAppMessage(
   reservedItems: Array<{ release_id: number, title: string, price: number }>, 
-  userAlias: string
+  userAlias: string,
+  language: string = 'en',
+  t: any // Pass translation function
 ): string {
  const formattedItems = reservedItems
    .map(item => `- ${item.title || `Record #${item.release_id}`} (${item.price || 0}€)`)
@@ -388,35 +396,40 @@ function formatWhatsAppMessage(
 
  const total = reservedItems.reduce((sum, item) => sum + (item.price || 0), 0);
 
- return `Hi! I would like to pick up my reserved items:
-${formattedItems}
-Total: ${total}€
-Alias: ${userAlias}`;
+ // Use the translation template directly
+ const template = t('messages.whatsapp');
+ 
+ return template
+   .replace('{{items}}', formattedItems)
+   .replace('{{total}}', total.toString())
+   .replace('{{alias}}', userAlias);
 }
 
-// Format email message for contact
+// Format email message for contact based on language
 function formatEmailMessage(
   reservedItems: Array<{ release_id: number, title: string, price: number }>, 
-  userAlias: string
+  userAlias: string,
+  language: string = 'en',
+  t: any // Pass translation function
 ): string {
  const formattedItems = reservedItems
    .map(item => `- ${item.title || `Record #${item.release_id}`} (${item.price || 0}€)`)
    .join('\n');
 
  const total = reservedItems.reduce((sum, item) => sum + (item.price || 0), 0);
- const date = new Date().toLocaleDateString();
+ 
+ // Format date according to locale
+ const date = new Date().toLocaleDateString(
+   language === 'es' ? 'es-ES' : 'en-US',
+   { year: 'numeric', month: 'long', day: 'numeric' }
+ );
 
- return `Hello,
+ // Use the translation template directly
+ const template = t('messages.email_body');
 
-I would like to coordinate pickup for my reserved vinyl records:
-
-${formattedItems}
-
-Total: ${total}€
-Reservation Date: ${date}
-Alias: ${userAlias}
-
-Please let me know what times are convenient for pickup.
-
-Thank you.`;
+ return template
+   .replace('{{items}}', formattedItems)
+   .replace('{{total}}', total.toString())
+   .replace('{{date}}', date)
+   .replace('{{alias}}', userAlias);
 }

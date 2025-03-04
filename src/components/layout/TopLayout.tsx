@@ -1,5 +1,5 @@
 import React from 'react'
-import { Globe, ShoppingCart, UserCircle2 } from 'lucide-react'
+import { ShoppingCart, UserCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { useTranslation } from 'react-i18next'
@@ -9,9 +9,11 @@ import { CartSheet } from './CartSheet'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { useTheme } from 'next-themes'
 import Image from 'next/image'
+import GB from 'country-flag-icons/react/3x2/GB'
+import ES from 'country-flag-icons/react/3x2/ES'
 
 export function TopLayout() {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation('common')
   const setModalOpen = useAuthStore(state => state.setModalOpen)
   const isAuthenticated = useAuthStore(state => state.isAuthenticated)
   const setLanguage = useStore((state) => state.setLanguage)
@@ -66,15 +68,22 @@ export function TopLayout() {
           variant="knurled"
           size="icon"
           onClick={toggleLanguage}
-          title={i18n.language === 'es' ? 'Switch to English' : 'Cambiar a Español'}
-          className="rounded-full"
+          title={t('nav.switch_language')}
+          className="rounded-full overflow-hidden flex items-center justify-center p-0"
         >
-          <Globe className="h-5 w-5" />
+          {/* Show the flag of the language user would switch to */}
+          {i18n.language === 'es' ? (
+            // Show UK flag when in Spanish mode (to switch to English)
+            <GB className="h-5 w-5" />
+          ) : (
+            // Show Spanish flag when in English mode (to switch to Spanish)
+            <ES className="h-5 w-5" />
+          )}
         </Button>
 
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="knurled" size="icon" title="Cart" className="rounded-full">
+            <Button variant="knurled" size="icon" title={t('nav.cart')} className="rounded-full">
               <ShoppingCart className="h-5 w-5" />
             </Button>
           </SheetTrigger>
@@ -85,7 +94,7 @@ export function TopLayout() {
           variant="knurled"
           size="icon"
           onClick={() => setModalOpen(true)}
-          title="Change User"
+          title={t('nav.change_user')}
           className="rounded-full"
         >
           <UserCircle2 className="h-5 w-5" />

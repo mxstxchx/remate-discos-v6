@@ -1,0 +1,54 @@
+{
+  "cart": {
+    "title": "Carrito",
+    "empty": "Tu carrito está vacío",
+    "itemCount": "{{count}} artículos en tu carrito",
+    "total": "Total",
+    "checkout": "Finalizar Compra",
+    "processing": "Procesando..."
+  },
+  "status": {
+    "available": "Añadir al Carrito",
+    "in_cart": "En Carrito",
+    "reserved": "Reservado",
+    "reserved_by_others": "Reservado por Otros",
+    "queue_position": "Posición {{position}}",
+    "sold": "Vendido",
+    "join_queue": "Unirse a la Cola",
+    "leave_queue": "Salir de la Cola"
+  },
+  "success": {
+    "title": "Reserva Exitosa",
+    "description": "Tus artículos han sido reservados exitosamente.",
+    "reserved_items": "Artículos Reservados",
+    "total": "Total",
+    "expiry_notice": "Tu reserva expirará el",
+    "contact_instruction": "Por favor contáctanos para coordinar la recogida:",
+    "contact_email": "Correo",
+    "contact_whatsapp": "WhatsApp"
+  },
+  "conflict": {
+    "title": "Artículos Ya No Disponibles",
+    "description": "Los siguientes artículos han sido reservados por otros usuarios:",
+    "queue_question": "¿Te gustaría unirte a la cola para estos artículos? Se te notificará cuando estén disponibles.",
+    "cancel": "Cancelar",
+    "join_queue": "Unirse a la Cola"
+  },
+  "queue_exit": {
+    "title": "¿Salir de la Cola?",
+    "description": "¿Estás seguro de que quieres salir de la cola para \"{{title}}\"? Si te unes a la cola más tarde, serás colocado al final de la cola.",
+    "cancel": "Cancelar",
+    "confirm": "Salir de la Cola"
+  },
+  "toast": {
+    "success": "Éxito",
+    "partial_success": "Éxito Parcial",
+    "error": "Error",
+    "unexpected_error": "Ha ocurrido un error inesperado"
+  },
+  "messages": {
+    "whatsapp": "¡Hola! Me gustaría recoger mis artículos reservados:\n{{items}}\nTotal: {{total}}€\nAlias: {{alias}}",
+    "email_subject": "Reserva de Vinilos - {{alias}}",
+    "email_body": "Hola,\n\nMe gustaría coordinar la recogida de mis discos de vinilo reservados:\n\n{{items}}\n\nTotal: {{total}}€\nFecha de Reserva: {{date}}\nAlias: {{alias}}\n\nPor favor, háganme saber qué horarios son convenientes para la recogida.\n\nGracias."
+  }
+}

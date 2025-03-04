@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
+
 import { useState, Suspense } from 'react';
 import { Filter, LayoutGrid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +21,7 @@ import {
 } from '@/components/filters';
 
 export default function BrowsePage() {
+  const { t } = useTranslation(['common', 'filters']);
   const { 
     releases, 
     loading, 
@@ -46,7 +49,7 @@ export default function BrowsePage() {
     <div>
       <TopLayout />
       <main className="container mx-auto px-4 py-8 mt-16">
-        <h1 className="text-2xl font-semibold mb-8">Browse Records</h1>
+        <h1 className="text-2xl font-semibold mb-8">{t('app.browse_records')}</h1>
 
         {/* Active Filters - Always visible on mobile */}
         <div className="block lg:hidden mb-4">
@@ -57,10 +60,10 @@ export default function BrowsePage() {
           {/* Left Column - Price and Condition Filters - Hidden on Mobile */}
           <div className="hidden lg:block lg:col-span-1 mb-6 lg:mb-0">
             <div className="space-y-4 lg:sticky lg:top-4">
-              <FilterCard title="Price Range">
+              <FilterCard title={t('filters:price.title')}>
                 <PriceRangeFilter />
               </FilterCard>
-              <FilterCard title="Condition">
+              <FilterCard title={t('filters:conditions.title')}>
                 <ConditionFilter />
               </FilterCard>
             </div>
@@ -71,13 +74,13 @@ export default function BrowsePage() {
             {/* Filters on Desktop (Includes Active Filters) */}
             <div className="hidden lg:block space-y-4 mb-6 lg:sticky lg:top-4 bg-background z-10">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FilterCard title="Artists">
+                <FilterCard title={t('filters:artists.title')}>
                   <ArtistFilter />
                 </FilterCard>
-                <FilterCard title="Labels">
+                <FilterCard title={t('filters:labels.title')}>
                   <LabelFilter />
                 </FilterCard>
-                <FilterCard title="Styles">
+                <FilterCard title={t('filters:styles.title')}>
                   <StyleFilter />
                 </FilterCard>
               </div>

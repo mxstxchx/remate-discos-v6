@@ -28,7 +28,7 @@ export function CheckoutModal({
   items,
   reservedItems
 }: CheckoutModalProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation('checkout');
 
   const handleConfirm = async () => {
     await onConfirm();
@@ -39,9 +39,9 @@ export function CheckoutModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Items No Longer Available</DialogTitle>
+          <DialogTitle>{t('conflict.title')}</DialogTitle>
           <DialogDescription>
-            The following items have been reserved by other users:
+            {t('conflict.description')}
           </DialogDescription>
         </DialogHeader>
         
@@ -55,16 +55,16 @@ export function CheckoutModal({
           </ul>
           
           <p className="mt-4 text-sm text-muted-foreground">
-            Would you like to join the queue for these items? You will be notified when they become available.
+            {t('conflict.queue_question')}
           </p>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {t('conflict.cancel')}
           </Button>
           <Button onClick={handleConfirm}>
-            Join Queue
+            {t('conflict.join_queue')}
           </Button>
         </DialogFooter>
       </DialogContent>
