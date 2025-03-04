@@ -35,7 +35,7 @@ export const API_ENDPOINTS = {
 export const CART_CONFIG = {
   VALIDATION_INTERVAL: 5 * 60 * 1000, // 5 minutes in milliseconds
   WHATSAPP_MESSAGE_LIMIT: 4096,
-  SUPPORT_EMAIL: 'rafavasquezf@gmail.com',
+  SUPPORT_EMAIL: process.env.NEXT_PUBLIC_SUPPORT_EMAIL,
   WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER
 } as const;
 
