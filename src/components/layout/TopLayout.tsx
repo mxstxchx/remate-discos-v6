@@ -1,5 +1,5 @@
 import React from 'react'
-import { Globe, ShoppingCart, UserCircle2 } from 'lucide-react'
+import { ShoppingCart, UserCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { useTranslation } from 'react-i18next'
@@ -67,9 +67,16 @@ export function TopLayout() {
           size="icon"
           onClick={toggleLanguage}
           title={t('nav.switch_language')}
-          className="rounded-full"
+          className="rounded-full overflow-hidden"
         >
-          <Globe className="h-5 w-5" />
+          {/* Show the flag of the language user would switch to */}
+          <Image 
+            src={`/images/${i18n.language === 'es' ? 'en' : 'es'}.png`}
+            alt={i18n.language === 'es' ? 'English' : 'Español'}
+            width={20}
+            height={20}
+            className="h-5 w-5 rounded-full object-cover"
+          />
         </Button>
 
         <Sheet>
