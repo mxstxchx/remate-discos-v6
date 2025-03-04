@@ -67,16 +67,33 @@ export function TopLayout() {
           size="icon"
           onClick={toggleLanguage}
           title={t('nav.switch_language')}
-          className="rounded-full overflow-hidden"
+          className="rounded-full overflow-hidden flex items-center justify-center p-0"
         >
           {/* Show the flag of the language user would switch to */}
-          <Image 
-            src={`/images/${i18n.language === 'es' ? 'en' : 'es'}.png`}
-            alt={i18n.language === 'es' ? 'English' : 'Español'}
-            width={20}
-            height={20}
-            className="h-5 w-5 rounded-full object-cover"
-          />
+          {i18n.language === 'es' ? (
+            // Show UK flag when in Spanish mode (to switch to English)
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" className="h-5 w-5">
+              <clipPath id="a">
+                <path d="M0 0v30h60V0z"/>
+              </clipPath>
+              <clipPath id="b">
+                <path d="M30 15h30v15zv15H0zH0V0zV0h30z"/>
+              </clipPath>
+              <g clipPath="url(#a)">
+                <path d="M0 0v30h60V0z" fill="#00247d"/>
+                <path d="M0 0l60 30m0-30L0 30" stroke="#fff" strokeWidth="6"/>
+                <path d="M0 0l60 30m0-30L0 30" clipPath="url(#b)" stroke="#cf142b" strokeWidth="4"/>
+                <path d="M30 0v30M0 15h60" stroke="#fff" strokeWidth="10"/>
+                <path d="M30 0v30M0 15h60" stroke="#cf142b" strokeWidth="6"/>
+              </g>
+            </svg>
+          ) : (
+            // Show Spanish flag when in English mode (to switch to Spanish)
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 500" className="h-5 w-5">
+              <rect width="750" height="500" fill="#c60b1e"/>
+              <rect width="750" height="250" fill="#ffc400" y="125"/>
+            </svg>
+          )}
         </Button>
 
         <Sheet>
