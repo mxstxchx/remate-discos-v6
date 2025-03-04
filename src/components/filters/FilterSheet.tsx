@@ -1,4 +1,5 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { useTranslation } from 'react-i18next';
 import {
  PriceRangeFilter,
  ConditionFilter,
@@ -15,32 +16,33 @@ interface FilterSheetProps {
 }
 
 export function FilterSheet({ open, onOpenChange }: FilterSheetProps) {
+ const { t } = useTranslation('filters');
  return (
    <Sheet open={open} onOpenChange={onOpenChange}>
      <SheetContent side="left" className="w-[90%] max-w-[400px] overflow-y-auto">
        <SheetHeader>
-         <SheetTitle>Filters</SheetTitle>
+         <SheetTitle>{t('title')}</SheetTitle>
        </SheetHeader>
        
        <div className="mt-4 space-y-6 pb-20">
          
-         <FilterCard title="Price Range">
+         <FilterCard title={t('price.title')}>
            <PriceRangeFilter />
          </FilterCard>
          
-         <FilterCard title="Condition">
+         <FilterCard title={t('conditions.title')}>
            <ConditionFilter />
          </FilterCard>
          
-         <FilterCard title="Artists">
+         <FilterCard title={t('artists.title')}>
            <ArtistFilter />
          </FilterCard>
          
-         <FilterCard title="Labels">
+         <FilterCard title={t('labels.title')}>
            <LabelFilter />
          </FilterCard>
          
-         <FilterCard title="Styles">
+         <FilterCard title={t('styles.title')}>
            <StyleFilter />
          </FilterCard>
        </div>

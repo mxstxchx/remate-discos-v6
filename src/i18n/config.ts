@@ -3,6 +3,17 @@
 import { createInstance } from 'i18next'
 import { initReactI18next } from 'react-i18next'
 
+// Import resource files
+import authEN from './resources/en/auth.json'
+import commonEN from './resources/en/common.json'
+import filtersEN from './resources/en/filters.json'
+import checkoutEN from './resources/en/checkout.json'
+
+import authES from './resources/es/auth.json'
+import commonES from './resources/es/common.json'
+import filtersES from './resources/es/filters.json'
+import checkoutES from './resources/es/checkout.json'
+
 const i18n = createInstance()
 
 i18n
@@ -10,40 +21,16 @@ i18n
   .init({
     resources: {
       en: {
-        auth: {
-          modal: {
-            title: 'Welcome!',
-            subtitle: 'Please enter your alias to continue',
-            aliasLabel: 'Your Alias',
-            aliasPlaceholder: 'Enter your alias (min. 6 characters)',
-            submit: 'Continue',
-            loading: 'Signing in...',
-            languageLabel: 'Select Language'
-          },
-          validation: {
-            aliasRequired: 'Alias is required',
-            aliasLength: 'Alias must be at least 6 characters',
-            systemError: 'Could not create session'
-          }
-        }
+        auth: authEN,
+        common: commonEN,
+        filters: filtersEN,
+        checkout: checkoutEN
       },
       es: {
-        auth: {
-          modal: {
-            title: 'Bienvenidx!',
-            subtitle: 'Por favor ingresa tu alias para continuar',
-            aliasLabel: 'Tu Alias',
-            aliasPlaceholder: 'Ingresa tu alias (mín. 6 caracteres)',
-            submit: 'Continuar',
-            loading: 'Iniciando...',
-            languageLabel: 'Selecciona Idioma'
-          },
-          validation: {
-            aliasRequired: 'El alias es requerido',
-            aliasLength: 'El alias debe tener al menos 6 caracteres',
-            systemError: 'No se pudo crear la sesión'
-          }
-        }
+        auth: authES,
+        common: commonES,
+        filters: filtersES,
+        checkout: checkoutES
       }
     },
     lng: 'es',

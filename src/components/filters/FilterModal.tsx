@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ export function FilterModal({
   onApply,
   loading = false
 }: FilterModalProps) {
+  const { t } = useTranslation('filters');
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>(selectedValues);
 
@@ -61,7 +63,7 @@ export function FilterModal({
         </DialogHeader>
         <div className="space-y-4">
           <Input
-            placeholder="Search..."
+            placeholder={t('search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full"
@@ -90,19 +92,19 @@ export function FilterModal({
               </div>
             ) : (
               <div className="flex items-center justify-center h-full text-muted-foreground">
-                No options found
+                {t('noResults')}
               </div>
             )}
           </ScrollArea>
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={onClose}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button
               onClick={handleApply}
               disabled={loading}
             >
-              Apply
+              {t('apply')}
             </Button>
           </div>
         </div>

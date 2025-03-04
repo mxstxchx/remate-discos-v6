@@ -11,7 +11,7 @@ import { useTheme } from 'next-themes'
 import Image from 'next/image'
 
 export function TopLayout() {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation('common')
   const setModalOpen = useAuthStore(state => state.setModalOpen)
   const isAuthenticated = useAuthStore(state => state.isAuthenticated)
   const setLanguage = useStore((state) => state.setLanguage)
@@ -66,7 +66,7 @@ export function TopLayout() {
           variant="knurled"
           size="icon"
           onClick={toggleLanguage}
-          title={i18n.language === 'es' ? 'Switch to English' : 'Cambiar a Español'}
+          title={t('nav.switch_language')}
           className="rounded-full"
         >
           <Globe className="h-5 w-5" />
@@ -74,7 +74,7 @@ export function TopLayout() {
 
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="knurled" size="icon" title="Cart" className="rounded-full">
+            <Button variant="knurled" size="icon" title={t('nav.cart')} className="rounded-full">
               <ShoppingCart className="h-5 w-5" />
             </Button>
           </SheetTrigger>
@@ -85,7 +85,7 @@ export function TopLayout() {
           variant="knurled"
           size="icon"
           onClick={() => setModalOpen(true)}
-          title="Change User"
+          title={t('nav.change_user')}
           className="rounded-full"
         >
           <UserCircle2 className="h-5 w-5" />

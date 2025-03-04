@@ -350,17 +350,21 @@ export function useCheckout() {
    }
  }, [items, session?.user_alias, supabase, validateCart]);
 
- // Create contact methods
+ // Create contact methods with language awareness
  const handleWhatsAppContact = useCallback(() => {
-   const message = formatWhatsAppMessage(reservedItems, session.user_alias);
+   const message = formatWhatsAppMessage(reservedItems, session.user_alias, session.language);
    window.open(`https://wa.me/${CART_CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
- }, [reservedItems, session?.user_alias]);
+ }, [reservedItems, session?.user_alias, session?.language]);
 
  const handleEmailContact = useCallback(() => {
-   const subject = `Vinyl Reservation - ${session.user_alias}`;
-   const body = formatEmailMessage(reservedItems, session.user_alias); 
+   // Get email subject from translations
+   const i18n = require('i18next').default;
+   const subjectTemplate = i18n.t('messages.email_subject', { ns: 'checkout' });
+   const subject = subjectTemplate.replace('{{alias}}', session.user_alias);
+   
+   const body = formatEmailMessage(reservedItems, session.user_alias, session.language); 
    window.open(`mailto:${CART_CONFIG.SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
- }, [reservedItems, session?.user_alias]);
+ }, [reservedItems, session?.user_alias, session?.language]);
  
  return {
    handleCheckout,
@@ -377,10 +381,11 @@ export function useCheckout() {
  };
 }
 
-// Format WhatsApp message for contact
+// Format WhatsApp message for contact based on language
 function formatWhatsAppMessage(
   reservedItems: Array<{ release_id: number, title: string, price: number }>, 
-  userAlias: string
+  userAlias: string,
+  language: string = 'en'
 ): string {
  const formattedItems = reservedItems
    .map(item => `- ${item.title || `Record #${item.release_id}`} (${item.price || 0}€)`)
@@ -388,35 +393,41 @@ function formatWhatsAppMessage(
 
  const total = reservedItems.reduce((sum, item) => sum + (item.price || 0), 0);
 
- return `Hi! I would like to pick up my reserved items:
-${formattedItems}
-Total: ${total}€
-Alias: ${userAlias}`;
+ // Use appropriate template based on language
+ const i18n = require('i18next').default;
+ const template = i18n.t('messages.whatsapp', { ns: 'checkout' });
+
+ return template
+   .replace('{{items}}', formattedItems)
+   .replace('{{total}}', total.toString())
+   .replace('{{alias}}', userAlias);
 }
 
-// Format email message for contact
+// Format email message for contact based on language
 function formatEmailMessage(
   reservedItems: Array<{ release_id: number, title: string, price: number }>, 
-  userAlias: string
+  userAlias: string,
+  language: string = 'en'
 ): string {
  const formattedItems = reservedItems
    .map(item => `- ${item.title || `Record #${item.release_id}`} (${item.price || 0}€)`)
    .join('\n');
 
  const total = reservedItems.reduce((sum, item) => sum + (item.price || 0), 0);
- const date = new Date().toLocaleDateString();
+ 
+ // Format date according to locale
+ const date = new Date().toLocaleDateString(
+   language === 'es' ? 'es-ES' : 'en-US',
+   { year: 'numeric', month: 'long', day: 'numeric' }
+ );
 
- return `Hello,
+ // Use appropriate template based on language
+ const i18n = require('i18next').default;
+ const template = i18n.t('messages.email_body', { ns: 'checkout' });
 
-I would like to coordinate pickup for my reserved vinyl records:
-
-${formattedItems}
-
-Total: ${total}€
-Reservation Date: ${date}
-Alias: ${userAlias}
-
-Please let me know what times are convenient for pickup.
-
-Thank you.`;
+ return template
+   .replace('{{items}}', formattedItems)
+   .replace('{{total}}', total.toString())
+   .replace('{{date}}', date)
+   .replace('{{alias}}', userAlias);
 }

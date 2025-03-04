@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
@@ -7,6 +8,7 @@ import { FilterModal } from './FilterModal';
 import { useFilters } from '@/hooks/useFilters';
 
 export function StyleFilter() {
+  const { t } = useTranslation('filters');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [availableStyles, setAvailableStyles] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,10 +48,10 @@ export function StyleFilter() {
       <div className="space-y-2">
         <div className="flex items-center justify-center space-x-2">
           <Loader2 className="h-4 w-4 animate-spin" />
-          <span>Loading Styles...</span>
+          <span>{t('styles.loading')}</span>
         </div>
         <Button variant="outline" className="w-full" disabled>
-          Select Styles
+          {t('styles.buttonLabel')}
         </Button>
       </div>
     );
@@ -59,14 +61,14 @@ export function StyleFilter() {
     return (
       <div className="space-y-2">
         <div className="text-sm text-destructive">
-          Error loading styles: {error}
+          {t('styles.error')}: {error}
         </div>
         <Button
           variant="outline"
           className="w-full"
           onClick={() => window.location.reload()}
         >
-          Retry
+          {t('retry')}
         </Button>
       </div>
     );
@@ -92,14 +94,14 @@ export function StyleFilter() {
           onClick={() => setIsModalOpen(true)}
           disabled={isLoading || availableStyles.length === 0}
         >
-          Select Styles ({availableStyles.length})
+          {t('styles.buttonLabel')} ({availableStyles.length})
         </Button>
       </div>
 
       <FilterModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Select Styles"
+        title={t('styles.title')}
         options={availableStyles}
         selectedValues={styles}
         onApply={(newStyles) => {

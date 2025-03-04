@@ -12,6 +12,8 @@ import { useTranslation } from "react-i18next";
 import { formatPrice } from "@/lib/utils";
 import { Mail, MessageCircle } from "lucide-react";
 import { CART_CONFIG } from "@/lib/constants";
+import { format } from 'date-fns';
+import { es, enUS } from 'date-fns/locale';
 
 interface SuccessModalProps {
   isOpen: boolean;
@@ -32,7 +34,7 @@ export function SuccessModal({
   onWhatsApp,
   onEmail
 }: SuccessModalProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation('checkout');
 
   // Add debugging for modal state
   useEffect(() => {
@@ -48,14 +50,14 @@ export function SuccessModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t('checkout.success', 'Reservation Successful')}</DialogTitle>
+          <DialogTitle>{t('success.title')}</DialogTitle>
           <DialogDescription>
-            {t('checkout.success_description', 'Your items have been successfully reserved.')}
+            {t('success.description')}
           </DialogDescription>
         </DialogHeader>
         
         <div className="py-4">
-          <h3 className="font-medium mb-2">{t('checkout.reserved_items', 'Reserved Items')}:</h3>
+          <h3 className="font-medium mb-2">{t('success.reserved_items')}:</h3>
           <ul className="space-y-2 max-h-60 overflow-y-auto">
             {items.map((item) => (
               <li key={item.release_id} className="flex justify-between text-sm border-b border-border pb-2">
@@ -66,19 +68,23 @@ export function SuccessModal({
           </ul>
           
           <div className="flex justify-between mt-4 font-medium">
-            <span>{t('checkout.total', 'Total')}:</span>
+            <span>{t('success.total')}:</span>
             <span className="font-mono">{formatPrice(total)}</span>
           </div>
           
           <div className="mt-4 text-sm text-muted-foreground">
             <p>
-              {t('checkout.expiry_notice', 'Your reservation will expire on')}:
+              {t('success.expiry_notice')}:
               <span className="font-medium text-foreground ml-1">
-                {expiryDate.toLocaleDateString()}
+                {expiryDate.toLocaleDateString(i18n.language === 'es' ? 'es-ES' : 'en-US', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              })}
               </span>
             </p>
             <p className="mt-2">
-              {t('checkout.contact_instruction', 'Please contact us to coordinate pickup:')}
+              {t('success.contact_instruction')}
             </p>
           </div>
         </div>
@@ -89,13 +95,13 @@ export function SuccessModal({
             variant="outline" 
             onClick={onEmail}>
             <Mail className="mr-2 h-4 w-4" />
-            {t('checkout.contact_email', 'Email')}
+            {t('success.contact_email')}
           </Button>
           <Button 
             className="flex-1" 
             onClick={onWhatsApp}>
             <MessageCircle className="mr-2 h-4 w-4" />
-            {t('checkout.contact_whatsapp', 'WhatsApp')}
+            {t('success.contact_whatsapp')}
           </Button>
         </DialogFooter>
       </DialogContent>

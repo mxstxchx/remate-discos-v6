@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
@@ -6,6 +7,7 @@ import { FilterModal } from './FilterModal';
 import { useFilters } from '@/hooks/useFilters';
 
 export function LabelFilter() {
+  const { t } = useTranslation('filters');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [availableLabels, setAvailableLabels] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,10 +47,10 @@ export function LabelFilter() {
       <div className="space-y-2">
         <div className="flex items-center justify-center space-x-2">
           <Loader2 className="h-4 w-4 animate-spin" />
-          <span>Loading Labels...</span>
+          <span>{t('labels.loading')}</span>
         </div>
         <Button variant="outline" className="w-full" disabled>
-          Select Labels
+          {t('labels.buttonLabel')}
         </Button>
       </div>
     );
@@ -58,14 +60,14 @@ export function LabelFilter() {
     return (
       <div className="space-y-2">
         <div className="text-sm text-destructive">
-          Error loading labels: {error}
+          {t('labels.error')}: {error}
         </div>
         <Button
           variant="outline"
           className="w-full"
           onClick={() => window.location.reload()}
         >
-          Retry
+          {t('retry')}
         </Button>
       </div>
     );
@@ -91,14 +93,14 @@ export function LabelFilter() {
           onClick={() => setIsModalOpen(true)}
           disabled={isLoading || availableLabels.length === 0}
         >
-          Select Labels ({availableLabels.length})
+          {t('labels.buttonLabel')} ({availableLabels.length})
         </Button>
       </div>
 
       <FilterModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Select Labels"
+        title={t('labels.title')}
         options={availableLabels}
         selectedValues={labels}
         onApply={(newLabels) => {
