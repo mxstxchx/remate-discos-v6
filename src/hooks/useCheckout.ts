@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 // Add TypeScript declaration for window.cartCache
 declare global {
   interface Window {
@@ -33,7 +35,8 @@ interface CheckoutResult {
 }
 
 export function useCheckout() {
- const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation('checkout');
+  const [isLoading, setIsLoading] = useState(false);
  const [showModal, setShowModal] = useState(false);
  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -352,19 +355,18 @@ export function useCheckout() {
 
  // Create contact methods with language awareness
  const handleWhatsAppContact = useCallback(() => {
-   const message = formatWhatsAppMessage(reservedItems, session.user_alias, session.language);
+   const message = formatWhatsAppMessage(reservedItems, session.user_alias, session.language, t);
    window.open(`https://wa.me/${CART_CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
- }, [reservedItems, session?.user_alias, session?.language]);
+ }, [reservedItems, session?.user_alias, session?.language, t]);
 
  const handleEmailContact = useCallback(() => {
-   // Get email subject from translations
-   const i18n = require('i18next').default;
-   const subjectTemplate = i18n.t('messages.email_subject', { ns: 'checkout' });
-   const subject = subjectTemplate.replace('{{alias}}', session.user_alias);
+   // Create subject from translation
+   const subject = t('messages.email_subject', { alias: session.user_alias });
    
-   const body = formatEmailMessage(reservedItems, session.user_alias, session.language); 
+   // Create body with translation function
+   const body = formatEmailMessage(reservedItems, session.user_alias, session.language, t); 
    window.open(`mailto:${CART_CONFIG.SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
- }, [reservedItems, session?.user_alias, session?.language]);
+ }, [reservedItems, session?.user_alias, session?.language, t]);
  
  return {
    handleCheckout,
@@ -385,7 +387,8 @@ export function useCheckout() {
 function formatWhatsAppMessage(
   reservedItems: Array<{ release_id: number, title: string, price: number }>, 
   userAlias: string,
-  language: string = 'en'
+  language: string = 'en',
+  t: any // Pass translation function
 ): string {
  const formattedItems = reservedItems
    .map(item => `- ${item.title || `Record #${item.release_id}`} (${item.price || 0}€)`)
@@ -393,10 +396,9 @@ function formatWhatsAppMessage(
 
  const total = reservedItems.reduce((sum, item) => sum + (item.price || 0), 0);
 
- // Use appropriate template based on language
- const i18n = require('i18next').default;
- const template = i18n.t('messages.whatsapp', { ns: 'checkout' });
-
+ // Use the translation template directly
+ const template = t('messages.whatsapp');
+ 
  return template
    .replace('{{items}}', formattedItems)
    .replace('{{total}}', total.toString())
@@ -407,7 +409,8 @@ function formatWhatsAppMessage(
 function formatEmailMessage(
   reservedItems: Array<{ release_id: number, title: string, price: number }>, 
   userAlias: string,
-  language: string = 'en'
+  language: string = 'en',
+  t: any // Pass translation function
 ): string {
  const formattedItems = reservedItems
    .map(item => `- ${item.title || `Record #${item.release_id}`} (${item.price || 0}€)`)
@@ -421,9 +424,8 @@ function formatEmailMessage(
    { year: 'numeric', month: 'long', day: 'numeric' }
  );
 
- // Use appropriate template based on language
- const i18n = require('i18next').default;
- const template = i18n.t('messages.email_body', { ns: 'checkout' });
+ // Use the translation template directly
+ const template = t('messages.email_body');
 
  return template
    .replace('{{items}}', formattedItems)

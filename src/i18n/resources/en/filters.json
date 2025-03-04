@@ -30,9 +30,9 @@
     "loading": "Loading Conditions...",
     "error": "Error loading conditions",
     "mint": "Mint",
-    "nearMint": "Near Mint",
-    "veryGoodPlus": "Very Good Plus",
-    "veryGood": "Very Good"
+    "nearmint": "Near Mint",
+    "verygoodplus": "Very Good Plus",
+    "verygood": "Very Good"
   },
   "price": {
     "title": "Price Range",
