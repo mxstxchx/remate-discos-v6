@@ -49,7 +49,7 @@ export function useRecordStatus(recordId: number) {
           cartStatus: 'SOLD',
           reservation: null,
           soldAt: release.sold_at,
-          soldBy: release.sold_by,
+          // Removed soldBy property as it's not in RecordStatus type
           lastValidated: new Date().toISOString()
         };
         updateRecordStatuses({

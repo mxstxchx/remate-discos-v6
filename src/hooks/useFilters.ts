@@ -197,9 +197,9 @@ export const useFilters = create<FilterStore>()(
           console.log('[FILTER_COMBINATION] Current filter state:', state);
           
           // Initialize empty arrays for each filter category
-          const artistFilters = [];
-          const labelFilters = [];
-          const styleFilters = [];
+          const artistFilters: string[] = [];
+          const labelFilters: string[] = [];
+          const styleFilters: string[] = [];
           const conditionFilters = [];
           const priceFilters = [];
 

@@ -325,7 +325,8 @@ export function useCheckout() {
           message: 'Checkout completed with some items unavailable',
           conflicts: conflicts.map(({ item }) => ({
             release_id: item.release_id,
-            title: item.releases.title
+            title: item.releases.title,
+          price: item.releases?.price || 0
           })),
           reserved: availableItems.map(item => ({
             release_id: item.release_id,

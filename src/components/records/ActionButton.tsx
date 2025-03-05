@@ -100,52 +100,52 @@ export const ActionButton = memo(function ActionButton({
         return (
           <>
             <Ban className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('common:status.sold')}</span>
+            <span className="font-heading">{t('status.sold', {ns: 'common'})}</span>
           </>
         );
       case 'IN_CART':
         return (
           <>
             <ShoppingCart className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('common:status.in_cart')}</span>
+            <span className="font-heading">{t('status.in_cart', {ns: 'common'})}</span>
           </>
         );
       case 'IN_QUEUE':
         return isHoveringQueue ? (
           <>
             <LogOut className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('common:status.leave_queue')}</span>
+            <span className="font-heading">{t('status.leave_queue', {ns: 'common'})}</span>
           </>
         ) : (
           <>
             <Clock className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('common:status.queue_position', { position: status?.queuePosition || 0 })}</span>
+            <span className="font-heading">{t('status.queue_position', { position: status?.queuePosition || 0, ns: 'common' })}</span>
           </>
         );
       case 'RESERVED':
         return isMyReservation ? (
           <>
             <Check className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('common:status.reserved')}</span>
+            <span className="font-heading">{t('status.reserved', {ns: 'common'})}</span>
           </>
         ) : (
           <>
             <Users className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('common:status.join_queue')}</span>
+            <span className="font-heading">{t('status.join_queue', {ns: 'common'})}</span>
           </>
         );
       case 'RESERVED_BY_OTHERS':
         return (
           <>
             <Users className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('common:status.join_queue')}</span>
+            <span className="font-heading">{t('status.join_queue', {ns: 'common'})}</span>
           </>
         );
       default: // AVAILABLE
         return (
           <>
             <ShoppingCart className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('common:status.available')}</span>
+            <span className="font-heading">{t('status.available', {ns: 'common'})}</span>
           </>
         );
     }

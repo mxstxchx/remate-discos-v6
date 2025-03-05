@@ -126,9 +126,9 @@ export function CartSheet() {
                         className="mt-2"
                       >
                         {item.status === 'IN_QUEUE' ? (
-                          <>{t('common:status.queue_position', { position: item.queue_position || 0 })}</>
+                          <>{t('status.queue_position', { position: item.queue_position || 0, ns: 'common' })}</>
                         ) : (
-                          t(`common:status.${item.status.toLowerCase()}`, { defaultValue: item.status })
+                          t(`status.${item.status.toLowerCase()}`, { defaultValue: item.status, ns: 'common' })
                         )}
                       </Badge>
                     </div>
@@ -160,7 +160,7 @@ export function CartSheet() {
             <div className="border-t pt-4 space-y-4">
               {lastValidated && (
                 <div className="text-xs text-muted-foreground text-center">
-                  {t('common:last_validated')} {new Date(lastValidated).toLocaleTimeString()}
+                  {t('last_validated', {ns: 'common'})} {new Date(lastValidated).toLocaleTimeString()}
                 </div>
               )}
               <div className="flex justify-between">
@@ -178,18 +178,18 @@ export function CartSheet() {
                 onClick={async () => {
                   try {
                     const result = await handleCheckout();
-                    if (result.success) {
+                    if (result && result.success) {
                       // Show success toast with appropriate message
                       toast({
-                        title: result.hasConflicts ? t('toast.partial_success', { ns: 'checkout' }) : t('toast.success', { ns: 'checkout' }),
-                        description: result.message,
-                        variant: result.hasConflicts ? "warning" : "success",
+                        title: result && result.hasConflicts ? t('toast.partial_success', { ns: 'checkout' }) : t('toast.success', { ns: 'checkout' }),
+                        description: result ? result.message : t('toast.unknown_error', { ns: 'checkout' }),
+                        variant: result && result.hasConflicts ? "warning" : "success",
                       });
                     } else {
                       // Show error toast
                       toast({
                         title: t('toast.error', { ns: 'checkout' }),
-                        description: result.message,
+                        description: result ? result.message : t('toast.unknown_error', { ns: 'checkout' }),
                         variant: "destructive",
                       });
                     }

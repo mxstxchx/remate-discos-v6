@@ -86,7 +86,7 @@ export interface SessionMetadata {
 }
 
 // Type guard for session metadata
-export function isSessionMetadataObject(value: Json | null | undefined): value is SessionMetadata {
+export function isSessionMetadataObject(value: Json | null | undefined): value is { [key: string]: Json | undefined } {
   return value !== null && value !== undefined && typeof value === 'object' && !Array.isArray(value);
 }
 

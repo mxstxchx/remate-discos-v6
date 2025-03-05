@@ -22,7 +22,7 @@ export const createAdminSlice: StateCreator<
   [],
   [],
   AdminState & AdminActions
-> = (set, get) => ({
+> = (set: any, get, _store: any) => ({
   // State
   stats: initialStats,
   reservations: [],

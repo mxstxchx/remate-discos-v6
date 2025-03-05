@@ -13,7 +13,13 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({
+  // Add the missing properties that are being destructured
+  setAuth: (authState) => set((state) => ({ ...state, ...authState })),
+  reset: () => set({ isAuthenticated: false, isAdmin: false, alias: null, session: null, error: null }),
   isAuthenticated: false,
+  isAdmin: false,
+  alias: null,
+  session: null,
   error: null,
   modalOpen: true, // Changed to show by default
  setModalOpen: (open: boolean) => set({ modalOpen: open }),

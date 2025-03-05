@@ -119,7 +119,7 @@ export function RecordDetail({ id }: RecordDetailProps) {
       <div className="md:col-span-2">
         <div className="aspect-square relative rounded-lg overflow-hidden">
           <Image
-            src={record.primary_image || record.thumb}
+            src={record.primary_image || record.thumb || '/placeholder-image.jpg'}
             alt={record.title}
             fill
             className="object-contain"

@@ -39,6 +39,7 @@ export function createPostgrestQuery(filter: FilterState): PostgRESTQuery {
 
   // Handle JSONB arrays (artists, labels)
   if (filter.artists.length) {
+    if (!query.filter) query.filter = {};
     query.filter['artists'] = {
       operator: 'cs',
       value: filter.artists.map(name => ({ name }))
@@ -46,6 +47,7 @@ export function createPostgrestQuery(filter: FilterState): PostgRESTQuery {
   }
 
   if (filter.labels.length) {
+    if (!query.filter) query.filter = {};
     query.filter['labels'] = {
       operator: 'cs',
       value: filter.labels.map(name => ({ name }))
@@ -54,6 +56,7 @@ export function createPostgrestQuery(filter: FilterState): PostgRESTQuery {
 
   // Handle text arrays (styles)
   if (filter.styles.length) {
+    if (!query.filter) query.filter = {};
     query.filter['styles'] = {
       operator: 'cs',
       value: filter.styles
@@ -62,6 +65,7 @@ export function createPostgrestQuery(filter: FilterState): PostgRESTQuery {
 
   // Handle conditions
   if (filter.conditions.length) {
+    if (!query.filter) query.filter = {};
     query.filter['condition'] = {
       operator: 'in',
       value: filter.conditions
@@ -70,6 +74,7 @@ export function createPostgrestQuery(filter: FilterState): PostgRESTQuery {
 
   // Handle price range
   if (filter.priceRange) {
+    if (!query.filter) query.filter = {};
     query.filter['price'] = {
       operator: 'and',
       value: [

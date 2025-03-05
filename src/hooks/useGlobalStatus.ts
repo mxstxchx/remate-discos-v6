@@ -133,14 +133,14 @@ export function useGlobalStatus() {
         { event: '*', schema: 'public', table: 'audit_logs' },
         (payload) => {
           console.log(`[GS_FIX] ${hookId.current} - Received audit log event:`, {
-            id: payload.new?.id,
-            action: payload.new?.action,
-            release_id: payload.new?.release_id,
-            user_alias: payload.new?.user_alias,
+            id: payload.new && 'id' in payload.new ? payload.new.id : undefined,
+            action: payload.new && 'action' in payload.new ? payload.new.action : undefined,
+            release_id: payload.new && 'release_id' in payload.new ? payload.new.release_id : undefined,
+            user_alias: payload.new && 'user_alias' in payload.new ? payload.new.user_alias : undefined,
             timestamp: new Date().toISOString()
           });
           
-          const releaseId = payload.new?.release_id;
+          const releaseId = payload.new && 'release_id' in payload.new ? payload.new.release_id : undefined;
           if (releaseId) {
             console.log(`[GS_FIX] ${hookId.current} - Processing status change for release ${releaseId}`);
             

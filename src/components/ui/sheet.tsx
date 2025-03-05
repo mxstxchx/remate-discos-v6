@@ -52,7 +52,7 @@ const sheetVariants = cva(
 interface SheetContentProps
   extends Omit<React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>, 'forceMount'>,
     VariantProps<typeof sheetVariants> {
-      forceMount?: boolean;
+      forceMount?: true;
     }
 
 const SheetContent = React.forwardRef<

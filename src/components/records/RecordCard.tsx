@@ -29,7 +29,7 @@ export const RecordCard = React.memo(function RecordCard({
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     console.log(`${APP_LOG} Image load failed for record ${record.id}, falling back to thumb`);
     const img = e.target as HTMLImageElement;
-    img.src = record.thumb;
+    img.src = record.thumb || '/placeholder-image.jpg';
   };
 
   const handleAddToCart = async (e: React.MouseEvent) => {
@@ -78,7 +78,7 @@ export const RecordCard = React.memo(function RecordCard({
       >
         <div className="relative aspect-square w-full overflow-hidden rounded-t-xl">
           <Image
-            src={record.primary_image || record.thumb}
+            src={record.primary_image || record.thumb || '/placeholder-image.jpg'}
             alt={record.title}
             fill
             className="object-cover"
@@ -144,7 +144,7 @@ export const RecordCard = React.memo(function RecordCard({
       <div className="w-28 sm:w-32 flex-shrink-0">
         <div className="relative aspect-square w-full overflow-hidden rounded-md">
           <Image
-            src={record.primary_image || record.thumb}
+            src={record.primary_image || record.thumb || '/placeholder-image.jpg'}
             alt={record.title}
             fill
             className="object-cover"

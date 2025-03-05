@@ -2,7 +2,8 @@ import { useEffect, useMemo } from 'react';
 import { useStore } from '@/store';
 import { useFilters } from './useFilters';
 import { supabase } from '@/lib/supabase/client';
-import type { Session, FilterState, SessionMetadata, isSessionMetadataObject } from '@/types/database';
+import type { Session, FilterState, SessionMetadata } from '@/types/database';
+import { isSessionMetadataObject } from '@/types/database';
 
 export function useSession() {
   const session = useStore((state) => state.session);

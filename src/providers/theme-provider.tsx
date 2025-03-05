@@ -3,9 +3,11 @@
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider } from "next-themes"
 // Define interfaces here since type declarations may be missing
-interface ThemeProviderProps {
+import { type ThemeProviderProps as NextThemeProviderProps } from 'next-themes'; 
+
+interface ThemeProviderProps extends Omit<NextThemeProviderProps, 'attribute'> {
   children: React.ReactNode;
-  attribute?: string;
+  attribute?: 'class' | 'data-theme';
   defaultTheme?: string;
   enableSystem?: boolean;
   disableTransitionOnChange?: boolean;

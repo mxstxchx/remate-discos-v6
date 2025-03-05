@@ -91,14 +91,14 @@ export function useAuth() {
       }
     } catch (error) {
       debug('error', 'Sign in failed:', {
-        message: error.message,
-        code: error.code,
-        details: error.details
+        message: error instanceof Error ? error.message : 'Unknown error',
+        code: error && typeof error === 'object' && 'code' in error ? error.code : 'unknown',
+        details: error && typeof error === 'object' && 'details' in error ? error.details : {}
       })
 
       const authError = {
-        message: error.message || 'Failed to sign in',
-        code: error.code
+        message: error instanceof Error ? error.message : 'Failed to sign in',
+        code: error && typeof error === 'object' && 'code' in error ? error.code : 'unknown'
       }
       setAuth({ error: authError.message })
       return { success: false, error: authError }
@@ -108,7 +108,9 @@ export function useAuth() {
   }, [supabase, setAuth])
 
   const signOut = useCallback(async () => {
-    const { session } = useAuthStore.getState()
+    // Create a local accessor function for useAuthStore state
+    const getAuthState = () => useAuthStore.getState()
+    const { session } = getAuthState()
     
     if (!session?.id) return
     

@@ -113,7 +113,12 @@ export function useQueue() {
      }
      
      // Update the store with our guaranteed correct status
-     updateSingleStatus(recordId, newStatus);
+     // Make sure the status is compatible with RecordStatus type
+      const typedStatus = {
+        ...newStatus,
+        cartStatus: newStatus.cartStatus as CartItemStatus
+      };
+      updateSingleStatus(recordId, typedStatus);
      console.log(`[QUEUE] Updated status after leaving queue:`, newStatus);
      
      console.log('[QUEUE] Left queue successfully for record:', recordId);

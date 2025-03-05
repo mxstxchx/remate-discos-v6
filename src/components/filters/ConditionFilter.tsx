@@ -93,7 +93,7 @@ export function ConditionFilter() {
               className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70
                 ${!isAvailable ? 'opacity-50' : ''}`}
             >
-              {t(`conditions.${condition.toLowerCase().replace(/ /g, '')}`)}
+              {t(['filters', `conditions.${condition.toLowerCase().replace(/ /g, '')}`], {defaultValue: condition})}
             </Label>
           </div>
         );
