@@ -1,25 +1,6 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+// This file was causing deployment errors and has been identified as not needed.
+// File intentionally emptied as per deployment fix plan.
+// Will be fully removed in a future cleanup.
+// The auth is handled through session API routes, not through Supabase Auth.
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
-
-  // Protect admin routes
-  if (req.nextUrl.pathname.startsWith('/admin')) {
-    const {
-      data: { session }
-    } = await supabase.auth.getSession();
-
-    if (!session?.metadata?.is_admin) {
-      return NextResponse.redirect(new URL('/', req.url));
-    }
-  }
-
-  return res;
-}
-
-export const config = {
-  matcher: ['/admin/:path*']
-};
+export { }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@supabase/supabase-js';
 import { useStore } from '@/store';
 import { useToast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -58,7 +58,10 @@ export function ActivityLog() {
       fetchActivities();
       
       // Set up real-time subscription
-      const supabase = createClientComponentClient();
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
       const subscription = supabase
         .channel('admin-activity')
         .on(
