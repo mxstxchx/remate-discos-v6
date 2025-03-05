@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     console.log(`[API:STATUS] Found ${soldRecords?.length || 0} sold records`);
     
     // Create map of sold records for faster lookups
-    const soldMap = {};
+    const soldMap: Record<number, any> = {};
     soldRecords?.forEach(record => {
       soldMap[record.id] = {
         cartStatus: 'SOLD',
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
     console.log(`[API:STATUS] Retrieved ${data?.length || 0} status entries`);
     
     // Merge statuses, prioritizing sold records
-    const statusMap = { ...soldMap, ...data.reduce((acc, item) => {
+    const statusMap = { ...soldMap, ...data.reduce((acc: Record<number, any>, item: any) => {
       // Don't override sold status
       if (!soldMap[item.release_id]) {
         acc[item.release_id] = {
@@ -63,7 +63,7 @@ export async function GET(request: Request) {
         };
       }
       return acc;
-    }, {})};
+    }, {} as Record<number, any>)};
     
     return NextResponse.json({ 
       statusMap, 

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
-import { animate, motion } from "motion";
+import { animate } from "framer-motion";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -24,20 +24,18 @@ const AnimatedButton = React.forwardRef<HTMLButtonElement, AnimatedButtonProps>(
     // Handle press animation
     const handlePressStart = () => {
       if (buttonRef.current) {
-        animate(
-          buttonRef.current,
-          { scale: 0.98 },
-          { duration: 0.2, easing: "ease-out" }
+        animate(buttonRef.current, 
+          { scale: 0.98 }, 
+          { duration: 0.2, ease: "easeOut" }
         );
       }
     };
     
     const handlePressEnd = () => {
       if (buttonRef.current) {
-        animate(
-          buttonRef.current,
-          { scale: 1 },
-          { duration: 0.2, easing: "ease-out" }
+        animate(buttonRef.current, 
+          { scale: 1 }, 
+          { duration: 0.2, ease: "easeOut" }
         );
       }
     };

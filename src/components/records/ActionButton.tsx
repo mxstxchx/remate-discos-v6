@@ -1,6 +1,7 @@
 import React, { memo, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSession, useStore } from '@/store';
+import { RecordStatus, CartItemStatus } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Clock, Users, Check, LogOut, Ban } from 'lucide-react';
 import { QueueExitModal } from './QueueExitModal';
@@ -25,7 +26,7 @@ export const ActionButton = memo(function ActionButton({
   className = ''
 }: ActionButtonProps) {
   const session = useSession();
-  const { t } = useTranslation('checkout');
+  const { t } = useTranslation(['checkout', 'common'] as const);
   const [showExitModal, setShowExitModal] = useState(false);
   const [isHoveringQueue, setIsHoveringQueue] = useState(false);
 
@@ -69,25 +70,25 @@ export const ActionButton = memo(function ActionButton({
   const getButtonConfig = () => {
     switch (currentStatus) {
       case 'SOLD':
-        return { variant: 'secondary', led: 'off', ledColor: 'none' };
+        return { variant: 'secondary' as const, led: 'off', ledColor: 'none' as const };
       case 'IN_CART':
-        return { variant: 'knurled', led: 'off', ledColor: 'none' };
+        return { variant: 'knurled' as const, led: 'off', ledColor: 'none' as const };
       case 'IN_QUEUE':
         return { 
-          variant: 'led', 
+          variant: 'led' as const, 
           led: undefined, 
-          ledColor: isHoveringQueue ? 'error' : 'warning'
+          ledColor: isHoveringQueue ? 'error' as const : 'warning' as const
         };
       case 'RESERVED':
         return { 
-          variant: isMyReservation ? 'led' : 'knurled', 
+          variant: isMyReservation ? 'led' as const : 'knurled' as const, 
           led: undefined, 
-          ledColor: isMyReservation ? 'success' : 'none'
+          ledColor: isMyReservation ? 'success' as const : 'none' as const
         };
       case 'RESERVED_BY_OTHERS':
-        return { variant: 'knurled', led: 'off', ledColor: 'none' };
+        return { variant: 'knurled' as const, led: 'off', ledColor: 'none' as const };
       default: // AVAILABLE
-        return { variant: 'default', led: 'off', ledColor: 'none' };
+        return { variant: 'default' as const, led: 'off', ledColor: 'none' as const };
     }
   };
 
@@ -99,52 +100,52 @@ export const ActionButton = memo(function ActionButton({
         return (
           <>
             <Ban className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('status.sold')}</span>
+            <span className="font-heading">{t('status.sold', { ns: 'common' })}</span>
           </>
         );
       case 'IN_CART':
         return (
           <>
             <ShoppingCart className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('status.in_cart')}</span>
+            <span className="font-heading">{t('status.in_cart', { ns: 'common' })}</span>
           </>
         );
       case 'IN_QUEUE':
         return isHoveringQueue ? (
           <>
             <LogOut className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('status.leave_queue')}</span>
+            <span className="font-heading">{t('status.leave_queue', { ns: 'common' })}</span>
           </>
         ) : (
           <>
             <Clock className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('status.queue_position', { position: status?.queuePosition })}</span>
+            <span className="font-heading">{t('status.queue_position', { position: status?.queuePosition, ns: 'common' })}</span>
           </>
         );
       case 'RESERVED':
         return isMyReservation ? (
           <>
             <Check className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('status.reserved')}</span>
+            <span className="font-heading">{t('status.reserved', { ns: 'common' })}</span>
           </>
         ) : (
           <>
             <Users className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('status.join_queue')}</span>
+            <span className="font-heading">{t('status.join_queue', { ns: 'common' })}</span>
           </>
         );
       case 'RESERVED_BY_OTHERS':
         return (
           <>
             <Users className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('status.join_queue')}</span>
+            <span className="font-heading">{t('status.join_queue', { ns: 'common' })}</span>
           </>
         );
       default: // AVAILABLE
         return (
           <>
             <ShoppingCart className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('status.available')}</span>
+            <span className="font-heading">{t('status.available', { ns: 'common' })}</span>
           </>
         );
     }

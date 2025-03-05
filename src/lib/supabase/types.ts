@@ -6,6 +6,19 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+import { Session as SupabaseSession } from '@supabase/supabase-js';
+
+export type Session = {
+  id: string;
+  user_alias: string;
+  language: string;
+  created_at: string;
+  last_seen_at: string;
+  expires_at: string;
+  metadata: Json;
+  is_admin?: boolean;
+};
+
 export type Database = {
   public: {
     Tables: {

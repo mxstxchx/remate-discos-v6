@@ -21,10 +21,10 @@ import {
 } from '@/components/filters';
 
 export default function BrowsePage() {
-  const { t } = useTranslation(['common', 'filters']);
+  const { t } = useTranslation(['common', 'filters'] as const);
   const { 
     releases, 
-    loading, 
+    isLoading, 
     error,
     totalPages 
   } = useRecords();
@@ -60,10 +60,10 @@ export default function BrowsePage() {
           {/* Left Column - Price and Condition Filters - Hidden on Mobile */}
           <div className="hidden lg:block lg:col-span-1 mb-6 lg:mb-0">
             <div className="space-y-4 lg:sticky lg:top-4">
-              <FilterCard title={t('filters:price.title')}>
+              <FilterCard title={t('price.title', { ns: 'filters' })}>
                 <PriceRangeFilter />
               </FilterCard>
-              <FilterCard title={t('filters:conditions.title')}>
+              <FilterCard title={t('conditions.title', { ns: 'filters' })}>
                 <ConditionFilter />
               </FilterCard>
             </div>
@@ -74,13 +74,13 @@ export default function BrowsePage() {
             {/* Filters on Desktop (Includes Active Filters) */}
             <div className="hidden lg:block space-y-4 mb-6 lg:sticky lg:top-4 bg-background z-10">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FilterCard title={t('filters:artists.title')}>
+                <FilterCard title={t('artists.title', { ns: 'filters' })}>
                   <ArtistFilter />
                 </FilterCard>
-                <FilterCard title={t('filters:labels.title')}>
+                <FilterCard title={t('labels.title', { ns: 'filters' })}>
                   <LabelFilter />
                 </FilterCard>
-                <FilterCard title={t('filters:styles.title')}>
+                <FilterCard title={t('styles.title', { ns: 'filters' })}>
                   <StyleFilter />
                 </FilterCard>
               </div>
@@ -89,7 +89,7 @@ export default function BrowsePage() {
             </div>
 
             <Suspense fallback={<RecordGrid records={[]} loading={true} viewPreference={viewPreference} />}>
-              <RecordGrid records={releases} loading={loading} viewPreference={viewPreference} />
+              <RecordGrid records={releases} loading={isLoading} viewPreference={viewPreference} />
             </Suspense>
           </div>
         </div>

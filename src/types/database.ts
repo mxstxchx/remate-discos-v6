@@ -11,6 +11,11 @@ export interface Release {
   thumb?: string;
   primary_image?: string;
   secondary_image?: string;
+  notes?: string;
+  tracklist?: any;
+  videos?: Array<{url: string; title?: string}>;
+  sold_at?: string | null;
+  visibility?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -63,6 +68,7 @@ export interface CartItem {
   release_id: number;
   status: CartItemStatus;
   last_validated_at: string;
+  queue_position?: number;
   releases: Release;
 }
 
@@ -97,4 +103,5 @@ export interface RecordStatus {
   queuePosition?: number;
   inCart?: boolean;
   lastValidated: string;
+  soldAt?: string | null;
 }

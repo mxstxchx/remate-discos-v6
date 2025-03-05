@@ -4,10 +4,10 @@ import { createClient } from '@supabase/supabase-js';
 import type { Session } from '@/lib/supabase/types';
 import type { Release } from './recordsSlice';
 import type { CartItem, RecordStatus } from '@/types/database';
-import type { AdminState, AdminActions } from '@/types/admin';
+import type { AdminActions } from '@/types/admin';
 import { createAdminSlice } from './adminSlice';
 
-interface AdminState {
+interface StoreAdminState {
   stats: {
     activeReservations: number;
     queuedItems: number;
@@ -67,9 +67,9 @@ interface AppActions {
   clearAllStatuses: () => void;
 }
 
-type Store = AppState & AppActions & AdminState & AdminActions;
+type Store = AppState & AppActions & StoreAdminState & AdminActions;
 
-const initialAdminState: AdminState = {
+const initialAdminState: StoreAdminState = {
   stats: {
     activeReservations: 0,
     queuedItems: 0,
@@ -118,7 +118,7 @@ const store = create<Store>()(
       ...initialState,
       admin: initialAdminState,
       ...initialState,
-      ...createAdminSlice(set, get),
+      ...createAdminSlice(set, get, store),
       
       setSession: (session) => set({ session }),
       setLanguage: (language) => set({ language }),

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { animate, motion } from "motion";
+import { animate } from "framer-motion";
 import { Card, cardVariants } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -24,16 +24,14 @@ const AnimatedCard = React.forwardRef<HTMLDivElement, AnimatedCardProps>(
       if (!cardRef.current || hover !== "lift") return;
       
       if (isHovered) {
-        animate(
-          cardRef.current,
-          { y: -4 },
-          { duration: 0.3, easing: "ease-out" }
+        animate(cardRef.current, 
+          { y: -4 }, 
+          { duration: 0.3, ease: "easeOut" }
         );
       } else {
-        animate(
-          cardRef.current,
-          { y: 0 },
-          { duration: 0.3, easing: "ease-out" }
+        animate(cardRef.current, 
+          { y: 0 }, 
+          { duration: 0.3, ease: "easeOut" }
         );
       }
     }, [isHovered, hover]);

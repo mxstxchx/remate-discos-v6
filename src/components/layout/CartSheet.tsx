@@ -32,7 +32,7 @@ const getStatusVariant = (status: string) => {
 
 export function CartSheet() {
   const { toast } = useToast();
-  const { t } = useTranslation('checkout');
+  const { t } = useTranslation(['checkout', 'common'] as const);
   const { items, removeFromCart, lastValidated } = useCart();
   const { 
     handleCheckout, 
@@ -69,7 +69,7 @@ export function CartSheet() {
         id: item.release_id,
         title: item.releases?.title,
         status: item.status,
-        queuePosition: item.queue_position
+        queuePosition: item.queue_position || null
       }))
     });
   }, [items]);
@@ -90,7 +90,7 @@ export function CartSheet() {
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
-            {t('cart.title')}
+            {t('cart.title', { ns: 'checkout' })}
             {items.length > 0 && (
               <Badge variant="secondary" className="ml-auto">
                 {items.length}
@@ -102,7 +102,7 @@ export function CartSheet() {
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full">
             <p className="text-muted-foreground">
-              {t('cart.empty')}
+              {t('cart.empty', { ns: 'checkout' })}
             </p>
           </div>
         ) : (
@@ -126,7 +126,7 @@ export function CartSheet() {
                         className="mt-2"
                       >
                         {item.status === 'IN_QUEUE' ? (
-                          <>{t('status.queue_position', { position: item.queue_position })}</>
+                          <>{t('status.queue_position', { position: item.queue_position || 0, ns: 'common' })}</>
                         ) : (
                           t(`status.${item.status.toLowerCase()}`, item.status)
                         )}
@@ -160,12 +160,12 @@ export function CartSheet() {
             <div className="border-t pt-4 space-y-4">
               {lastValidated && (
                 <div className="text-xs text-muted-foreground text-center">
-                  {t('last_validated')} {new Date(lastValidated).toLocaleTimeString()}
+                  {t('last_validated', { ns: 'common' })} {new Date(lastValidated).toLocaleTimeString()}
                 </div>
               )}
               <div className="flex justify-between">
                 <span className="font-medium">
-                  {t('cart.total')}
+                  {t('cart.total', { ns: 'checkout' })}
                 </span>
                 <span className="font-mono text-lg">
                   {formatPrice(total)}
@@ -181,14 +181,14 @@ export function CartSheet() {
                     if (result.success) {
                       // Show success toast with appropriate message
                       toast({
-                        title: result.hasConflicts ? t('toast.partial_success') : t('toast.success'),
+                        title: result.hasConflicts ? t('toast.partial_success', { ns: 'checkout' }) : t('toast.success', { ns: 'checkout' }),
                         description: result.message,
                         variant: result.hasConflicts ? "warning" : "success",
                       });
                     } else {
                       // Show error toast
                       toast({
-                        title: t('toast.error'),
+                        title: t('toast.error', { ns: 'checkout' }),
                         description: result.message,
                         variant: "destructive",
                       });
@@ -196,8 +196,8 @@ export function CartSheet() {
                   } catch (error) {
                     // Show error toast for unexpected errors
                     toast({
-                      title: t('toast.error'),
-                      description: t('toast.unexpected_error'),
+                      title: t('toast.error', { ns: 'checkout' }),
+                      description: t('toast.unexpected_error', { ns: 'checkout' }),
                       variant: "destructive",
                     });
                   }
@@ -205,8 +205,8 @@ export function CartSheet() {
                 disabled={checkoutLoading}
               >
                 {checkoutLoading ?
-                  t('cart.processing', 'Processing...') :
-                  t('cart.checkout', 'Checkout')}
+                  t('cart.processing', { defaultValue: 'Processing...', ns: 'checkout' }) :
+                  t('cart.checkout', { defaultValue: 'Checkout', ns: 'checkout' })}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>

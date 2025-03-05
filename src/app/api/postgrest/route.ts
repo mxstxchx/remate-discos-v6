@@ -17,19 +17,15 @@ export async function GET(request: Request) {
     let query = supabase.from('releases');
     
     // Apply select
-    if (select) {
-      query = query.select(select);
-    } else {
-      query = query.select('*');
-    }
+    let builtQuery = select ? query.select(select) : query.select('*');
     
     // Apply order
     if (orderBy) {
       const [column, direction] = orderBy.split('.');
-      query = query.order(column, { ascending: direction === 'asc' });
+      builtQuery = builtQuery.order(column, { ascending: direction === 'asc' });
     }
 
-    const { data, error } = await query;
+    const { data, error } = await builtQuery.execute();
 
     if (error) throw error;
     
