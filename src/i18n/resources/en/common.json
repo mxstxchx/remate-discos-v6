@@ -15,6 +15,17 @@
     "confirm": "Confirm",
     "save": "Save"
   },
+  "status": {
+    "available": "Available",
+    "in_cart": "In Cart",
+    "reserved": "Reserved",
+    "reserved_by_others": "Reserved",
+    "sold": "Sold",
+    "queue_position": "Queue Position: {{position}}",
+    "join_queue": "Join Queue",
+    "leave_queue": "Leave Queue"
+  },
+  "last_validated": "Last validated at",
   "errors": {
     "general": "An error occurred",
     "tryAgain": "Please try again"

@@ -15,6 +15,17 @@
     "confirm": "Confirmar",
     "save": "Guardar"
   },
+  "status": {
+    "available": "Disponible",
+    "in_cart": "En Carrito",
+    "reserved": "Reservado",
+    "reserved_by_others": "Reservado",
+    "sold": "Vendido",
+    "queue_position": "Posición: {{position}}",
+    "join_queue": "Unirse a Cola",
+    "leave_queue": "Salir de Cola"
+  },
+  "last_validated": "Última validación a las",
   "errors": {
     "general": "Ha ocurrido un error",
     "tryAgain": "Por favor, inténtalo de nuevo"
