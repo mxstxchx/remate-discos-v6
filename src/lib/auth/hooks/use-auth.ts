@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useSupabase } from '@/hooks/use-supabase'
 import { useAuthStore } from './use-auth-store'
+import { AuthState } from '../types'
 import type { SignInResponse } from '../types'
 
 const debug = (area: string, message: string, data?: any) => {
@@ -12,7 +13,9 @@ const debug = (area: string, message: string, data?: any) => {
 export function useAuth() {
   const [loading, setLoading] = useState(false)
   const supabase = useSupabase()
-  const { setAuth, reset } = useAuthStore()
+  const store = useAuthStore()
+  const setAuth = (authState: Partial<AuthState>) => store.setAuth(authState)
+  const reset = () => store.reset()
 
   const signIn = useCallback(async (alias: string, language: 'es' | 'en' = 'es'): Promise<SignInResponse> => {
     setLoading(true)
@@ -101,7 +104,7 @@ export function useAuth() {
         code: error && typeof error === 'object' && 'code' in error ? error.code : 'unknown'
       }
       setAuth({ error: authError.message })
-      return { success: false, error: authError }
+      return { success: false, error: { message: authError.message, code: authError.code as string } }
     } finally {
       setLoading(false)
     }
@@ -109,8 +112,8 @@ export function useAuth() {
 
   const signOut = useCallback(async () => {
     // Create a local accessor function for useAuthStore state
-    const getAuthState = () => useAuthStore.getState()
-    const { session } = getAuthState()
+    // Get current session from store
+    const { session } = useAuthStore.getState()
     
     if (!session?.id) return
     

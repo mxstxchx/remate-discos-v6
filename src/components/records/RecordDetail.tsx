@@ -190,7 +190,7 @@ export function RecordDetail({ id }: RecordDetailProps) {
             <div>
               <p className="text-sm text-muted-foreground mb-2">Tracklist</p>
               <div className="space-y-1">
-                {record.tracklist.map((track, index) => (
+                {record.tracklist.map((track: any, index: number) => (
                   <div key={index} className="flex text-sm">
                     <span className="w-10 text-muted-foreground">{track.position}</span>
                     <span>{track.title}</span>
@@ -231,7 +231,7 @@ export function RecordDetail({ id }: RecordDetailProps) {
               <div className="relative">
                 <div className="overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
                   <div className="flex gap-3">
-                    {Array.isArray(record.videos) && record.videos.map((video: any, index: number) => {
+                    {Array.isArray(record.videos) && record.videos.map((video, index) => {
                       const videoId = getVideoId(video.url);
                       return (
                         <div 

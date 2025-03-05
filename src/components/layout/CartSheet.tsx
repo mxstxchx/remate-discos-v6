@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { useTypedTranslation } from '@/i18n/utils';
 import { useEffect, useState } from 'react';
 import { SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,7 @@ const getStatusVariant = (status: string) => {
 
 export function CartSheet() {
   const { toast } = useToast();
-  const { t } = useTranslation(['checkout', 'common']);
+  const { t } = useTypedTranslation();
   const { items, removeFromCart, lastValidated } = useCart();
   const { 
     handleCheckout, 
@@ -86,7 +86,7 @@ export function CartSheet() {
 
   return (
     <>
-      <SheetContent forceMount={keepOpen}>
+      <SheetContent forceMount={keepOpen as true}>
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
@@ -126,7 +126,7 @@ export function CartSheet() {
                         className="mt-2"
                       >
                         {item.status === 'IN_QUEUE' ? (
-                          <>{t('status.queue_position', { position: item.queue_position || 0, ns: 'common' })}</>
+                          <>{t('status.queue_position', { position: item.queue_position || 0, ns: 'common' } as any)}</>
                         ) : (
                           t(`status.${item.status.toLowerCase()}`, { defaultValue: item.status, ns: 'common' })
                         )}
@@ -160,7 +160,7 @@ export function CartSheet() {
             <div className="border-t pt-4 space-y-4">
               {lastValidated && (
                 <div className="text-xs text-muted-foreground text-center">
-                  {t('last_validated', {ns: 'common'})} {new Date(lastValidated).toLocaleTimeString()}
+                  {t('last_validated', {ns: 'common'} as any)} {new Date(lastValidated).toLocaleTimeString()}
                 </div>
               )}
               <div className="flex justify-between">
@@ -182,7 +182,7 @@ export function CartSheet() {
                       // Show success toast with appropriate message
                       toast({
                         title: result && result.hasConflicts ? t('toast.partial_success', { ns: 'checkout' }) : t('toast.success', { ns: 'checkout' }),
-                        description: result ? result.message : t('toast.unknown_error', { ns: 'checkout' }),
+                        description: result ? result.message : t('toast.unknown_error', { ns: 'checkout' } as any),
                         variant: result && result.hasConflicts ? "warning" : "success",
                       });
                     } else {

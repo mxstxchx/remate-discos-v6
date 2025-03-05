@@ -27,10 +27,10 @@ export function ThemeToggle() {
   React.useEffect(() => {
     if (!buttonRef.current || !mounted) return;
     
-    // Button spin animation
+    // Button spin animation - cast as any to fix type error
     animate(
       buttonRef.current,
-      { transform: `rotate(${theme === 'dark' ? 180 : 0}deg)` },
+      { transform: `rotate(${theme === 'dark' ? 180 : 0}deg)` } as any,
       { duration: 0.5, easing: [0.34, 1.56, 0.64, 1] }
     );
   }, [theme, mounted]);

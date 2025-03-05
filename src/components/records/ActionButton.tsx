@@ -1,5 +1,5 @@
 import React, { memo, useState, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTypedTranslation } from '@/i18n/utils';
 import { useSession, useStore } from '@/store';
 import { RecordStatus, CartItemStatus } from '@/types/database';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,7 @@ export const ActionButton = memo(function ActionButton({
   className = ''
 }: ActionButtonProps) {
   const session = useSession();
-  const { t } = useTranslation(['checkout', 'common']);
+  const { t } = useTypedTranslation();
   const [showExitModal, setShowExitModal] = useState(false);
   const [isHoveringQueue, setIsHoveringQueue] = useState(false);
 
@@ -100,52 +100,52 @@ export const ActionButton = memo(function ActionButton({
         return (
           <>
             <Ban className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('status.sold', {ns: 'common'})}</span>
+            <span className="font-heading">{t('status.sold', {ns: 'common'} as any)}</span>
           </>
         );
       case 'IN_CART':
         return (
           <>
             <ShoppingCart className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('status.in_cart', {ns: 'common'})}</span>
+            <span className="font-heading">{t('status.in_cart', {ns: 'common'} as any)}</span>
           </>
         );
       case 'IN_QUEUE':
         return isHoveringQueue ? (
           <>
             <LogOut className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('status.leave_queue', {ns: 'common'})}</span>
+            <span className="font-heading">{t('status.leave_queue', {ns: 'common'} as any)}</span>
           </>
         ) : (
           <>
             <Clock className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('status.queue_position', { position: status?.queuePosition || 0, ns: 'common' })}</span>
+            <span className="font-heading">{t('status.queue_position', { position: status?.queuePosition || 0, ns: 'common' } as any)}</span>
           </>
         );
       case 'RESERVED':
         return isMyReservation ? (
           <>
             <Check className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('status.reserved', {ns: 'common'})}</span>
+            <span className="font-heading">{t('status.reserved', {ns: 'common'} as any)}</span>
           </>
         ) : (
           <>
             <Users className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('status.join_queue', {ns: 'common'})}</span>
+            <span className="font-heading">{t('status.join_queue', {ns: 'common'} as any)}</span>
           </>
         );
       case 'RESERVED_BY_OTHERS':
         return (
           <>
             <Users className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('status.join_queue', {ns: 'common'})}</span>
+            <span className="font-heading">{t('status.join_queue', {ns: 'common'} as any)}</span>
           </>
         );
       default: // AVAILABLE
         return (
           <>
             <ShoppingCart className="mr-2 h-4 w-4" />
-            <span className="font-heading">{t('status.available', {ns: 'common'})}</span>
+            <span className="font-heading">{t('status.available', {ns: 'common'} as any)}</span>
           </>
         );
     }

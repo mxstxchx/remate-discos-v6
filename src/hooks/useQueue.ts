@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from 'react';
+import { CartItemStatus } from '@/types/database';
 import { createClient } from '@supabase/supabase-js';
 import { useSession, useStore } from '@/store';
 import { useToast } from '@/components/ui/use-toast';

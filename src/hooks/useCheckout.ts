@@ -158,7 +158,8 @@ export function useCheckout() {
      if (conflicts.length > 0) {
        setReservedItems(conflicts.map(({ item }) => ({
          release_id: item.release_id,
-         title: item.releases.title
+         title: item.releases.title,
+         price: item.releases?.price || 0
        })));
        
        setShowModal(true);

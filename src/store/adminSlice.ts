@@ -33,7 +33,7 @@ export const createAdminSlice: StateCreator<
 
   // Actions
   setStats: (stats) =>
-    set((state) => ({
+    set((state: AdminState) => ({
       stats: {
         ...state.stats,
         ...stats,

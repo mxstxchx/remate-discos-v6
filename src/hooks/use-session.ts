@@ -12,7 +12,7 @@ export function useSession() {
 
   // Get typed session metadata
   const sessionMetadata = useMemo(() => {
-    if (session?.metadata && isSessionMetadataObject(session.metadata)) {
+    if (session?.metadata && isSessionMetadataObject(session.metadata as any)) {
       return session.metadata as SessionMetadata;
     }
     return {} as SessionMetadata;

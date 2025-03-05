@@ -118,7 +118,7 @@ const storeBase = create<Store>()(
     (set, get) => ({
       ...initialState,
       // Initialize admin state properly - avoid circular reference
-      ...createAdminSlice(set, get, {}),
+      ...createAdminSlice(set, get, {} as any),
       
       setSession: (session) => set({ session }),
       setLanguage: (language) => set({ language }),

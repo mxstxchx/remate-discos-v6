@@ -12,6 +12,8 @@ interface FilterOptions {
 }
 
 interface FilterStore extends FilterState {
+  page: number;
+  perPage: number;
   // Filter state setters
   setArtists: (artists: string[]) => void;
   setLabels: (labels: string[]) => void;
@@ -33,6 +35,8 @@ interface FilterStore extends FilterState {
 export const useFilters = create<FilterStore>()(
   persist(
     (set, get) => ({
+      page: 1,
+      perPage: 20,
       // Initial state
       artists: [],
       labels: [],
@@ -56,7 +60,7 @@ export const useFilters = create<FilterStore>()(
           ...state,
           [filterType]: Array.isArray(state[filterType])
             ? []
-            : FILTER_DEFAULTS[filterType]
+            : filterType === 'priceRange' ? FILTER_DEFAULTS.priceRange : []
         })),
       
       clearAllFilters: () => {
