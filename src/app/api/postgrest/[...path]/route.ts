@@ -54,10 +54,56 @@ export async function GET(request: Request) {
               selectQuery = selectQuery.in(key, filterValue);
             } else if (operator === 'and') {
               filterValue.forEach((condition: any) => {
-                selectQuery = selectQuery[condition.operator](key, condition.value);
+                // Use explicit conditionals instead of dynamic access for type safety
+                if (condition.operator === 'eq') {
+                  selectQuery = selectQuery.eq(key, condition.value);
+                } else if (condition.operator === 'neq') {
+                  selectQuery = selectQuery.neq(key, condition.value);
+                } else if (condition.operator === 'gt') {
+                  selectQuery = selectQuery.gt(key, condition.value);
+                } else if (condition.operator === 'gte') {
+                  selectQuery = selectQuery.gte(key, condition.value);
+                } else if (condition.operator === 'lt') {
+                  selectQuery = selectQuery.lt(key, condition.value);
+                } else if (condition.operator === 'lte') {
+                  selectQuery = selectQuery.lte(key, condition.value);
+                } else if (condition.operator === 'like') {
+                  selectQuery = selectQuery.like(key, condition.value);
+                } else if (condition.operator === 'ilike') {
+                  selectQuery = selectQuery.ilike(key, condition.value);
+                } else if (condition.operator === 'is') {
+                  selectQuery = selectQuery.is(key, condition.value);
+                } else if (condition.operator === 'in') {
+                  selectQuery = selectQuery.in(key, condition.value);
+                } else if (condition.operator === 'contains') {
+                  selectQuery = selectQuery.contains(key, condition.value);
+                } else {
+                  console.warn(`Unsupported operator: ${condition.operator}`);
+                }
               });
             } else {
-              selectQuery = selectQuery[operator](key, filterValue);
+              // Use explicit conditionals for operator
+              if (operator === 'eq') {
+                selectQuery = selectQuery.eq(key, filterValue);
+              } else if (operator === 'neq') {
+                selectQuery = selectQuery.neq(key, filterValue);
+              } else if (operator === 'gt') {
+                selectQuery = selectQuery.gt(key, filterValue);
+              } else if (operator === 'gte') {
+                selectQuery = selectQuery.gte(key, filterValue);
+              } else if (operator === 'lt') {
+                selectQuery = selectQuery.lt(key, filterValue);
+              } else if (operator === 'lte') {
+                selectQuery = selectQuery.lte(key, filterValue);
+              } else if (operator === 'like') {
+                selectQuery = selectQuery.like(key, filterValue);
+              } else if (operator === 'ilike') {
+                selectQuery = selectQuery.ilike(key, filterValue);
+              } else if (operator === 'is') {
+                selectQuery = selectQuery.is(key, filterValue);
+              } else {
+                console.warn(`Unsupported operator: ${operator}`);
+              }
             }
           } else {
             selectQuery = selectQuery.eq(key, value);
@@ -103,10 +149,56 @@ export async function GET(request: Request) {
               simpleQuery = simpleQuery.in(key, filterValue);
             } else if (operator === 'and') {
               filterValue.forEach((condition: any) => {
-                simpleQuery = simpleQuery[condition.operator](key, condition.value);
+                // Use explicit conditionals instead of dynamic access for type safety
+                if (condition.operator === 'eq') {
+                  simpleQuery = simpleQuery.eq(key, condition.value);
+                } else if (condition.operator === 'neq') {
+                  simpleQuery = simpleQuery.neq(key, condition.value);
+                } else if (condition.operator === 'gt') {
+                  simpleQuery = simpleQuery.gt(key, condition.value);
+                } else if (condition.operator === 'gte') {
+                  simpleQuery = simpleQuery.gte(key, condition.value);
+                } else if (condition.operator === 'lt') {
+                  simpleQuery = simpleQuery.lt(key, condition.value);
+                } else if (condition.operator === 'lte') {
+                  simpleQuery = simpleQuery.lte(key, condition.value);
+                } else if (condition.operator === 'like') {
+                  simpleQuery = simpleQuery.like(key, condition.value);
+                } else if (condition.operator === 'ilike') {
+                  simpleQuery = simpleQuery.ilike(key, condition.value);
+                } else if (condition.operator === 'is') {
+                  simpleQuery = simpleQuery.is(key, condition.value);
+                } else if (condition.operator === 'in') {
+                  simpleQuery = simpleQuery.in(key, condition.value);
+                } else if (condition.operator === 'contains') {
+                  simpleQuery = simpleQuery.contains(key, condition.value);
+                } else {
+                  console.warn(`Unsupported operator: ${condition.operator}`);
+                }
               });
             } else {
-              simpleQuery = simpleQuery[operator](key, filterValue);
+              // Use explicit conditionals for operator
+              if (operator === 'eq') {
+                simpleQuery = simpleQuery.eq(key, filterValue);
+              } else if (operator === 'neq') {
+                simpleQuery = simpleQuery.neq(key, filterValue);
+              } else if (operator === 'gt') {
+                simpleQuery = simpleQuery.gt(key, filterValue);
+              } else if (operator === 'gte') {
+                simpleQuery = simpleQuery.gte(key, filterValue);
+              } else if (operator === 'lt') {
+                simpleQuery = simpleQuery.lt(key, filterValue);
+              } else if (operator === 'lte') {
+                simpleQuery = simpleQuery.lte(key, filterValue);
+              } else if (operator === 'like') {
+                simpleQuery = simpleQuery.like(key, filterValue);
+              } else if (operator === 'ilike') {
+                simpleQuery = simpleQuery.ilike(key, filterValue);
+              } else if (operator === 'is') {
+                simpleQuery = simpleQuery.is(key, filterValue);
+              } else {
+                console.warn(`Unsupported operator: ${operator}`);
+              }
             }
           } else {
             simpleQuery = simpleQuery.eq(key, value);
