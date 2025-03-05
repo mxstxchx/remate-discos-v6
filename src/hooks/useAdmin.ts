@@ -1,9 +1,12 @@
 import { useCallback, useEffect } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@supabase/supabase-js';
 import { useStore } from '@/store';
 
 export function useAdmin() {
-  const supabase = createClientComponentClient();
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
   const admin = useStore(state => state.admin);
   const setAdmin = useStore(state => set => ({
     admin: { ...state.admin, ...set }
