@@ -27,7 +27,23 @@ export function ActiveFilters() {
     if (value) {
       const currentValues = filters[key] as string[];
       const newValues = currentValues.filter(v => v !== value);
-      filters[`set${key.charAt(0).toUpperCase() + key.slice(1)}`](newValues);
+      // Using the appropriate filter method based on key
+      switch(key) {
+        case 'artists':
+          filters.setArtists(newValues);
+          break;
+        case 'labels':
+          filters.setLabels(newValues);
+          break;
+        case 'styles':
+          filters.setStyles(newValues);
+          break;
+        case 'conditions':
+          filters.setConditions(newValues);
+          break;
+        default:
+          console.warn(`No setter found for filter key: ${key}`);
+      }
     } else {
       filters.clearFilter(key);
     }

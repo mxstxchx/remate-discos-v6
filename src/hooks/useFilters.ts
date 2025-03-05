@@ -176,7 +176,7 @@ export const useFilters = create<FilterStore>()(
           return options;
         } catch (error) {
           console.error('[FILTER_OPTIONS] Error fetching options:', error);
-          set({ optionsError: error.message });
+          set({ optionsError: error instanceof Error ? error.message : 'Unknown error' });
           throw error;
         } finally {
           set({ isLoadingOptions: false });

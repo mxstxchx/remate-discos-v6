@@ -358,16 +358,16 @@ export function useCheckout() {
 
  // Create contact methods with language awareness
  const handleWhatsAppContact = useCallback(() => {
-   const message = formatWhatsAppMessage(reservedItems, session.user_alias, session.language, t);
+   const message = formatWhatsAppMessage(reservedItems, session?.user_alias || 'Guest', session?.language || 'en', t);
    window.open(`https://wa.me/${CART_CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
  }, [reservedItems, session?.user_alias, session?.language, t]);
 
  const handleEmailContact = useCallback(() => {
    // Create subject from translation
-   const subject = t('messages.email_subject', { alias: session.user_alias });
+   const subject = t('messages.email_subject', { alias: session?.user_alias || 'Guest' });
    
    // Create body with translation function
-   const body = formatEmailMessage(reservedItems, session.user_alias, session.language, t); 
+   const body = formatEmailMessage(reservedItems, session?.user_alias || 'Guest', session?.language || 'en', t); 
    window.open(`mailto:${CART_CONFIG.SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
  }, [reservedItems, session?.user_alias, session?.language, t]);
  

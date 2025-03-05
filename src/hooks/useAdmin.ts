@@ -8,7 +8,7 @@ export function useAdmin() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
   const admin = useStore(state => state.admin);
-  const setAdmin = useStore(state => set => ({
+  const setAdmin = useStore(state => (set: any) => ({
     admin: { ...state.admin, ...set }
   }));
 

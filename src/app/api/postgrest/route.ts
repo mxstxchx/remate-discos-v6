@@ -25,7 +25,8 @@ export async function GET(request: Request) {
       builtQuery = builtQuery.order(column, { ascending: direction === 'asc' });
     }
 
-    const { data, error } = await builtQuery.execute();
+    // Direct await on the query instead of calling execute()
+    const { data, error } = await builtQuery;
 
     if (error) throw error;
     

@@ -112,13 +112,13 @@ const initialState: AppState = {
   statusLastFetched: null
 };
 
-const store = create<Store>()(
+// Create store without admin at first to avoid circular dependency
+const storeBase = create<Store>()(
   persist(
     (set, get) => ({
       ...initialState,
-      admin: initialAdminState,
-      ...initialState,
-      ...createAdminSlice(set, get, store),
+      // Initialize admin state properly - avoid circular reference
+      ...createAdminSlice(set, get),
       
       setSession: (session) => set({ session }),
       setLanguage: (language) => set({ language }),
@@ -195,7 +195,8 @@ const store = create<Store>()(
   )
 );
 
-export const useStore = store;
+// Rename to useStore for export
+export const useStore = storeBase;
 
 // Export selector hooks to prevent unnecessary re-renders
 export const useSession = () => useStore(state => state.session);

@@ -1,11 +1,12 @@
 import { RecordCard } from './RecordCard';
-import { Release } from '@/store/recordsSlice';
+import { Release } from '@/types/database';
+import { RecordStatus } from '@/types/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useStore } from '@/store';
 import { useMemo, useEffect } from 'react';
 
 interface RecordGridProps {
-  records: Release[];
+  records: any[]; // Make more flexible to accept different Release types
   loading?: boolean;
   viewPreference?: 'grid' | 'list';
 }
@@ -50,8 +51,8 @@ export function RecordGrid({ records = [], loading = false, viewPreference = 'gr
       // Log details for filtered records
       if (isHidden || isSold) {
         console.log(`[RG_FIX] Filtering out record ${record.id}:`, { 
-          visibility: record.visibility, 
-          sold_at: record.sold_at,
+          visibility: record.visibility as boolean | undefined, 
+          sold_at: record.sold_at as string | null | undefined,
           statusCartStatus: status?.cartStatus
         });
         return false;

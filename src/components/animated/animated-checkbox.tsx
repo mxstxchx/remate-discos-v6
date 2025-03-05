@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox"
-import { animate } from "motion"
+import { animate } from "framer-motion"
 import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -32,7 +32,7 @@ const AnimatedCheckbox = React.forwardRef<
             // Scale in the checkbox
             animate(
               rootRef.current!,
-              { scale: [0.95, 1.05, 1] },
+              { transform: ['scale(0.95)', 'scale(1.05)', 'scale(1)'] },
               { duration: 0.3, easing: [0.22, 1.2, 0.36, 1] }
             );
             
@@ -41,8 +41,7 @@ const AnimatedCheckbox = React.forwardRef<
               checkRef.current!,
               { 
                 opacity: [0, 1],
-                scale: [0.5, 1.2, 1],
-                rotate: [-10, 5, 0]
+                transform: ['scale(0.5) rotate(-10deg)', 'scale(1.2) rotate(5deg)', 'scale(1) rotate(0deg)']
               },
               { duration: 0.3, easing: [0.22, 1.2, 0.36, 1] }
             );

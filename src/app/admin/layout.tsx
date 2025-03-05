@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from '@/store';
+import { useSession } from '@/hooks/use-session';
 
 export default function AdminLayout({
   children
@@ -14,13 +14,13 @@ export default function AdminLayout({
 
   useEffect(() => {
     // Redirect non-admin users
-    if (session && !session.metadata?.is_admin) {
+    if (session && !session.sessionMetadata.is_admin) {
       router.replace('/');
     }
   }, [session, router]);
 
   // Show nothing while checking auth
-  if (!session || !session.metadata?.is_admin) {
+  if (!session.session || !session.isAdmin) {
     return null;
   }
 

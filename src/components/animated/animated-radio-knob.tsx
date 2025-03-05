@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
-import { animate, motion } from "motion";
+import { animate } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const AnimatedRadioGroupKnob = React.forwardRef<
@@ -23,13 +23,13 @@ const AnimatedRadioGroupKnob = React.forwardRef<
     if (isPressed) {
       animate(
         knobRef.current,
-        { rotate: 15 },
+        { transform: 'rotate(15deg)' },
         { duration: 0.3, easing: [0.34, 1.56, 0.64, 1] } // Spring-like
       );
     } else {
       animate(
         knobRef.current,
-        { rotate: 0 },
+        { transform: 'rotate(0deg)' },
         { duration: 0.5, easing: "ease-out" }
       );
     }

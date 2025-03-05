@@ -32,7 +32,7 @@ export function ConditionFilter() {
         setAvailableConditions(options);
       } catch (err) {
         console.error('[FILTER_DYNAMIC_OPTIONS] ConditionFilter - Error:', err);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : 'Unknown error occurred');
       } finally {
         setIsLoading(false);
       }

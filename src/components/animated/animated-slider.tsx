@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import * as SliderPrimitive from "@radix-ui/react-slider"
-import { animate } from "motion"
+import { animate } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 const AnimatedSlider = React.forwardRef<
@@ -20,7 +20,7 @@ const AnimatedSlider = React.forwardRef<
     if (thumbRef.current) {
       animate(
         thumbRef.current,
-        { scale: 1.15 },
+        { transform: 'scale(1.15)' },
         { duration: 0.2, easing: "ease-out" }
       );
     }
@@ -30,7 +30,7 @@ const AnimatedSlider = React.forwardRef<
     if (thumbRef.current) {
       animate(
         thumbRef.current,
-        { scale: 1 },
+        { transform: 'scale(1)' },
         { duration: 0.3, easing: [0.22, 1.2, 0.36, 1] }
       );
     }
@@ -46,7 +46,7 @@ const AnimatedSlider = React.forwardRef<
           // Add subtle pulse to the track when value changes
           animate(
             rangeRef.current,
-            { opacity: [0.7, 1] },
+            { opacity: [0.7, 1] as any },
             { duration: 0.3, easing: "ease-out" }
           );
         }

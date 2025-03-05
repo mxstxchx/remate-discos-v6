@@ -72,10 +72,22 @@ export interface CartItem {
   releases: Release;
 }
 
+export type Json =
+  | string
+  | number
+  | boolean
+  | { [key: string]: Json | undefined }
+  | Json[];
+
 export interface SessionMetadata {
-  is_admin: boolean;
-  language: 'es' | 'en';
-  filters?: Record<string, any>;
+  is_admin?: boolean;
+  language?: 'es' | 'en';
+  filters?: FilterState;
+}
+
+// Type guard for session metadata
+export function isSessionMetadataObject(value: Json | null | undefined): value is SessionMetadata {
+  return value !== null && value !== undefined && typeof value === 'object' && !Array.isArray(value);
 }
 
 export interface Session {

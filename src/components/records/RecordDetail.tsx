@@ -7,7 +7,7 @@ import { ActionButton } from './ActionButton';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Play } from 'lucide-react';
-import type { Release } from '@/store/recordsSlice';
+import type { Release } from '@/types/database';
 import { createClient } from '@supabase/supabase-js';
 
 // Extract video ID from YouTube URL
@@ -147,7 +147,7 @@ export function RecordDetail({ id }: RecordDetailProps) {
           <div className="flex flex-wrap gap-2 mb-4">
             {record.artists.map((artist, index) => (
               <Badge key={index} variant="secondary">
-                {typeof artist === 'string' ? artist : artist.name}
+                {typeof artist === 'string' ? artist : 'name' in artist ? artist.name : String(artist)}
               </Badge>
             ))}
           </div>
@@ -204,11 +204,11 @@ export function RecordDetail({ id }: RecordDetailProps) {
           )}
 
           {/* Videos Section - Optimized with thumbnails */}
-          {record.videos && record.videos.length > 0 && (
+          {record.videos && Array.isArray(record.videos) && record.videos.length > 0 && (
             <div ref={videoContainerRef}>
               <div className="flex justify-between items-center mb-2">
                 <p className="text-sm text-muted-foreground">Videos</p>
-                {record.videos.length > 1 && (
+                {Array.isArray(record.videos) && record.videos.length > 1 && (
                   <span className="text-xs text-muted-foreground">Scroll for more →</span>
                 )}
               </div>
@@ -217,8 +217,8 @@ export function RecordDetail({ id }: RecordDetailProps) {
               {activeVideoIndex !== null && (
                 <div className="aspect-video rounded-md overflow-hidden mb-4">
                   <iframe
-                    src={`https://www.youtube-nocookie.com/embed/${getVideoId(record.videos[activeVideoIndex].url)}?modestbranding=1&rel=0`}
-                    title={record.videos[activeVideoIndex].title || 'Video'}
+                    src={`https://www.youtube-nocookie.com/embed/${getVideoId(Array.isArray(record.videos) && activeVideoIndex !== null ? record.videos[activeVideoIndex].url : '')}?modestbranding=1&rel=0`}
+                    title={Array.isArray(record.videos) && activeVideoIndex !== null ? (record.videos[activeVideoIndex].title || 'Video') : 'Video'}
                     allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
                     className="w-full h-full"
                     loading="lazy"
@@ -231,7 +231,7 @@ export function RecordDetail({ id }: RecordDetailProps) {
               <div className="relative">
                 <div className="overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
                   <div className="flex gap-3">
-                    {record.videos.map((video, index) => {
+                    {Array.isArray(record.videos) && record.videos.map((video: any, index: number) => {
                       const videoId = getVideoId(video.url);
                       return (
                         <div 
@@ -258,7 +258,7 @@ export function RecordDetail({ id }: RecordDetailProps) {
                     })}
                   </div>
                 </div>
-                {record.videos.length > 1 && (
+                {Array.isArray(record.videos) && record.videos.length > 1 && (
                   <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
                 )}
               </div>

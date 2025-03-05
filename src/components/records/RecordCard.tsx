@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useCart } from '@/hooks/useCart';
 import { useQueue } from '@/hooks/useQueue';
 import { useStore } from '@/store';
-import { Release } from '@/store/recordsSlice';
+import { Release, RecordStatus } from '@/types/database';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ActionButton } from './ActionButton';

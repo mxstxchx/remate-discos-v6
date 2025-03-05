@@ -3,7 +3,12 @@ import { createClient } from '@supabase/supabase-js';
 import { useStore, useSession } from '@/store';
 
 // Use a module-level variable to ensure we only do this once per app instance
-const globalInitMap = {
+const globalInitMap: {
+  initialLoadStarted: boolean;
+  initialLoadComplete: boolean;
+  isLoading: boolean;
+  loadRequested: Record<string, boolean>;
+} = {
   initialLoadStarted: false,
   initialLoadComplete: false,
   isLoading: false,

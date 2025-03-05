@@ -32,7 +32,7 @@ const getStatusVariant = (status: string) => {
 
 export function CartSheet() {
   const { toast } = useToast();
-  const { t } = useTranslation(['checkout', 'common'] as const);
+  const { t } = useTranslation(['checkout', 'common']);
   const { items, removeFromCart, lastValidated } = useCart();
   const { 
     handleCheckout, 
@@ -126,9 +126,9 @@ export function CartSheet() {
                         className="mt-2"
                       >
                         {item.status === 'IN_QUEUE' ? (
-                          <>{t('status.queue_position', { position: item.queue_position || 0, ns: 'common' })}</>
+                          <>{t('common:status.queue_position', { position: item.queue_position || 0 })}</>
                         ) : (
-                          t(`status.${item.status.toLowerCase()}`, item.status)
+                          t(`common:status.${item.status.toLowerCase()}`, { defaultValue: item.status })
                         )}
                       </Badge>
                     </div>
@@ -160,7 +160,7 @@ export function CartSheet() {
             <div className="border-t pt-4 space-y-4">
               {lastValidated && (
                 <div className="text-xs text-muted-foreground text-center">
-                  {t('last_validated', { ns: 'common' })} {new Date(lastValidated).toLocaleTimeString()}
+                  {t('common:last_validated')} {new Date(lastValidated).toLocaleTimeString()}
                 </div>
               )}
               <div className="flex justify-between">

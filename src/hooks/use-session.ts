@@ -1,13 +1,21 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useStore } from '@/store';
 import { useFilters } from './useFilters';
 import { supabase } from '@/lib/supabase/client';
-import type { Session, FilterState } from '@/types/database';
+import type { Session, FilterState, SessionMetadata, isSessionMetadataObject } from '@/types/database';
 
 export function useSession() {
   const session = useStore((state) => state.session);
   const setSession = useStore((state) => state.setSession);
   const filters = useFilters();
+
+  // Get typed session metadata
+  const sessionMetadata = useMemo(() => {
+    if (session?.metadata && isSessionMetadataObject(session.metadata)) {
+      return session.metadata as SessionMetadata;
+    }
+    return {} as SessionMetadata;
+  }, [session?.metadata]);
 
   // Sync filters with session
   useEffect(() => {
@@ -18,7 +26,8 @@ export function useSession() {
         .from('sessions')
         .update({
           metadata: {
-            ...session.metadata,
+            // Use spread on sessionMetadata which is now properly typed
+            ...sessionMetadata,
             filters: {
               artists: filters.artists,
               labels: filters.labels,
@@ -47,9 +56,9 @@ export function useSession() {
 
   // Restore filters from session
   useEffect(() => {
-    if (!session?.metadata?.filters) return;
+    if (!sessionMetadata.filters) return;
 
-    const savedFilters = session.metadata.filters as FilterState;
+    const savedFilters = sessionMetadata.filters;
     
     filters.setArtists(savedFilters.artists);
     filters.setLabels(savedFilters.labels);
@@ -58,5 +67,10 @@ export function useSession() {
     filters.setPriceRange(savedFilters.priceRange);
   }, [session?.id]);
 
-  return { session, setSession };
+  return { 
+    session, 
+    setSession,
+    sessionMetadata, // Expose the properly typed metadata
+    isAdmin: sessionMetadata.is_admin || false
+  };
 }

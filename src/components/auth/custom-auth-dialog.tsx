@@ -41,11 +41,8 @@ const AuthDialogContent = React.forwardRef<
         "before:!hidden before:!content-none after:!hidden after:!content-none",
         className
       )}
-      style={{
-        // Ensure no pseudo-elements are applied
-        "--before-content": "none",
-        "--after-content": "none",
-      }}
+      // Remove custom CSS properties to fix TypeScript errors
+      data-disable-before-after="true"
       {...props}
     >
       {children}

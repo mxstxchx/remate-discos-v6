@@ -68,7 +68,7 @@ export function TopLayout() {
           variant="knurled"
           size="icon"
           onClick={toggleLanguage}
-          title={t('nav.switch_language')}
+          title="Switch Language"
           className="rounded-full overflow-hidden flex items-center justify-center p-0"
         >
           {/* Show the flag of the language user would switch to */}
@@ -83,7 +83,7 @@ export function TopLayout() {
 
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="knurled" size="icon" title={t('nav.cart')} className="rounded-full">
+            <Button variant="knurled" size="icon" title="Cart" className="rounded-full">
               <ShoppingCart className="h-5 w-5" />
             </Button>
           </SheetTrigger>
@@ -94,7 +94,7 @@ export function TopLayout() {
           variant="knurled"
           size="icon"
           onClick={() => setModalOpen(true)}
-          title={t('nav.change_user')}
+          title="Change User"
           className="rounded-full"
         >
           <UserCircle2 className="h-5 w-5" />

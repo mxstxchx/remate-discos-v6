@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { animate } from "motion"
+import { animate } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { cva, type VariantProps } from "class-variance-authority"
 
@@ -31,7 +31,7 @@ const inputVariants = cva(
 )
 
 export interface AnimatedInputProps
-  extends React.InputHTMLAttributes<HTMLInputElement>,
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>,
     VariantProps<typeof inputVariants> {}
 
 const AnimatedInput = React.forwardRef<HTMLInputElement, AnimatedInputProps>(
@@ -50,7 +50,7 @@ const AnimatedInput = React.forwardRef<HTMLInputElement, AnimatedInputProps>(
       if (inputRef.current) {
         animate(
           inputRef.current,
-          { scale: 1.01 },
+          { transform: 'scale(1.01)' },
           { duration: 0.25, easing: "ease-out" }
         );
       }
@@ -62,7 +62,7 @@ const AnimatedInput = React.forwardRef<HTMLInputElement, AnimatedInputProps>(
       if (inputRef.current) {
         animate(
           inputRef.current,
-          { scale: 1 },
+          { transform: 'scale(1)' },
           { duration: 0.25, easing: "ease-out" }
         );
       }
@@ -71,7 +71,11 @@ const AnimatedInput = React.forwardRef<HTMLInputElement, AnimatedInputProps>(
     return (
       <input
         type={type}
-        className={cn(inputVariants({ variant, size, className }))}
+        className={cn(inputVariants({ 
+          variant, 
+          size, 
+          className 
+        }))}
         ref={combinedRef}
         onFocus={handleFocus}
         onBlur={handleBlur}

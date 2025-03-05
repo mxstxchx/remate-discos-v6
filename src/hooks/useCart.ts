@@ -13,7 +13,14 @@ declare global {
 }
 
 // Module-level cache to prevent redundant loading
-let cartCache = {
+interface CartCache {
+  items: CartItem[];
+  userAlias: string | null;
+  lastLoaded: number | null;
+  isLoading: boolean;
+}
+
+let cartCache: CartCache = {
   items: [],
   userAlias: null,
   lastLoaded: null,
@@ -67,7 +74,9 @@ export function useCart() {
     if (cacheIsValid && cartCache.items.length > 0) {
       console.log('[CART] Using cached cart data');
       setCartItems(cartCache.items);
-      setLastValidated(new Date(cartCache.lastLoaded));
+      if (cartCache.lastLoaded) {
+        setLastValidated(new Date(cartCache.lastLoaded));
+      }
       return;
     }
     
@@ -177,7 +186,7 @@ export function useCart() {
       if (releasesError) throw releasesError;
       
       // Prepare a map of releases for faster lookups
-      const releaseMap = {};
+      const releaseMap: Record<number, any> = {};
       releases?.forEach(release => {
         releaseMap[release.id] = release;
       });

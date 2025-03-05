@@ -29,7 +29,7 @@ export function StyleFilter() {
         setAvailableStyles(options);
       } catch (err) {
         console.error('[FILTER_DYNAMIC_OPTIONS] StyleFilter - Error:', err);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : 'Unknown error occurred');
       } finally {
         setIsLoading(false);
       }

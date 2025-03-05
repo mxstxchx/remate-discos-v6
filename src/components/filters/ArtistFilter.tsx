@@ -28,7 +28,7 @@ export function ArtistFilter() {
         setAvailableArtists(options);
       } catch (err) {
         console.error('[FILTER_DYNAMIC_OPTIONS] ArtistFilter - Error:', err);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : 'Unknown error occurred');
       } finally {
         setIsLoading(false);
       }

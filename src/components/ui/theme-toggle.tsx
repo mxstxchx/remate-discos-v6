@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
-import { animate } from "motion"
+import { animate } from "framer-motion"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -30,7 +30,7 @@ export function ThemeToggle() {
     // Button spin animation
     animate(
       buttonRef.current,
-      { rotate: theme === 'dark' ? 180 : 0 },
+      { transform: `rotate(${theme === 'dark' ? 180 : 0}deg)` },
       { duration: 0.5, easing: [0.34, 1.56, 0.64, 1] }
     );
   }, [theme, mounted]);

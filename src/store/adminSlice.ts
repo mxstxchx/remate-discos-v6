@@ -17,7 +17,12 @@ const initialStats: AdminStats = {
   updatedAt: new Date().toISOString()
 };
 
-export const createAdminSlice: StateCreator<AdminState & AdminActions> = (set) => ({
+export const createAdminSlice: StateCreator<
+  any, // Use any type to avoid circular dependency with Store
+  [],
+  [],
+  AdminState & AdminActions
+> = (set, get) => ({
   // State
   stats: initialStats,
   reservations: [],
