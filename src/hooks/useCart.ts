@@ -24,14 +24,17 @@ let cartCache = {
 if (typeof window !== 'undefined') {
   window.cartCache = cartCache;
 }
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@supabase/supabase-js';
 import { useStore, useSession } from '@/store';
 import { CartOperationError } from '@/lib/errors';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import type { CartItem, RecordStatus } from '@/types/database';
 
 export function useCart() {
-  const supabase = createClientComponentClient();
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
   const session = useSession();
   const cartItems = useStore(state => state.cartItems);
   const setCartItems = useStore(state => state.setCartItems);

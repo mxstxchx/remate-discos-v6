@@ -1,10 +1,13 @@
 import { useCallback, useEffect } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@supabase/supabase-js';
 import { useSession, useStore } from '@/store';
 import { useToast } from '@/components/ui/use-toast';
 
 export function useQueue() {
- const supabase = createClientComponentClient();
+ const supabase = createClient(
+   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+ );
  const session = useSession();
  const updateSingleStatus = useStore(state => state.updateSingleStatus);
  const { toast } = useToast();

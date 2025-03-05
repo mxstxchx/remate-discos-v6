@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Play } from 'lucide-react';
 import type { Release } from '@/store/recordsSlice';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@supabase/supabase-js';
 
 // Extract video ID from YouTube URL
 const getVideoId = (url: string) => {
@@ -25,7 +25,10 @@ export function RecordDetail({ id }: RecordDetailProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeVideoIndex, setActiveVideoIndex] = useState<number | null>(null);
-  const supabase = createClientComponentClient();
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
   const videoContainerRef = useRef<HTMLDivElement>(null);
   
   // Get record status

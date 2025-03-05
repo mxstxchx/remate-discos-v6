@@ -13,7 +13,7 @@ declare global {
 }
 
 import { useState, useCallback, useEffect } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@supabase/supabase-js';
 import { useSession, useStore } from '@/store';
 import { useCart } from '@/hooks/useCart';
 import { CART_CONFIG } from '@/lib/constants';
@@ -58,7 +58,10 @@ export function useCheckout() {
    title: string;
  }>>([]);
 
- const supabase = createClientComponentClient();
+ const supabase = createClient(
+   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+ );
  const session = useSession();
  const { items, validateCart } = useCart();
  // Get direct access to setCartItems
