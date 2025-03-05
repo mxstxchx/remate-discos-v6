@@ -9,17 +9,24 @@ export async function GET(request: Request) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const query = supabase.from('releases');
-
+    
+    // Create a properly chained query
     const select = searchParams.get('select');
-    if (select) {
-      query.select(select);
-    }
-
     const orderBy = searchParams.get('order');
+    
+    let query = supabase.from('releases');
+    
+    // Apply select
+    if (select) {
+      query = query.select(select);
+    } else {
+      query = query.select('*');
+    }
+    
+    // Apply order
     if (orderBy) {
       const [column, direction] = orderBy.split('.');
-      query.order(column, { ascending: direction === 'asc' });
+      query = query.order(column, { ascending: direction === 'asc' });
     }
 
     const { data, error } = await query;

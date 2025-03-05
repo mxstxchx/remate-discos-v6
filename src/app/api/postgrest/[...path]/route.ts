@@ -37,59 +37,106 @@ export async function GET(request: Request) {
     // Validate query
     const validatedQuery = validateQuery(query);
     
-    // Build query
-    let dbQuery = supabase.from(path);
-
-    // Apply select
+    // Apply different query strategies based on presence of select
     if (validatedQuery.select) {
-      dbQuery = dbQuery.select(validatedQuery.select, { count: 'exact' });
-    }
-
-    // Apply filters
-    if (validatedQuery.filter) {
-      Object.entries(validatedQuery.filter).forEach(([key, value]) => {
-        if (typeof value === 'object' && value !== null) {
-          const { operator, value: filterValue } = value;
-          
-          if (operator === 'cs') {
-            dbQuery = dbQuery.contains(key, filterValue);
-          } else if (operator === 'in') {
-            dbQuery = dbQuery.in(key, filterValue);
-          } else if (operator === 'and') {
-            filterValue.forEach((condition: any) => {
-              dbQuery = dbQuery[condition.operator](key, condition.value);
-            });
+      // When select is specified, build query with full chaining
+      let selectQuery = supabase.from(path).select(validatedQuery.select, { count: 'exact' });
+      
+      // Apply filters
+      if (validatedQuery.filter) {
+        Object.entries(validatedQuery.filter).forEach(([key, value]) => {
+          if (typeof value === 'object' && value !== null) {
+            const { operator, value: filterValue } = value;
+            
+            if (operator === 'cs') {
+              selectQuery = selectQuery.contains(key, filterValue);
+            } else if (operator === 'in') {
+              selectQuery = selectQuery.in(key, filterValue);
+            } else if (operator === 'and') {
+              filterValue.forEach((condition: any) => {
+                selectQuery = selectQuery[condition.operator](key, condition.value);
+              });
+            } else {
+              selectQuery = selectQuery[operator](key, filterValue);
+            }
           } else {
-            dbQuery = dbQuery[operator](key, filterValue);
+            selectQuery = selectQuery.eq(key, value);
           }
-        } else {
-          dbQuery = dbQuery.eq(key, value);
-        }
+        });
+      }
+      
+      // Apply pagination
+      if (validatedQuery.page && validatedQuery.perPage) {
+        const from = (validatedQuery.page - 1) * validatedQuery.perPage;
+        const to = from + validatedQuery.perPage - 1;
+        selectQuery = selectQuery.range(from, to);
+      }
+      
+      // Apply ordering
+      if (validatedQuery.order) {
+        const [column, direction] = validatedQuery.order.split('.');
+        selectQuery = selectQuery.order(column, { ascending: direction === 'asc' });
+      }
+      
+      const { data, error, count } = await selectQuery;
+      
+      if (error) throw error;
+
+      return NextResponse.json({
+        data,
+        count,
+        error: null
+      });
+    } else {
+      // When no select is specified, do a simpler query
+      let simpleQuery = supabase.from(path).select('*');
+      
+      // Apply filters
+      if (validatedQuery.filter) {
+        Object.entries(validatedQuery.filter).forEach(([key, value]) => {
+          if (typeof value === 'object' && value !== null) {
+            const { operator, value: filterValue } = value;
+            
+            if (operator === 'cs') {
+              simpleQuery = simpleQuery.contains(key, filterValue);
+            } else if (operator === 'in') {
+              simpleQuery = simpleQuery.in(key, filterValue);
+            } else if (operator === 'and') {
+              filterValue.forEach((condition: any) => {
+                simpleQuery = simpleQuery[condition.operator](key, condition.value);
+              });
+            } else {
+              simpleQuery = simpleQuery[operator](key, filterValue);
+            }
+          } else {
+            simpleQuery = simpleQuery.eq(key, value);
+          }
+        });
+      }
+      
+      // Apply pagination
+      if (validatedQuery.page && validatedQuery.perPage) {
+        const from = (validatedQuery.page - 1) * validatedQuery.perPage;
+        const to = from + validatedQuery.perPage - 1;
+        simpleQuery = simpleQuery.range(from, to);
+      }
+      
+      // Apply ordering
+      if (validatedQuery.order) {
+        const [column, direction] = validatedQuery.order.split('.');
+        simpleQuery = simpleQuery.order(column, { ascending: direction === 'asc' });
+      }
+      
+      const { data, error } = await simpleQuery;
+      
+      if (error) throw error;
+
+      return NextResponse.json({
+        data,
+        count: data?.length || 0,
+        error: null
       });
     }
-
-    // Apply pagination
-    if (validatedQuery.page && validatedQuery.perPage) {
-      const from = (validatedQuery.page - 1) * validatedQuery.perPage;
-      const to = from + validatedQuery.perPage - 1;
-      dbQuery = dbQuery.range(from, to);
-    }
-
-    // Apply ordering
-    if (validatedQuery.order) {
-      const [column, direction] = validatedQuery.order.split('.');
-      dbQuery = dbQuery.order(column, { ascending: direction === 'asc' });
-    }
-
-    const { data, error, count } = await dbQuery;
-    
-    if (error) throw error;
-
-    return NextResponse.json({
-      data,
-      count,
-      error: null
-    });
   } catch (error) {
     console.error('[API] Query error:', error);
     return NextResponse.json({
