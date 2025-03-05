@@ -1,6 +1,6 @@
 import { createContext, useContext, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@supabase/supabase-js'
 import { useAuthStore } from './hooks'
 import { useStore } from '@/store'
 import { useGlobalStatus } from '@/hooks/useGlobalStatus'
@@ -18,7 +18,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { refreshAllStatuses } = useGlobalStatus();
 
   const signIn = async (alias: string, language: 'es' | 'en') => {
-    const supabase = createClientComponentClient()
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
     console.log('[AUTH] Starting sign in process for:', alias)
     try {
       // First upsert user
