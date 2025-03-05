@@ -31,7 +31,7 @@ export function ThemeToggle() {
     animate(
       buttonRef.current,
       { transform: `rotate(${theme === 'dark' ? 180 : 0}deg)` } as any,
-      { duration: 0.5, easing: [0.34, 1.56, 0.64, 1] }
+      { duration: 0.5, easing: [0.34, 1.56, 0.64, 1] } as any
     );
   }, [theme, mounted]);
 

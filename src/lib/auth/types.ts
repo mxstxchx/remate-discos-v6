@@ -2,6 +2,7 @@ export interface AuthState {
   isAuthenticated: boolean
   isAdmin: boolean
   alias: string | null
+  session: AuthSession | null
   error: string | null
 }
 
