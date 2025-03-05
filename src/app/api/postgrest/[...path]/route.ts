@@ -1,5 +1,4 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { validateQuery } from '@/lib/validation';
 import type { PostgRESTQuery } from '@/types/database';
@@ -7,8 +6,10 @@ import type { PostgRESTQuery } from '@/types/database';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  const cookieStore = await cookies();
-  const supabase = createServerComponentClient({ cookies: () => cookieStore });
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
   const { searchParams } = new URL(request.url);
   const path = request.url.split('/api/postgrest/')[1]?.split('?')[0] ?? 'releases';
   
