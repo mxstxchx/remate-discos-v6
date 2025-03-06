@@ -42,13 +42,21 @@ export function CartSheet() {
     showSuccessModal, 
     setShowSuccessModal, 
     modalActions, 
-    reservedItems, 
+    reservedItems,
+    queuedItems,
     handleWhatsAppContact, 
     handleEmailContact 
   } = useCheckout();
 
   // Track if cart should stay open after checkout
   const [keepOpen, setKeepOpen] = useState(false);
+  
+  // Track sold items for the modal
+  const [soldItems, setSoldItems] = useState<Array<{
+    release_id: number;
+    title: string;
+    price?: number;
+  }>>([]);
 
   // If success modal is showing, keep the cart sheet open
   useEffect(() => {
@@ -155,6 +163,7 @@ export function CartSheet() {
               }}
               items={items}
               reservedItems={reservedItems}
+              soldItems={soldItems}
             />
 
             <div className="border-t pt-4 space-y-4">
@@ -179,6 +188,12 @@ export function CartSheet() {
                   try {
                     const result = await handleCheckout();
                     if (result && result.success) {
+                      // Update soldItems state if there are any
+                      if (result.soldItems && result.soldItems.length > 0) {
+                        setSoldItems(result.soldItems);
+                        console.log('[CartSheet] Found sold items in cart:', result.soldItems);
+                      }
+                      
                       // Show success toast with appropriate message
                       toast({
                         title: result && result.hasConflicts ? t('toast.partial_success', { ns: 'checkout' }) : t('toast.success', { ns: 'checkout' }),

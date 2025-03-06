@@ -27,6 +27,12 @@ interface CheckoutResult {
   conflicts?: Array<{
     release_id: number;
     title: string;
+    price?: number;
+  }>;
+  soldItems?: Array<{
+    release_id: number;
+    title: string;
+    price?: number;
   }>;
   reserved: Array<{
     release_id: number;
@@ -130,30 +136,51 @@ export function useCheckout() {
        .select('release_id, user_alias')
        .in('release_id', items.map(i => i.release_id))
        .eq('user_alias', session.user_alias);
+       
+     // Check for sold releases
+     const { data: soldReleases } = await supabase
+       .from('releases')
+       .select('id, sold_at')
+       .in('id', items.map(i => i.release_id))
+       .not('sold_at', 'is', null);
+     
+     console.log('[CHECKOUT] Sold releases check:', soldReleases);
 
      // Categorize items
      const itemStates = items.map(item => {
        const isReserved = reservations?.some(r => r.release_id === item.release_id);
        const inQueue = queuePositions?.some(q => q.release_id === item.release_id);
-       return { item, isReserved, inQueue };
+       const isSold = soldReleases?.some(r => r.id === item.release_id);
+       return { item, isReserved, inQueue, isSold };
      });
 
-     const conflicts = itemStates.filter(({ isReserved }) => isReserved);
-     const availableItems = itemStates.filter(({ isReserved, inQueue }) => !isReserved && !inQueue)
-       .map(({ item }) => item);
+     // Items with conflicts (already reserved or sold)
+     const conflicts = itemStates.filter(({ isReserved, isSold }) => isReserved || isSold);
+     
+     // Only truly available items (not reserved, not sold, not in queue)
+     const availableItems = itemStates.filter(({ isReserved, inQueue, isSold }) => 
+       !isReserved && !inQueue && !isSold
+     ).map(({ item }) => item);
 
+     // Calculate sold items separately for reporting
+     const soldItems = itemStates.filter(({ isSold }) => isSold);
+     
      console.log('[CHECKOUT] Item states:', {
        total: items.length,
        conflicts: conflicts.length,
        available: availableItems.length,
-       inQueue: itemStates.filter(({ inQueue }) => inQueue).length
+       inQueue: itemStates.filter(({ inQueue }) => inQueue).length,
+       sold: soldItems.length
      });
 
      let shouldQueue = false;
-
-     // Handle conflicts first
-     if (conflicts.length > 0) {
-       setReservedItems(conflicts.map(({ item }) => ({
+     
+     // Separate reserved items from sold items
+     const reservedByOthers = conflicts.filter(({ isReserved, isSold }) => isReserved && !isSold);
+     
+     // Handle conflicts first (only for items that are reserved but not sold)
+     if (reservedByOthers.length > 0) {
+       setReservedItems(reservedByOthers.map(({ item }) => ({
          release_id: item.release_id,
          title: item.releases.title,
          price: item.releases?.price || 0
@@ -169,7 +196,13 @@ export function useCheckout() {
 
        if (shouldQueue) {
          console.log('[CHECKOUT] Processing queue joins');
-         for (const { item, inQueue } of conflicts) {
+         for (const { item, inQueue, isSold } of reservedByOthers) {
+           // Skip sold items - they can't be queued
+           if (isSold) {
+             console.log('[CHECKOUT] Skipping queue join - item is sold:', item.release_id);
+             continue;
+           }
+           
            if (!inQueue) {
              try {
                await joinQueue(item.release_id);
@@ -291,10 +324,14 @@ export function useCheckout() {
        
        // Save queued items separately if user chose to join queue
        if (shouldQueue) {
-         setQueuedItems(conflicts.map(({ item }) => ({
-           release_id: item.release_id,
-           title: item.releases?.title || `Record #${item.release_id}`
-         })));
+         // Filter out sold items from the queue list
+         setQueuedItems(reservedByOthers
+           .filter(({ isSold }) => !isSold)
+           .map(({ item }) => ({
+             release_id: item.release_id,
+             title: item.releases?.title || `Record #${item.release_id}`
+           }))
+         );
        }
        
        // Show success modal before clearing cart
@@ -316,16 +353,31 @@ export function useCheckout() {
 
       // Handle results notification
       if (conflicts.length > 0) {
-        // Return result object instead of throwing
+        // Calculate reserved conflicts (exclude sold items)
+        const reservableConflicts = conflicts
+          .filter(({ isSold }) => !isSold)
+          .map(({ item }) => ({
+            release_id: item.release_id,
+            title: item.releases.title,
+            price: item.releases?.price || 0
+          }));
+          
+        // Get sold items for reporting
+        const soldItemsInfo = soldItems.map(({ item }) => ({
+          release_id: item.release_id,
+          title: item.releases.title,
+          price: item.releases?.price || 0
+        }));
+        
+        console.log('[CHECKOUT] Sold items not included in queue:', soldItemsInfo);
+          
+        // Return result object with both types of conflicts
         return {
           success: true,
           hasConflicts: true,
           message: 'Checkout completed with some items unavailable',
-          conflicts: conflicts.map(({ item }) => ({
-            release_id: item.release_id,
-            title: item.releases.title,
-          price: item.releases?.price || 0
-          })),
+          conflicts: reservableConflicts,
+          soldItems: soldItemsInfo,
           reserved: availableItems.map(item => ({
             release_id: item.release_id,
             title: item.releases.title

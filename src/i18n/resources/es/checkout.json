@@ -29,8 +29,11 @@
   },
   "conflict": {
     "title": "Artículos Ya No Disponibles",
-    "description": "Los siguientes artículos han sido reservados por otros usuarios:",
-    "queue_question": "¿Te gustaría unirte a la cola para estos artículos? Se te notificará cuando estén disponibles.",
+    "description": "Algunos artículos en tu carrito no están disponibles para reserva:",
+    "reserved_by_others": "Reservados por otros usuarios",
+    "sold_items": "Artículos vendidos",
+    "sold_explanation": "Estos artículos han sido vendidos y no se pueden reservar.",
+    "queue_question": "¿Te gustaría unirte a la cola para los artículos reservados? Se te notificará cuando estén disponibles.",
     "cancel": "Cancelar",
     "join_queue": "Unirse a la Cola"
   },

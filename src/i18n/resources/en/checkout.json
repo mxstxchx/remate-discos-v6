@@ -29,8 +29,11 @@
   },
   "conflict": {
     "title": "Items No Longer Available",
-    "description": "The following items have been reserved by other users:",
-    "queue_question": "Would you like to join the queue for these items? You will be notified when they become available.",
+    "description": "Some items in your cart are not available for reservation:",
+    "reserved_by_others": "Reserved by other users",
+    "sold_items": "Sold items",
+    "sold_explanation": "These items have been sold and cannot be reserved.",
+    "queue_question": "Would you like to join the queue for the reserved items? You will be notified when they become available.",
     "cancel": "Cancel",
     "join_queue": "Join Queue"
   },

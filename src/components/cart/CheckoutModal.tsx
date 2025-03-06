@@ -18,6 +18,12 @@ interface CheckoutModalProps {
   reservedItems: Array<{
     release_id: number;
     title: string;
+    price?: number;
+  }>;
+  soldItems?: Array<{
+    release_id: number;
+    title: string;
+    price?: number;
   }>;
 }
 
@@ -26,7 +32,8 @@ export function CheckoutModal({
   onClose,
   onConfirm,
   items,
-  reservedItems
+  reservedItems,
+  soldItems = []
 }: CheckoutModalProps) {
   const { t } = useTranslation('checkout');
 
@@ -46,17 +53,40 @@ export function CheckoutModal({
         </DialogHeader>
         
         <div className="py-4">
-          <ul className="space-y-2">
-            {reservedItems.map((item) => (
-              <li key={item.release_id} className="text-sm">
-                • {item.title}
-              </li>
-            ))}
-          </ul>
+          {reservedItems.length > 0 && (
+            <>
+              <h4 className="font-medium text-sm mb-2">{t('conflict.reserved_by_others')}:</h4>
+              <ul className="space-y-2 mb-4">
+                {reservedItems.map((item) => (
+                  <li key={item.release_id} className="text-sm">
+                    • {item.title}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
           
-          <p className="mt-4 text-sm text-muted-foreground">
-            {t('conflict.queue_question')}
-          </p>
+          {soldItems.length > 0 && (
+            <>
+              <h4 className="font-medium text-sm mb-2">{t('conflict.sold_items')}:</h4>
+              <ul className="space-y-2 mb-4">
+                {soldItems.map((item) => (
+                  <li key={item.release_id} className="text-sm">
+                    • {item.title}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-sm text-muted-foreground mb-4">
+                {t('conflict.sold_explanation')}
+              </p>
+            </>
+          )}
+          
+          {reservedItems.length > 0 && (
+            <p className="mt-4 text-sm text-muted-foreground">
+              {t('conflict.queue_question')}
+            </p>
+          )}
         </div>
 
         <DialogFooter>
