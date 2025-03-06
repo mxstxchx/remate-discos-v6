@@ -6,6 +6,7 @@ import { BasicAuthModal } from '@/components/auth/basic-auth-modal'
 import MaterialFilters from '@/components/ui/MaterialFilters'
 import { ThemeProvider } from '@/providers/theme-provider'
 import './globals.css'
+import { Analytics } from '@vercel/analytics/next'
 
 // Load fonts
 const inter = Inter({
@@ -44,6 +45,7 @@ export default function RootLayout({
           <Providers>
             <BasicAuthModal />
             {children}
+            <Analytics />
             <Toaster />
           </Providers>
         </ThemeProvider>
