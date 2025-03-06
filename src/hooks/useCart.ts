@@ -31,17 +31,14 @@ let cartCache: CartCache = {
 if (typeof window !== 'undefined') {
   window.cartCache = cartCache;
 }
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase/client';
 import { useStore, useSession } from '@/store';
 import { CartOperationError } from '@/lib/errors';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import type { CartItem, RecordStatus } from '@/types/database';
 
 export function useCart() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // Using the singleton supabase client from client.ts
   const session = useSession();
   const cartItems = useStore(state => state.cartItems);
   const setCartItems = useStore(state => state.setCartItems);

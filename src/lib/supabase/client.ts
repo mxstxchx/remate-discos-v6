@@ -3,6 +3,28 @@ import { type Database } from './types'
 
 // Create a reliable client with robust error handling
 export const createClient = () => {
+  // Server-side rendering check
+  const isServer = typeof window === 'undefined';
+  
+  // For server-side rendering, create a basic client without WebSocket patching
+  if (isServer) {
+    return createSupabaseClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          fetch: (...args) => {
+            return fetch(...args).catch(err => {
+              console.warn('Supabase fetch error handled:', err);
+              throw err;
+            });
+          }
+        }
+      }
+    );
+  }
+  
+  // Client-side with WebSocket handling
   // Custom WebSocket class to prevent errors in console
   class SilentWebSocket extends WebSocket {
     constructor(url: string | URL, protocols?: string | string[]) {
@@ -19,11 +41,8 @@ export const createClient = () => {
   // Patch global WebSocket to use our silent version
   const originalWebSocket = window.WebSocket;
   try {
-    // Only apply in browser context
-    if (typeof window !== 'undefined') {
-      // @ts-ignore - Temporarily override WebSocket
-      window.WebSocket = SilentWebSocket;
-    }
+    // @ts-ignore - Temporarily override WebSocket
+    window.WebSocket = SilentWebSocket;
 
     // Create the Supabase client with customized settings
     const client = createSupabaseClient<Database>(
@@ -52,10 +71,8 @@ export const createClient = () => {
     return client;
   } finally {
     // Restore original WebSocket after client creation
-    if (typeof window !== 'undefined') {
-      // @ts-ignore - Restore original WebSocket
-      window.WebSocket = originalWebSocket;
-    }
+    // @ts-ignore - Restore original WebSocket
+    window.WebSocket = originalWebSocket;
   }
 }
 

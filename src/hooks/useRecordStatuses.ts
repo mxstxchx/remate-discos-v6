@@ -1,13 +1,10 @@
 import { useEffect, useCallback } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase/client';
 import { useSession, useStore } from '@/store';
 import type { RecordStatus } from '@/types/database';
 
 export function useRecordStatuses() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // Using the singleton supabase client from client.ts
   const session = useSession();
   const updateRecordStatuses = useStore(state => state.updateRecordStatuses);
 

@@ -1,14 +1,11 @@
 import { useCallback, useEffect } from 'react';
 import { CartItemStatus } from '@/types/database';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase/client';
 import { useSession, useStore } from '@/store';
 import { useToast } from '@/components/ui/use-toast';
 
 export function useQueue() {
- const supabase = createClient(
-   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
- );
+ // Using the singleton supabase client from client.ts
  const session = useSession();
  const updateSingleStatus = useStore(state => state.updateSingleStatus);
  const { toast } = useToast();

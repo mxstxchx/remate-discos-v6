@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase/client';
 import type { Session } from '@/lib/supabase/types';
 import type { Release } from './recordsSlice';
 import type { CartItem, RecordStatus } from '@/types/database';

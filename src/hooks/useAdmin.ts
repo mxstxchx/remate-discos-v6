@@ -1,12 +1,9 @@
 import { useCallback, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase/client';
 import { useStore } from '@/store';
 
 export function useAdmin() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // Using the singleton supabase client from client.ts
   const admin = useStore(state => state.admin);
   const setAdmin = useStore(state => (set: any) => ({
     admin: { ...state.admin, ...set }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase/client';
 import { useStore } from '@/store';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -59,11 +59,7 @@ export function SessionsTable() {
     if (currentSession?.user_alias) {
       fetchSessions();
       
-      // Set up real-time subscription
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
+      // Using singleton supabase client for real-time subscription
       const subscription = supabase
         .channel('admin-sessions')
         .on(

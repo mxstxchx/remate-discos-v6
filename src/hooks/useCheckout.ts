@@ -13,7 +13,7 @@ declare global {
 }
 
 import { useState, useCallback, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase/client';
 import { useSession, useStore } from '@/store';
 import { useCart } from '@/hooks/useCart';
 import { CART_CONFIG } from '@/lib/constants';
@@ -58,10 +58,7 @@ export function useCheckout() {
    title: string;
  }>>([]);
 
- const supabase = createClient(
-   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
- );
+ // Using the singleton supabase client from client.ts
  const session = useSession();
  const { items, validateCart } = useCart();
  // Get direct access to setCartItems

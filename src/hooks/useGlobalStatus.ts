@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase/client';
 import { useStore, useSession } from '@/store';
 
 // Use a module-level variable to ensure we only do this once per app instance
@@ -21,10 +21,7 @@ export function useGlobalStatus() {
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const hookId = useRef(`hook_${Math.random().toString(36).substr(2, 9)}`);
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // Using the singleton supabase client from client.ts
   const session = useSession();
   const updateRecordStatuses = useStore(state => state.updateRecordStatuses);
   
