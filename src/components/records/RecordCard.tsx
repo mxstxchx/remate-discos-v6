@@ -81,6 +81,7 @@ export const RecordCard = React.memo(function RecordCard({
             src={record.primary_image || record.thumb || '/placeholder-image.jpg'}
             alt={record.title}
             fill
+            unoptimized={true}
             className="object-cover"
             onError={handleImageError}
           />
@@ -147,6 +148,7 @@ export const RecordCard = React.memo(function RecordCard({
             src={record.primary_image || record.thumb || '/placeholder-image.jpg'}
             alt={record.title}
             fill
+            unoptimized={true}
             className="object-cover"
             onError={handleImageError}
           />

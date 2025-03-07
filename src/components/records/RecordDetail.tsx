@@ -119,6 +119,7 @@ export function RecordDetail({ id }: RecordDetailProps) {
             src={record.primary_image || record.thumb || '/placeholder-image.jpg'}
             alt={record.title}
             fill
+            unoptimized={true}
             className="object-contain"
             priority
           />
