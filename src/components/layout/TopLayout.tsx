@@ -43,6 +43,7 @@ export function TopLayout() {
   }
 
   return (
+    <>
     <div className="fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b border-primary/10 bg-background px-4 texture-brushed-metal">
       <div className="h-9 sm:h-12 flex items-center transition-all duration-300">
         <Image 
@@ -101,5 +102,9 @@ export function TopLayout() {
         </Button>
       </div>
     </div>
+    <div className="fixed bottom-0 left-0 right-0 z-40 text-center py-1 px-4 text-[8px] opacity-60 bg-background/50 backdrop-blur-sm">
+      This application uses Discogs' API but is not affiliated with, sponsored or endorsed by Discogs. 'Discogs' is a trademark of Zink Media, LLC.
+    </div>
+    </>
   )
 }
