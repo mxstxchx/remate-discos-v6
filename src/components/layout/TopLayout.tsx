@@ -1,5 +1,5 @@
 import React from 'react'
-import { ShoppingCart, UserCircle2, MessageCircle, Mail, MessageQuestion } from 'lucide-react'
+import { ShoppingCart, UserCircle2, MessageCircle, Mail, HelpCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import {
@@ -105,7 +105,10 @@ export function TopLayout() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="knurled" size="icon" title={t('contact.title')} className="rounded-full">
-              <MessageQuestion className="h-5 w-5" />
+              <div className="relative h-5 w-5">
+                <MessageCircle className="h-5 w-5" />
+                <HelpCircle className="absolute h-3 w-3 -right-0.5 -bottom-0.5 bg-background text-foreground rounded-full" />
+              </div>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
