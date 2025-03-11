@@ -105,7 +105,10 @@ export function TopLayout() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="knurled" size="icon" title={t('contact.title')} className="rounded-full">
-              <MessageCircle className="h-5 w-5" />
+              <div className="relative h-5 w-5">
+                <MessageCircle className="h-5 w-5" />
+                <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold">?</span>
+              </div>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
