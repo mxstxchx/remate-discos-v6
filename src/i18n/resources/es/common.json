@@ -29,5 +29,11 @@
   "errors": {
     "general": "Ha ocurrido un error",
     "tryAgain": "Por favor, inténtalo de nuevo"
+  },
+  "contact": {
+    "title": "Contacto",
+    "whatsapp": "WhatsApp",
+    "email": "Correo",
+    "default_message": "Hola, estoy interesado en tus discos."
   }
 }

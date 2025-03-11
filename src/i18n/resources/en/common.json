@@ -29,5 +29,11 @@
   "errors": {
     "general": "An error occurred",
     "tryAgain": "Please try again"
+  },
+  "contact": {
+    "title": "Contact",
+    "whatsapp": "WhatsApp",
+    "email": "Email",
+    "default_message": "Hi, I'm interested in your records."
   }
 }

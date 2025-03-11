@@ -1,7 +1,15 @@
 import React from 'react'
-import { ShoppingCart, UserCircle2 } from 'lucide-react'
+import { ShoppingCart, UserCircle2, MessageCircle, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/lib/auth/hooks'
 import { useStore } from '@/store'
@@ -11,6 +19,7 @@ import { useTheme } from 'next-themes'
 import Image from 'next/image'
 import GB from 'country-flag-icons/react/3x2/GB'
 import ES from 'country-flag-icons/react/3x2/ES'
+import { CART_CONFIG } from '@/lib/constants'
 
 export function TopLayout() {
   const { t, i18n } = useTranslation('common')
@@ -41,6 +50,17 @@ export function TopLayout() {
     i18n.changeLanguage(newLang)
     setLanguage(newLang as 'es' | 'en')
   }
+
+  const handleWhatsAppContact = () => {
+    const message = t('contact.default_message');
+    window.open(`https://wa.me/${CART_CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
+  const handleEmailContact = () => {
+    const subject = t('app.name');
+    const body = t('contact.default_message');
+    window.open(`mailto:${CART_CONFIG.SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+  };
 
   return (
     <>
@@ -81,6 +101,26 @@ export function TopLayout() {
             <ES className="h-5 w-5" />
           )}
         </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="knurled" size="icon" title={t('contact.title')} className="rounded-full">
+              <MessageCircle className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>{t('contact.title')}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleWhatsAppContact}>
+              <MessageCircle className="mr-2 h-4 w-4" />
+              {t('contact.whatsapp')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleEmailContact}>
+              <Mail className="mr-2 h-4 w-4" />
+              {t('contact.email')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <Sheet>
           <SheetTrigger asChild>
